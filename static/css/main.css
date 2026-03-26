@@ -503,6 +503,7 @@ body {
 @media (max-width: 900px) {
   .end-layout { grid-template-columns: 1fr; }
 }
+.end-aside { display: flex; flex-direction: column; gap: 1rem; }
 
 /* Cabecera */
 .end-header {

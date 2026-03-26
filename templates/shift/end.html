@@ -45,11 +45,12 @@
             {{ kpi.oee }}%
           </div>
           <div class="end-kpi-oee-bar">
+            {% set bar_width = kpi.oee if kpi.oee <= 100 else 100 %}
             <div class="end-kpi-oee-bar__fill
               {% if kpi.oee >= 85 %}end-kpi-oee-bar__fill--good
               {% elif kpi.oee >= 60 %}end-kpi-oee-bar__fill--warn
               {% else %}end-kpi-oee-bar__fill--bad{% endif %}"
-              style="width: {{ [kpi.oee, 100] | min }}%"></div>
+              style="width: {{ bar_width }}%"></div>
           </div>
           <div class="end-kpi-oee-breakdown">
             <span title="Disponibilidad">D {{ kpi.availability }}%</span>

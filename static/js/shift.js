@@ -152,6 +152,10 @@ async function handleEndShift(e) {
   const errorBox = document.getElementById('form-error');
   errorBox.style.display = 'none';
 
+  const submitBtn = document.getElementById('end-btn');
+  const origHTML = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Cerrando turno...'; }
+
   const status = form.querySelector('input[name="status"]:checked').value;
   const payload = {
     status,
@@ -166,12 +170,14 @@ async function handleEndShift(e) {
     });
     const data = await res.json();
     if (!res.ok) {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = origHTML; }
       errorBox.textContent = data.error || 'Error al cerrar turno';
       errorBox.style.display = 'block';
       return;
     }
     window.location.href = `/shift/${shiftId}/summary`;
   } catch {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = origHTML; }
     errorBox.textContent = 'Error de conexión. Inténtalo de nuevo.';
     errorBox.style.display = 'block';
   }

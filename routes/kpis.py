@@ -3,6 +3,7 @@ from models.kpi import (
     create_kpi_reading, get_kpi_readings_by_shift,
     get_latest_kpi_reading, calculate_oee,
 )
+from models.shift import get_shift_by_id
 
 bp = Blueprint("kpis", __name__)
 
@@ -49,4 +50,6 @@ def latest_kpi(shift_id: int):
 
 @bp.get("/api/kpis/<int:shift_id>/aggregate")
 def aggregate_kpis(shift_id: int):
+    if not get_shift_by_id(shift_id):
+        return jsonify({"error": "Turno no encontrado"}), 404
     return jsonify(calculate_oee(shift_id))

@@ -85,7 +85,6 @@ def seed() -> None:
     # 2. Turnos históricos (líneas 1-3, últimos 5 días, 2 turnos/día)
     shift_ids = []
     now = datetime.utcnow()
-    shift_types = ["morning", "afternoon", "night"]
     shift_hours = {"morning": 6, "afternoon": 14, "night": 22}
 
     for line in range(1, 4):

@@ -88,24 +88,6 @@
   overflow-y: auto;
 }
 
-.comment-entry {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  background: var(--color-gray-100);
-  font-size: 0.875rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.comment-entry__meta {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  font-size: 0.75rem;
-  color: var(--color-gray-400);
-}
-
 /* ============================================================
    Supervisor dashboard grid
    ============================================================ */

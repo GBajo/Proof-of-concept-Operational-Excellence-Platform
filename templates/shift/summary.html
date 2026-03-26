@@ -50,7 +50,7 @@
     </div>
     <div class="kpi-card">
       <div class="kpi-card__label">Tiempo Parada</div>
-      <div class="kpi-card__value">{{ kpi.total_downtime_minutes }}</div>
+      <div class="kpi-card__value">{{ kpi.total_downtime_minutes | int }}</div>
       <div class="kpi-card__unit">min</div>
     </div>
   </div>

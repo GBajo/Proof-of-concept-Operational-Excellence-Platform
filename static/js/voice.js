@@ -144,6 +144,10 @@ function setCategory(cat) {
 // ── Guardar comentario ─────────────────────────────────────
 
 async function submitComment() {
+  if (typeof SHIFT_ID === 'undefined' || SHIFT_ID === null) {
+    console.error('voice.js: SHIFT_ID no definido');
+    return;
+  }
   const ta = document.getElementById('transcript-text');
   const text = ta ? ta.value.trim() : '';
 

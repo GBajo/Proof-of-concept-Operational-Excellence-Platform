@@ -60,10 +60,7 @@ async function loadInitialComments() {
     if (typeof loadComments === 'function') {
       loadComments(comments);
     }
-  } catch { /* silencioso */ }
-}
-
-const PollManager = {
+  } catch (e) { console.warn('loadInitialComments: error al cargar comentarios', e); } = {
   start(shiftId) {
     this.stop();
     dashboardState.intervals = [
@@ -78,7 +75,7 @@ const PollManager = {
     dashboardState.intervals = [];
   },
   pause() { this.stop(); },
-  resume(shiftId) { this.start(shiftId); fetchKpis(shiftId); },
+  resume(shiftId) { this.start(shiftId); },
 };
 
 function onVisibilityChange() {

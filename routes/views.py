@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, redirect, url_for
 from models.shift import get_shift_by_id, get_active_lines
 from models.operator import get_all_operators
 from models.comment import get_comments_by_shift
@@ -32,13 +32,18 @@ def shift_end(shift_id: int):
     shift = get_shift_by_id(shift_id)
     if not shift:
         abort(404)
+    # Si el turno ya está cerrado, redirigir directamente al resumen
+    if shift["status"] != "active":
+        return redirect(url_for("views.shift_summary_view", shift_id=shift_id))
+
     comments = get_comments_by_shift(shift_id)
     kpi = calculate_oee(shift_id)
 
-    # Duración del turno
-    from datetime import datetime
+    # Duración del turno (UTC naive, consistente con datetime('now') de SQLite)
+    from datetime import datetime, timezone
     start_dt = datetime.fromisoformat(shift["start_time"])
-    duration_min = int((datetime.utcnow() - start_dt).total_seconds() / 60)
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    duration_min = int((now_utc - start_dt).total_seconds() / 60)
     duration_h = duration_min // 60
     duration_m = duration_min % 60
 
