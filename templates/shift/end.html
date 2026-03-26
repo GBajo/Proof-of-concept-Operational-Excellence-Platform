@@ -3,37 +3,255 @@
 {% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <h1>Finalizar Turno — Línea {{ shift.line_number }}</h1>
-  <p class="page-header__sub">{{ shift.operator_name }}</p>
-</div>
+<div class="end-layout">
 
-<div class="form-card">
-  <form id="end-shift-form" class="form" data-shift-id="{{ shift.id }}">
-    <div class="form__group">
-      <label class="form__label" for="handover_notes">Notas de Traspaso</label>
-      <textarea id="handover_notes" name="handover_notes" class="form__textarea" rows="6"
-        placeholder="Indica el estado de la línea, incidencias pendientes, instrucciones para el próximo turno..."></textarea>
-    </div>
+  <!-- Columna principal -->
+  <div class="end-main">
 
-    <div class="form__group">
-      <label class="form__label">Estado al cierre</label>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" name="status" value="completed" checked> Normal
-        </label>
-        <label class="radio-label">
-          <input type="radio" name="status" value="interrupted"> Interrumpido
-        </label>
+    <!-- Cabecera -->
+    <div class="end-header">
+      <div>
+        <h1 class="end-title">Finalizar Turno</h1>
+        <p class="end-meta">
+          <span class="end-meta__line">Línea {{ shift.line_number }}</span>
+          <span class="end-meta__sep">·</span>
+          <span>{{ shift.operator_name }}</span>
+          <span class="end-meta__sep">·</span>
+          <span class="end-meta__type">
+            {% if shift.shift_type == 'morning' %}Mañana
+            {% elif shift.shift_type == 'afternoon' %}Tarde
+            {% else %}Noche{% endif %}
+          </span>
+        </p>
+      </div>
+      <div class="end-duration">
+        <span class="end-duration__value">{{ duration_h }}h {{ duration_m }}m</span>
+        <span class="end-duration__label">duración del turno</span>
       </div>
     </div>
 
-    <div id="form-error" class="alert alert--danger" style="display:none"></div>
+    <!-- Resumen de KPIs -->
+    <section class="end-section">
+      <h2 class="end-section__title">Resumen de KPIs del Turno</h2>
+      <div class="end-kpi-grid">
 
-    <div class="form__actions">
-      <a href="{{ url_for('views.shift_active', shift_id=shift.id) }}" class="btn btn--secondary">Volver</a>
-      <button type="submit" class="btn btn--danger">Cerrar Turno</button>
+        <!-- OEE -->
+        <div class="end-kpi-card end-kpi-card--oee">
+          <div class="end-kpi-card__label">OEE</div>
+          <div class="end-kpi-card__value
+            {% if kpi.oee >= 85 %}end-kpi-card__value--good
+            {% elif kpi.oee >= 60 %}end-kpi-card__value--warn
+            {% else %}end-kpi-card__value--bad{% endif %}">
+            {{ kpi.oee }}%
+          </div>
+          <div class="end-kpi-oee-bar">
+            <div class="end-kpi-oee-bar__fill
+              {% if kpi.oee >= 85 %}end-kpi-oee-bar__fill--good
+              {% elif kpi.oee >= 60 %}end-kpi-oee-bar__fill--warn
+              {% else %}end-kpi-oee-bar__fill--bad{% endif %}"
+              style="width: {{ [kpi.oee, 100] | min }}%"></div>
+          </div>
+          <div class="end-kpi-oee-breakdown">
+            <span title="Disponibilidad">D {{ kpi.availability }}%</span>
+            <span title="Rendimiento">R {{ kpi.performance }}%</span>
+            <span title="Calidad">C {{ kpi.quality }}%</span>
+          </div>
+        </div>
+
+        <!-- Unidades producidas -->
+        <div class="end-kpi-card">
+          <div class="end-kpi-card__label">Uds. Producidas</div>
+          <div class="end-kpi-card__value">{{ "{:,}".format(kpi.total_units_produced).replace(",", ".") }}</div>
+          {% if kpi.target_units > 0 %}
+          <div class="end-kpi-card__sub">
+            Objetivo: {{ "{:,}".format(kpi.target_units).replace(",", ".") }}
+            {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
+            <span class="{% if pct >= 95 %}end-kpi-badge--good{% elif pct >= 80 %}end-kpi-badge--warn{% else %}end-kpi-badge--bad{% endif %} end-kpi-badge">
+              {{ pct }}%
+            </span>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Unidades rechazadas -->
+        <div class="end-kpi-card">
+          <div class="end-kpi-card__label">Tasa de Rechazo</div>
+          <div class="end-kpi-card__value
+            {% if kpi.reject_rate_pct <= 1 %}end-kpi-card__value--good
+            {% elif kpi.reject_rate_pct <= 3 %}end-kpi-card__value--warn
+            {% else %}end-kpi-card__value--bad{% endif %}">
+            {{ kpi.reject_rate_pct }}%
+          </div>
+          <div class="end-kpi-card__sub">{{ kpi.total_units_rejected }} uds. rechazadas</div>
+        </div>
+
+        <!-- Tiempo de parada -->
+        <div class="end-kpi-card">
+          <div class="end-kpi-card__label">Tiempo de Parada</div>
+          <div class="end-kpi-card__value
+            {% if kpi.total_downtime_minutes <= 30 %}end-kpi-card__value--good
+            {% elif kpi.total_downtime_minutes <= 60 %}end-kpi-card__value--warn
+            {% else %}end-kpi-card__value--bad{% endif %}">
+            {{ kpi.total_downtime_minutes | int }} min
+          </div>
+          <div class="end-kpi-card__sub">Disponibilidad {{ kpi.availability }}%</div>
+        </div>
+
+        <!-- Right First Time -->
+        <div class="end-kpi-card">
+          <div class="end-kpi-card__label">Right First Time</div>
+          <div class="end-kpi-card__value
+            {% if kpi.right_first_time_pct >= 99 %}end-kpi-card__value--good
+            {% elif kpi.right_first_time_pct >= 97 %}end-kpi-card__value--warn
+            {% else %}end-kpi-card__value--bad{% endif %}">
+            {{ kpi.right_first_time_pct }}%
+          </div>
+          <div class="end-kpi-card__sub">{{ kpi.good_units }} uds. buenas</div>
+        </div>
+
+        <!-- Comentarios -->
+        <div class="end-kpi-card end-kpi-card--comments">
+          <div class="end-kpi-card__label">Comentarios</div>
+          <div class="end-kpi-card__value end-kpi-card__value--neutral">{{ total_comments }}</div>
+          <div class="end-kpi-card__sub end-kpi-comments-breakdown">
+            {% for cat, items in by_category.items() %}
+            <span class="end-kpi-cat-dot end-kpi-cat-dot--{{ cat }}" title="{{ cat | capitalize }}">
+              {{ items | length }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Comentarios por categoría (resumen compacto) -->
+    {% if total_comments > 0 %}
+    <section class="end-section">
+      <h2 class="end-section__title">Comentarios registrados</h2>
+      <div class="end-comments-summary">
+        {% for cat, items in by_category.items() %}
+        <div class="end-comment-group">
+          <div class="end-comment-group__header">
+            <span class="badge badge--{{ {'safety':'red','quality':'orange','production':'blue','maintenance':'gray'}[cat] }}">
+              {{ {'safety':'Seguridad','quality':'Calidad','production':'Producción','maintenance':'Mantenimiento'}[cat] }}
+            </span>
+            <span class="end-comment-group__count">{{ items | length }}</span>
+          </div>
+          <ul class="comment-list">
+            {% for c in items %}
+            <li class="comment-item">
+              <span class="comment-item__time">{{ c.timestamp[11:16] }}</span>
+              <span class="comment-item__text">{{ c.text }}</span>
+              {% if c.source == 'voice' %}<span class="comment-item__source" title="Voz">🎤</span>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Formulario de cierre -->
+    <section class="end-section">
+      <h2 class="end-section__title">Cerrar Turno</h2>
+      <form id="end-shift-form" class="end-form" data-shift-id="{{ shift.id }}">
+
+        <div class="form__group">
+          <label class="form__label" for="handover_notes">
+            Notas de traspaso al siguiente turno
+          </label>
+          <textarea id="handover_notes" name="handover_notes" class="form__textarea" rows="5"
+            placeholder="Indica el estado de la línea, incidencias pendientes, instrucciones para el próximo turno..."></textarea>
+          <p class="end-form__hint">Estas notas quedarán registradas en el historial del turno y serán visibles en el resumen final.</p>
+        </div>
+
+        <div class="form__group">
+          <label class="form__label">Estado al cierre</label>
+          <div class="end-status-options">
+            <label class="end-status-card">
+              <input type="radio" name="status" value="completed" checked>
+              <span class="end-status-card__inner">
+                <span class="end-status-card__icon">✅</span>
+                <span class="end-status-card__name">Turno Normal</span>
+                <span class="end-status-card__desc">El turno ha finalizado correctamente según lo planificado.</span>
+              </span>
+            </label>
+            <label class="end-status-card">
+              <input type="radio" name="status" value="interrupted">
+              <span class="end-status-card__inner">
+                <span class="end-status-card__icon">⚠️</span>
+                <span class="end-status-card__name">Interrumpido</span>
+                <span class="end-status-card__desc">El turno finalizó antes de lo previsto o con incidencias graves.</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div id="form-error" class="alert alert--danger" style="display:none"></div>
+
+        <div class="end-form__actions">
+          <a href="{{ url_for('views.shift_active', shift_id=shift.id) }}" class="btn btn--secondary">
+            Volver al turno activo
+          </a>
+          <button type="submit" class="btn btn--danger btn--lg" id="end-btn">
+            Confirmar cierre de turno
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+  </div><!-- /end-main -->
+
+  <!-- Columna lateral -->
+  <aside class="end-aside">
+
+    <div class="aside-card aside-card--info">
+      <p class="aside-card__title">Información del turno</p>
+      <dl class="end-info-list">
+        <dt>Inicio</dt>
+        <dd>{{ shift.start_time[11:16] }}</dd>
+        <dt>Línea</dt>
+        <dd>{{ shift.line_number }}</dd>
+        <dt>Operario</dt>
+        <dd>{{ shift.operator_name }}</dd>
+        <dt>Tipo</dt>
+        <dd>
+          {% if shift.shift_type == 'morning' %}☀️ Mañana
+          {% elif shift.shift_type == 'afternoon' %}🌤 Tarde
+          {% else %}🌙 Noche{% endif %}
+        </dd>
+      </dl>
     </div>
-  </form>
-</div>
+
+    <div class="aside-card aside-card--warning">
+      <p class="aside-card__title">Antes de cerrar</p>
+      <ul class="instructions-list">
+        <li>Revisa que todos los comentarios importantes estén registrados.</li>
+        <li>Anota cualquier incidencia pendiente en las notas de traspaso.</li>
+        <li>Confirma el estado de los equipos y materiales.</li>
+        <li>Una vez cerrado, el turno no puede reabrirse.</li>
+      </ul>
+    </div>
+
+    {% if kpi.total_units_produced > 0 %}
+    <div class="aside-card">
+      <p class="aside-card__title">Resumen rápido</p>
+      <div class="end-quick-stat">
+        <span class="end-quick-stat__value
+          {% if kpi.oee >= 85 %}end-kpi-card__value--good
+          {% elif kpi.oee >= 60 %}end-kpi-card__value--warn
+          {% else %}end-kpi-card__value--bad{% endif %}">
+          {{ kpi.oee }}%
+        </span>
+        <span class="end-quick-stat__label">OEE del turno</span>
+      </div>
+    </div>
+    {% endif %}
+
+  </aside>
+
+</div><!-- /end-layout -->
 {% endblock %}

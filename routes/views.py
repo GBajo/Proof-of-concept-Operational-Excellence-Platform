@@ -32,7 +32,30 @@ def shift_end(shift_id: int):
     shift = get_shift_by_id(shift_id)
     if not shift:
         abort(404)
-    return render_template("shift/end.html", shift=shift)
+    comments = get_comments_by_shift(shift_id)
+    kpi = calculate_oee(shift_id)
+
+    # Duración del turno
+    from datetime import datetime
+    start_dt = datetime.fromisoformat(shift["start_time"])
+    duration_min = int((datetime.utcnow() - start_dt).total_seconds() / 60)
+    duration_h = duration_min // 60
+    duration_m = duration_min % 60
+
+    # Comentarios por categoría
+    by_category: dict = {}
+    for c in comments:
+        by_category.setdefault(c["category"], []).append(c)
+
+    return render_template(
+        "shift/end.html",
+        shift=shift,
+        kpi=kpi,
+        total_comments=len(comments),
+        by_category=by_category,
+        duration_h=duration_h,
+        duration_m=duration_m,
+    )
 
 
 @bp.get("/shift/<int:shift_id>/summary")
