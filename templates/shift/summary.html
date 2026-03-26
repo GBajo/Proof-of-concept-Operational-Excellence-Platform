@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Resumen — Turno {{ shift.id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Resumen de Turno — Línea {{ shift.line_number }}</h1>
+    <p class="page-header__sub">
+      {{ shift.operator_name }} ·
+      {{ shift.start_time | replace('T',' ') }} →
+      {{ shift.end_time | replace('T',' ') if shift.end_time else 'En curso' }}
+    </p>
+  </div>
+  <a href="{{ url_for('views.index') }}" class="btn btn--secondary">Volver al inicio</a>
+</div>
+
+<!-- KPIs resumen -->
+<section class="section">
+  <h2 class="section__title">Indicadores del Turno</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-card--oee">
+      <div class="kpi-card__label">OEE</div>
+      <div class="kpi-card__value">{{ kpi.oee }}%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Disponibilidad</div>
+      <div class="kpi-card__value">{{ kpi.availability }}%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Rendimiento</div>
+      <div class="kpi-card__value">{{ kpi.performance }}%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Calidad</div>
+      <div class="kpi-card__value">{{ kpi.quality }}%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Unidades Buenas</div>
+      <div class="kpi-card__value">{{ kpi.good_units | int }}</div>
+      <div class="kpi-card__sub">de {{ kpi.total_units_produced | int }} producidas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Right First Time</div>
+      <div class="kpi-card__value">{{ kpi.right_first_time_pct }}%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Rechazos</div>
+      <div class="kpi-card__value">{{ kpi.total_units_rejected | int }}</div>
+      <div class="kpi-card__sub">{{ kpi.reject_rate_pct }}% tasa</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Tiempo Parada</div>
+      <div class="kpi-card__value">{{ kpi.total_downtime_minutes }}</div>
+      <div class="kpi-card__unit">min</div>
+    </div>
+  </div>
+</section>
+
+<!-- Notas de traspaso -->
+{% if shift.handover_notes %}
+<section class="section">
+  <h2 class="section__title">Notas de Traspaso</h2>
+  <div class="handover-box">{{ shift.handover_notes }}</div>
+</section>
+{% endif %}
+
+<!-- Comentarios por categoría -->
+<section class="section">
+  <h2 class="section__title">Comentarios del Turno ({{ comments | length }})</h2>
+  {% set categories = [
+    ('safety', 'Seguridad', 'badge--red'),
+    ('quality', 'Calidad', 'badge--orange'),
+    ('production', 'Producción', 'badge--blue'),
+    ('maintenance', 'Mantenimiento', 'badge--gray'),
+  ] %}
+  {% for cat_key, cat_label, cat_class in categories %}
+    {% if by_category.get(cat_key) %}
+    <div class="comment-category">
+      <h3 class="comment-category__title">
+        <span class="badge {{ cat_class }}">{{ cat_label }}</span>
+        ({{ by_category[cat_key] | length }})
+      </h3>
+      <ul class="comment-list">
+        {% for c in by_category[cat_key] %}
+        <li class="comment-item">
+          <span class="comment-item__time">{{ c.timestamp[11:16] }}</span>
+          <span class="comment-item__text">{{ c.text }}</span>
+          {% if c.source == 'voice' %}<span class="comment-item__source">🎤</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Líneas de Packaging</h1>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">+ Iniciar Turno</a>
+</div>
+
+{% if active_lines %}
+<section class="section">
+  <h2 class="section__title">Turnos Activos</h2>
+  <div class="cards-grid">
+    {% for line in active_lines %}
+    <div class="card card--active">
+      <div class="card__header">
+        <span class="badge badge--green">ACTIVO</span>
+        <span class="card__line">Línea {{ line.line_number }}</span>
+      </div>
+      <p class="card__operator">{{ line.operator_name }}</p>
+      <p class="card__time">Desde: {{ line.start_time | replace('T',' ') }}</p>
+      <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}" class="btn btn--sm">
+        Ver Turno
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<div class="empty-state">
+  <p>No hay turnos activos en este momento.</p>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">Iniciar primer turno</a>
+</div>
+{% endif %}
+{% endblock %}

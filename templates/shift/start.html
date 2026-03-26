@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Turno{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Iniciar Nuevo Turno</h1>
+</div>
+
+<div class="form-card">
+  <form id="start-shift-form" class="form">
+    <div class="form__group">
+      <label class="form__label" for="operator_id">Operario</label>
+      <select id="operator_id" name="operator_id" class="form__select" required>
+        <option value="">— Seleccionar operario —</option>
+        {% for op in operators %}
+        <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form__group">
+      <label class="form__label" for="line_number">Línea de Packaging</label>
+      <select id="line_number" name="line_number" class="form__select" required>
+        <option value="">— Seleccionar línea —</option>
+        {% for n in range(1, 6) %}
+        <option value="{{ n }}">Línea {{ n }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form__group">
+      <label class="form__label" for="shift_type">Tipo de Turno</label>
+      <select id="shift_type" name="shift_type" class="form__select" required>
+        <option value="morning">Mañana (06:00 – 14:00)</option>
+        <option value="afternoon">Tarde (14:00 – 22:00)</option>
+        <option value="night">Noche (22:00 – 06:00)</option>
+      </select>
+    </div>
+
+    <div id="form-error" class="alert alert--danger" style="display:none"></div>
+
+    <div class="form__actions">
+      <a href="{{ url_for('views.index') }}" class="btn btn--secondary">Cancelar</a>
+      <button type="submit" class="btn btn--primary">Iniciar Turno</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

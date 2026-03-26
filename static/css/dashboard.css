@@ -1,0 +1,166 @@
+/* ============================================================
+   KPI Cards (dashboard turno activo)
+   ============================================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  text-align: center;
+  border-top: 3px solid var(--color-primary);
+}
+
+.kpi-card--oee {
+  border-top-color: var(--color-success);
+  grid-column: span 1;
+}
+
+.kpi-card--alert { border-top-color: var(--color-danger); }
+
+.kpi-card__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-400);
+  margin-bottom: 0.4rem;
+}
+
+.kpi-card__value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-gray-900);
+  line-height: 1.1;
+}
+
+.kpi-card--oee .kpi-card__value { color: var(--color-success); }
+.kpi-card--alert .kpi-card__value { color: var(--color-danger); }
+
+.kpi-card__unit {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  margin-top: 0.2rem;
+}
+
+.kpi-card__sub {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  margin-top: 0.2rem;
+}
+
+/* ============================================================
+   Chart container
+   ============================================================ */
+.chart-container {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  min-height: 280px;
+}
+
+/* ============================================================
+   Comments panel
+   ============================================================ */
+.comments-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  max-height: 520px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.comment-entry {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: var(--color-gray-100);
+  font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.comment-entry__meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+}
+
+/* ============================================================
+   Supervisor dashboard grid
+   ============================================================ */
+.supervisor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.supervisor-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--color-primary);
+}
+
+.supervisor-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.supervisor-card__operator {
+  font-size: 0.85rem;
+  color: var(--color-gray-400);
+  margin-bottom: 0.75rem;
+}
+
+.supervisor-card__kpis {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mini-kpi {
+  flex: 1;
+  text-align: center;
+  background: var(--color-gray-100);
+  border-radius: 6px;
+  padding: 0.4rem;
+}
+
+.mini-kpi__label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--color-gray-400);
+  font-weight: 600;
+}
+
+.mini-kpi__value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Dashboard KPI — Todas las Líneas{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+  const SHIFT_ID = null;
+  const LINE_NUMBER = null;
+  const DASHBOARD_MODE = 'supervisor';
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard — Supervisor</h1>
+  <span class="badge badge--green" id="live-indicator">● EN VIVO</span>
+</div>
+
+{% if active_lines %}
+<div class="supervisor-grid" id="supervisor-grid">
+  {% for line in active_lines %}
+  <div class="supervisor-card" id="line-card-{{ line.line_number }}" data-shift="{{ line.shift_id }}" data-line="{{ line.line_number }}">
+    <div class="supervisor-card__header">
+      <strong>Línea {{ line.line_number }}</strong>
+      <span class="badge badge--green">ACTIVO</span>
+    </div>
+    <p class="supervisor-card__operator">{{ line.operator_name }}</p>
+    <div class="supervisor-card__kpis">
+      <div class="mini-kpi">
+        <span class="mini-kpi__label">OEE</span>
+        <span class="mini-kpi__value" id="sv-oee-{{ line.line_number }}">—</span>
+      </div>
+      <div class="mini-kpi">
+        <span class="mini-kpi__label">Uds.</span>
+        <span class="mini-kpi__value" id="sv-units-{{ line.line_number }}">—</span>
+      </div>
+      <div class="mini-kpi">
+        <span class="mini-kpi__label">Rechazo</span>
+        <span class="mini-kpi__value" id="sv-reject-{{ line.line_number }}">—</span>
+      </div>
+    </div>
+    <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}" class="btn btn--sm">Ver detalle</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No hay líneas activas en este momento.</p>
+</div>
+{% endif %}
+{% endblock %}

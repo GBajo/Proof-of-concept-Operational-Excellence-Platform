@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Finalizar Turno — Línea {{ shift.line_number }}{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Finalizar Turno — Línea {{ shift.line_number }}</h1>
+  <p class="page-header__sub">{{ shift.operator_name }}</p>
+</div>
+
+<div class="form-card">
+  <form id="end-shift-form" class="form" data-shift-id="{{ shift.id }}">
+    <div class="form__group">
+      <label class="form__label" for="handover_notes">Notas de Traspaso</label>
+      <textarea id="handover_notes" name="handover_notes" class="form__textarea" rows="6"
+        placeholder="Indica el estado de la línea, incidencias pendientes, instrucciones para el próximo turno..."></textarea>
+    </div>
+
+    <div class="form__group">
+      <label class="form__label">Estado al cierre</label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="status" value="completed" checked> Normal
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="status" value="interrupted"> Interrumpido
+        </label>
+      </div>
+    </div>
+
+    <div id="form-error" class="alert alert--danger" style="display:none"></div>
+
+    <div class="form__actions">
+      <a href="{{ url_for('views.shift_active', shift_id=shift.id) }}" class="btn btn--secondary">Volver</a>
+      <button type="submit" class="btn btn--danger">Cerrar Turno</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

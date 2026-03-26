@@ -1,0 +1,184 @@
+/* ============================================================
+   Variables y reset base
+   ============================================================ */
+:root {
+  --color-primary: #0057a8;
+  --color-primary-dark: #003f7a;
+  --color-danger: #c0392b;
+  --color-warning: #e67e22;
+  --color-success: #27ae60;
+  --color-gray-100: #f4f6f8;
+  --color-gray-200: #e8ecf0;
+  --color-gray-400: #a0aab4;
+  --color-gray-700: #3d4a58;
+  --color-gray-900: #1a2230;
+  --font: 'Segoe UI', system-ui, sans-serif;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   Topbar
+   ============================================================ */
+.topbar {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+
+.topbar__brand { display: flex; align-items: center; gap: 0.5rem; }
+.topbar__logo { font-size: 1.5rem; }
+.topbar__title { font-size: 1.1rem; font-weight: 700; }
+.topbar__subtitle { font-size: 0.8rem; opacity: 0.75; }
+
+.topbar__nav { display: flex; gap: 1rem; }
+.nav-link {
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.nav-link:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.main-content { flex: 1; padding: 1.5rem 2rem; max-width: 1400px; width: 100%; margin: 0 auto; }
+.footer { text-align: center; padding: 0.75rem; color: var(--color-gray-400); font-size: 0.8rem; }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+.page-header h1 { font-size: 1.5rem; color: var(--color-gray-900); }
+.page-header__sub { font-size: 0.9rem; color: var(--color-gray-400); margin-top: 0.2rem; }
+
+.section { margin-bottom: 2rem; }
+.section--row { display: flex; gap: 1.5rem; align-items: flex-start; }
+.section--row > * { flex: 1; }
+.section__title { font-size: 1rem; font-weight: 600; color: var(--color-gray-700); margin-bottom: 1rem; }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: var(--radius);
+  border: none; cursor: pointer;
+  font-size: 0.9rem; font-weight: 600;
+  text-decoration: none;
+  transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--secondary { background: var(--color-gray-200); color: var(--color-gray-700); }
+.btn--danger { background: var(--color-danger); color: #fff; }
+.btn--sm { padding: 0.3rem 0.75rem; font-size: 0.8rem; }
+
+/* ============================================================
+   Badges
+   ============================================================ */
+.badge {
+  display: inline-block; padding: 0.2rem 0.6rem;
+  border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+}
+.badge--green  { background: #d4edda; color: #155724; }
+.badge--red    { background: #f8d7da; color: #721c24; }
+.badge--orange { background: #fff3cd; color: #856404; }
+.badge--blue   { background: #d0e8ff; color: #004085; }
+.badge--gray   { background: var(--color-gray-200); color: var(--color-gray-700); }
+
+/* ============================================================
+   Cards grid (inicio)
+   ============================================================ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.card {
+  background: #fff; border-radius: var(--radius);
+  padding: 1.25rem; box-shadow: var(--shadow);
+}
+.card--active { border-top: 3px solid var(--color-success); }
+.card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.card__line { font-size: 1rem; font-weight: 700; }
+.card__operator { font-size: 0.95rem; margin-bottom: 0.3rem; }
+.card__time { font-size: 0.8rem; color: var(--color-gray-400); margin-bottom: 0.75rem; }
+
+/* ============================================================
+   Forms
+   ============================================================ */
+.form-card { background: #fff; border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow); max-width: 540px; }
+.form__group { margin-bottom: 1.25rem; }
+.form__label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-gray-700); }
+.form__select, .form__textarea {
+  width: 100%; padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-gray-200); border-radius: var(--radius);
+  font-size: 0.9rem; font-family: var(--font);
+  background: #fff; color: var(--color-gray-900);
+}
+.form__select--sm { width: auto; padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+.form__select:focus, .form__textarea:focus { outline: 2px solid var(--color-primary); border-color: transparent; }
+.form__actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+.radio-group { display: flex; gap: 1.5rem; }
+.radio-label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem; }
+
+/* ============================================================
+   Alerts
+   ============================================================ */
+.alert {
+  padding: 0.75rem 1rem; border-radius: var(--radius);
+  margin-bottom: 1rem; font-size: 0.875rem;
+}
+.alert--danger  { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.alert--success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert--warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+/* ============================================================
+   Empty state
+   ============================================================ */
+.empty-state { text-align: center; padding: 4rem 1rem; color: var(--color-gray-400); }
+.empty-state p { margin-bottom: 1rem; font-size: 1rem; }
+
+/* ============================================================
+   Handover box
+   ============================================================ */
+.handover-box {
+  background: #fff; border-left: 4px solid var(--color-primary);
+  padding: 1rem 1.25rem; border-radius: var(--radius);
+  white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;
+}
+
+/* ============================================================
+   Comment list (summary)
+   ============================================================ */
+.comment-category { margin-bottom: 1.5rem; }
+.comment-category__title { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.comment-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+.comment-item { display: flex; gap: 0.75rem; align-items: baseline; background: #fff; padding: 0.5rem 0.75rem; border-radius: 6px; }
+.comment-item__time { font-size: 0.75rem; color: var(--color-gray-400); white-space: nowrap; }
+.comment-item__text { font-size: 0.875rem; flex: 1; }
+.comment-item__source { font-size: 0.75rem; }

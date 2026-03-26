@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Turno Activo — Línea {{ shift.line_number }}{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script>
+  const SHIFT_ID = {{ shift.id }};
+  const OPERATOR_ID = {{ shift.operator_id }};
+  const LINE_NUMBER = {{ shift.line_number }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Línea {{ shift.line_number }} — Turno Activo</h1>
+    <p class="page-header__sub">{{ shift.operator_name }} · Inicio: <span id="start-time">{{ shift.start_time }}</span></p>
+  </div>
+  <button id="btn-end-shift" class="btn btn--danger" onclick="endShift()">Finalizar Turno</button>
+</div>
+
+<!-- KPI Cards -->
+<section class="section">
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-card--oee">
+      <div class="kpi-card__label">OEE</div>
+      <div class="kpi-card__value" id="kpi-oee">—</div>
+      <div class="kpi-card__unit">%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Unidades Producidas</div>
+      <div class="kpi-card__value" id="kpi-units">—</div>
+      <div class="kpi-card__sub" id="kpi-units-target"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Velocidad Línea</div>
+      <div class="kpi-card__value" id="kpi-speed">—</div>
+      <div class="kpi-card__unit">uds/h</div>
+    </div>
+    <div class="kpi-card kpi-card--alert" id="card-reject">
+      <div class="kpi-card__label">Tasa de Rechazo</div>
+      <div class="kpi-card__value" id="kpi-reject">—</div>
+      <div class="kpi-card__unit">%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Tiempo Parada</div>
+      <div class="kpi-card__value" id="kpi-downtime">—</div>
+      <div class="kpi-card__unit">min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Right First Time</div>
+      <div class="kpi-card__value" id="kpi-rft">—</div>
+      <div class="kpi-card__unit">%</div>
+    </div>
+  </div>
+</section>
+
+<!-- OEE Chart -->
+<section class="section section--row">
+  <div class="chart-container">
+    <h2 class="section__title">Evolución OEE</h2>
+    <canvas id="oee-chart"></canvas>
+  </div>
+
+  <!-- Comentarios -->
+  <div class="comments-panel">
+    <h2 class="section__title">
+      Comentarios
+      <span class="badge" id="comments-count">0</span>
+    </h2>
+
+    <!-- Grabación de voz -->
+    <div class="voice-controls">
+      <button id="btn-voice" class="voice-btn" onclick="toggleRecording()">
+        <span class="voice-btn__icon">🎤</span>
+        <span class="voice-btn__label">Grabar comentario</span>
+      </button>
+      <div id="voice-transcript" class="voice-transcript" style="display:none">
+        <textarea id="transcript-text" class="form__textarea" rows="3" placeholder="Transcripción..."></textarea>
+        <div class="voice-controls__row">
+          <select id="comment-category" class="form__select form__select--sm">
+            <option value="production">Producción</option>
+            <option value="quality">Calidad</option>
+            <option value="safety">Seguridad</option>
+            <option value="maintenance">Mantenimiento</option>
+          </select>
+          <button class="btn btn--primary btn--sm" onclick="submitComment()">Guardar</button>
+          <button class="btn btn--secondary btn--sm" onclick="cancelComment()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="comments-list" class="comments-list"></div>
+  </div>
+</section>
+
+<div id="connection-banner" class="alert alert--danger" style="display:none">
+  ⚠ Conexión perdida — reintentando...
+</div>
+{% endblock %}
