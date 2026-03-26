@@ -2,11 +2,90 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const startForm = document.getElementById('start-shift-form');
-  if (startForm) startForm.addEventListener('submit', handleStartShift);
+  if (startForm) {
+    startForm.addEventListener('submit', handleStartShift);
+    initStartScreen();
+  }
 
   const endForm = document.getElementById('end-shift-form');
   if (endForm) endForm.addEventListener('submit', handleEndShift);
 });
+
+// ── Pantalla de inicio de turno ────────────────────────────────────
+
+function initStartScreen() {
+  startLiveClock();
+  loadLineStatus();
+}
+
+function startLiveClock() {
+  const el = document.getElementById('live-clock');
+  if (!el) return;
+  const tick = () => {
+    el.textContent = new Date().toLocaleTimeString('es-ES', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    });
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+async function loadLineStatus() {
+  let active = 0;
+  const total = 5;
+
+  for (let line = 1; line <= total; line++) {
+    try {
+      const res = await fetch(`/api/shifts/active?line=${line}`);
+      const card = document.getElementById(`line-card-${line}`);
+      const statusEl = document.getElementById(`line-status-${line}`);
+      const input = card ? card.querySelector('input[type="radio"]') : null;
+
+      if (res.ok) {
+        // Línea ocupada
+        const data = await res.json();
+        active++;
+        if (statusEl) {
+          statusEl.innerHTML =
+            '<span class="line-dot line-dot--occupied"></span>' +
+            '<span class="line-status-text" style="color:#c0392b">OCUPADA</span>';
+        }
+        if (card) card.classList.add('line-card--occupied');
+        if (input) input.disabled = true;
+
+        // Añadir a la lista del aside
+        const occupiedList = document.getElementById('occupied-list');
+        const infoPanel = document.getElementById('active-lines-info');
+        if (occupiedList) {
+          const li = document.createElement('li');
+          li.textContent = `Línea ${line} — ${data.operator_name || 'Operario activo'}`;
+          occupiedList.appendChild(li);
+        }
+        if (infoPanel) infoPanel.style.display = '';
+      } else {
+        // Línea libre
+        if (statusEl) {
+          statusEl.innerHTML =
+            '<span class="line-dot line-dot--free"></span>' +
+            '<span class="line-status-text" style="color:#27ae60">LIBRE</span>';
+        }
+      }
+    } catch {
+      const statusEl = document.getElementById(`line-status-${line}`);
+      if (statusEl) {
+        statusEl.innerHTML =
+          '<span class="line-dot" style="background:#a0aab4"></span>' +
+          '<span class="line-status-text">—</span>';
+      }
+    }
+  }
+
+  // Actualizar estadísticas del aside
+  const statActive = document.getElementById('stat-active');
+  const statFree = document.getElementById('stat-free');
+  if (statActive) statActive.textContent = active;
+  if (statFree) statFree.textContent = total - active;
+}
 
 async function handleStartShift(e) {
   e.preventDefault();
@@ -14,10 +93,29 @@ async function handleStartShift(e) {
   const errorBox = document.getElementById('form-error');
   errorBox.style.display = 'none';
 
+  // Validación manual de radios (required no funciona con radio custom)
+  const operatorId = form.querySelector('input[name="operator_id"]:checked');
+  const lineNumber  = form.querySelector('input[name="line_number"]:checked');
+  const shiftType   = form.querySelector('input[name="shift_type"]:checked');
+
+  if (!operatorId) {
+    showError(errorBox, 'Por favor, seleccione un operario.');
+    return;
+  }
+  if (!lineNumber) {
+    showError(errorBox, 'Por favor, seleccione una línea de packaging.');
+    return;
+  }
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const origText  = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="btn-icon">⏳</span> Iniciando…';
+
   const payload = {
-    operator_id: parseInt(form.operator_id.value),
-    line_number: parseInt(form.line_number.value),
-    shift_type: form.shift_type.value,
+    operator_id: parseInt(operatorId.value),
+    line_number:  parseInt(lineNumber.value),
+    shift_type:   shiftType ? shiftType.value : 'morning',
   };
 
   try {
@@ -28,15 +126,23 @@ async function handleStartShift(e) {
     });
     const data = await res.json();
     if (!res.ok) {
-      errorBox.textContent = data.error || 'Error al iniciar turno';
-      errorBox.style.display = 'block';
+      showError(errorBox, data.error || 'Error al iniciar turno.');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origText;
       return;
     }
     window.location.href = `/shift/${data.id}/active`;
   } catch {
-    errorBox.textContent = 'Error de conexión. Inténtalo de nuevo.';
-    errorBox.style.display = 'block';
+    showError(errorBox, 'Error de conexión. Inténtalo de nuevo.');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = origText;
   }
+}
+
+function showError(box, msg) {
+  box.textContent = msg;
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 async function handleEndShift(e) {

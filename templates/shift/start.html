@@ -3,47 +3,150 @@
 {% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <h1>Iniciar Nuevo Turno</h1>
-</div>
+<div class="start-layout">
 
-<div class="form-card">
-  <form id="start-shift-form" class="form">
-    <div class="form__group">
-      <label class="form__label" for="operator_id">Operario</label>
-      <select id="operator_id" name="operator_id" class="form__select" required>
-        <option value="">— Seleccionar operario —</option>
-        {% for op in operators %}
-        <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
-        {% endfor %}
-      </select>
+  <!-- Columna izquierda: formulario -->
+  <div class="start-main">
+    <div class="start-header">
+      <div>
+        <h1 class="start-title">Inicio de Turno</h1>
+        <p class="start-subtitle">Complete los datos para registrar su turno de trabajo</p>
+      </div>
+      <div class="start-clock" id="live-clock">--:--:--</div>
     </div>
 
-    <div class="form__group">
-      <label class="form__label" for="line_number">Línea de Packaging</label>
-      <select id="line_number" name="line_number" class="form__select" required>
-        <option value="">— Seleccionar línea —</option>
-        {% for n in range(1, 6) %}
-        <option value="{{ n }}">Línea {{ n }}</option>
-        {% endfor %}
-      </select>
+    <form id="start-shift-form" class="start-form" novalidate>
+
+      <!-- Operario -->
+      <div class="sf-section">
+        <div class="sf-section__label">
+          <span class="sf-section__icon">👤</span>
+          <span>Operario</span>
+        </div>
+        <div class="operator-grid">
+          {% for op in operators %}
+          <label class="operator-card" data-role="{{ op.role }}">
+            <input type="radio" name="operator_id" value="{{ op.id }}" required>
+            <div class="operator-card__inner">
+              <div class="operator-card__avatar">{{ op.name[0] }}</div>
+              <div class="operator-card__info">
+                <span class="operator-card__name">{{ op.name }}</span>
+                <span class="operator-card__badge">{{ op.badge_number }}</span>
+              </div>
+              <div class="operator-card__role operator-card__role--{{ op.role }}">
+                {% if op.role == 'operator' %}OP
+                {% elif op.role == 'supervisor' %}SV
+                {% elif op.role == 'quality' %}QA
+                {% elif op.role == 'maintenance' %}MT
+                {% endif %}
+              </div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Línea de packaging -->
+      <div class="sf-section">
+        <div class="sf-section__label">
+          <span class="sf-section__icon">🏭</span>
+          <span>Línea de Packaging</span>
+        </div>
+        <div class="line-grid" id="line-grid">
+          {% for n in range(1, 6) %}
+          <label class="line-card" id="line-card-{{ n }}" data-line="{{ n }}">
+            <input type="radio" name="line_number" value="{{ n }}" required>
+            <div class="line-card__inner">
+              <div class="line-card__number">L{{ n }}</div>
+              <div class="line-card__label">Línea {{ n }}</div>
+              <div class="line-card__status" id="line-status-{{ n }}">
+                <span class="line-dot line-dot--loading"></span>
+                <span class="line-status-text">Verificando…</span>
+              </div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Tipo de turno -->
+      <div class="sf-section">
+        <div class="sf-section__label">
+          <span class="sf-section__icon">🕐</span>
+          <span>Tipo de Turno</span>
+        </div>
+        <div class="shift-type-grid">
+          <label class="shift-type-card">
+            <input type="radio" name="shift_type" value="morning" checked>
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">🌅</span>
+              <span class="shift-type-card__name">Mañana</span>
+              <span class="shift-type-card__hours">06:00 – 14:00</span>
+            </div>
+          </label>
+          <label class="shift-type-card">
+            <input type="radio" name="shift_type" value="afternoon">
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">☀️</span>
+              <span class="shift-type-card__name">Tarde</span>
+              <span class="shift-type-card__hours">14:00 – 22:00</span>
+            </div>
+          </label>
+          <label class="shift-type-card">
+            <input type="radio" name="shift_type" value="night">
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">🌙</span>
+              <span class="shift-type-card__name">Noche</span>
+              <span class="shift-type-card__hours">22:00 – 06:00</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div id="form-error" class="alert alert--danger" style="display:none" role="alert"></div>
+
+      <div class="sf-actions">
+        <a href="{{ url_for('views.index') }}" class="btn btn--secondary btn--lg">Cancelar</a>
+        <button type="submit" class="btn btn--primary btn--lg btn--start">
+          <span class="btn-icon">▶</span>
+          Iniciar Turno
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Columna derecha: info contextual -->
+  <aside class="start-aside">
+    <div class="aside-card">
+      <h3 class="aside-card__title">Estado de la Planta</h3>
+      <div class="plant-stats" id="plant-stats">
+        <div class="plant-stat">
+          <span class="plant-stat__value" id="stat-active">—</span>
+          <span class="plant-stat__label">Líneas activas</span>
+        </div>
+        <div class="plant-stat">
+          <span class="plant-stat__value" id="stat-free">—</span>
+          <span class="plant-stat__label">Líneas libres</span>
+        </div>
+      </div>
     </div>
 
-    <div class="form__group">
-      <label class="form__label" for="shift_type">Tipo de Turno</label>
-      <select id="shift_type" name="shift_type" class="form__select" required>
-        <option value="morning">Mañana (06:00 – 14:00)</option>
-        <option value="afternoon">Tarde (14:00 – 22:00)</option>
-        <option value="night">Noche (22:00 – 06:00)</option>
-      </select>
+    <div class="aside-card aside-card--info">
+      <h3 class="aside-card__title">Instrucciones</h3>
+      <ol class="instructions-list">
+        <li>Seleccione su nombre de operario</li>
+        <li>Elija una línea disponible <span class="badge badge--green" style="font-size:0.7rem">LIBRE</span></li>
+        <li>Confirme el tipo de turno</li>
+        <li>Pulse <strong>Iniciar Turno</strong></li>
+      </ol>
     </div>
 
-    <div id="form-error" class="alert alert--danger" style="display:none"></div>
-
-    <div class="form__actions">
-      <a href="{{ url_for('views.index') }}" class="btn btn--secondary">Cancelar</a>
-      <button type="submit" class="btn btn--primary">Iniciar Turno</button>
+    <div class="aside-card aside-card--warning" id="active-lines-info" style="display:none">
+      <h3 class="aside-card__title">⚠ Líneas Ocupadas</h3>
+      <ul class="occupied-list" id="occupied-list"></ul>
     </div>
-  </form>
+  </aside>
+
 </div>
 {% endblock %}
