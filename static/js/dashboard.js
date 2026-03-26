@@ -56,14 +56,10 @@ async function loadInitialComments() {
   try {
     const res = await fetch(`/api/comments/${SHIFT_ID}`);
     const comments = await res.json();
-    const list = document.getElementById('comments-list');
-    list.innerHTML = '';
-    comments.forEach(c => {
-      if (c.id > dashboardState.lastCommentId) dashboardState.lastCommentId = c.id;
-      list.appendChild(buildCommentElement(c));
-    });
-    const badge = document.getElementById('comments-count');
-    if (badge) badge.textContent = comments.length;
+    // Delegar render a voice.js que gestiona el estado local de comentarios
+    if (typeof loadComments === 'function') {
+      loadComments(comments);
+    }
   } catch { /* silencioso */ }
 }
 
@@ -111,16 +107,16 @@ async function fetchNewComments(shiftId) {
   try {
     const res = await fetch(`/api/comments/${shiftId}`);
     const comments = await res.json();
-    const list = document.getElementById('comments-list');
-    let added = 0;
-    comments
-      .filter(c => c.id > dashboardState.lastCommentId)
-      .forEach(c => {
+    const newOnes = comments.filter(c => c.id > dashboardState.lastCommentId);
+    if (newOnes.length > 0) {
+      newOnes.forEach(c => {
         dashboardState.lastCommentId = Math.max(dashboardState.lastCommentId, c.id);
-        list.prepend(buildCommentElement(c));
-        added++;
       });
-    if (added > 0) updateCommentCount(added);
+      // Delegar a voice.js para que gestione render y contador
+      if (typeof onNewComments === 'function') {
+        onNewComments(newOnes);
+      }
+    }
   } catch { /* silencioso */ }
 }
 

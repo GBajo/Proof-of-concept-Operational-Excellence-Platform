@@ -14,9 +14,9 @@
 <div class="page-header">
   <div>
     <h1>Línea {{ shift.line_number }} — Turno Activo</h1>
-    <p class="page-header__sub">{{ shift.operator_name }} · Inicio: <span id="start-time">{{ shift.start_time }}</span></p>
+    <p class="page-header__sub">{{ shift.operator_name }} · Inicio: {{ shift.start_time[11:16] }}</p>
   </div>
-  <button id="btn-end-shift" class="btn btn--danger" onclick="endShift()">Finalizar Turno</button>
+  <button class="btn btn--danger" onclick="endShift()">Finalizar Turno</button>
 </div>
 
 <!-- KPI Cards -->
@@ -55,46 +55,117 @@
   </div>
 </section>
 
-<!-- OEE Chart -->
+<!-- Gráfico OEE + Panel de comentarios -->
 <section class="section section--row">
+
   <div class="chart-container">
     <h2 class="section__title">Evolución OEE</h2>
     <canvas id="oee-chart"></canvas>
   </div>
 
-  <!-- Comentarios -->
-  <div class="comments-panel">
-    <h2 class="section__title">
-      Comentarios
-      <span class="badge" id="comments-count">0</span>
-    </h2>
+  <!-- Panel de comentarios de voz -->
+  <div class="voice-panel">
 
-    <!-- Grabación de voz -->
-    <div class="voice-controls">
-      <button id="btn-voice" class="voice-btn" onclick="toggleRecording()">
-        <span class="voice-btn__icon">🎤</span>
-        <span class="voice-btn__label">Grabar comentario</span>
-      </button>
-      <div id="voice-transcript" class="voice-transcript" style="display:none">
-        <textarea id="transcript-text" class="form__textarea" rows="3" placeholder="Transcripción..."></textarea>
-        <div class="voice-controls__row">
-          <select id="comment-category" class="form__select form__select--sm">
-            <option value="production">Producción</option>
-            <option value="quality">Calidad</option>
-            <option value="safety">Seguridad</option>
-            <option value="maintenance">Mantenimiento</option>
-          </select>
-          <button class="btn btn--primary btn--sm" onclick="submitComment()">Guardar</button>
-          <button class="btn btn--secondary btn--sm" onclick="cancelComment()">Cancelar</button>
+    <!-- Cabecera -->
+    <div class="voice-panel__header">
+      <h2 class="voice-panel__title">
+        Comentarios
+        <span class="badge badge--blue" id="comments-count">0</span>
+      </h2>
+      <select id="filter-category" class="form__select form__select--sm"
+              onchange="filterComments(this.value)" title="Filtrar por categoría">
+        <option value="">Todas las categorías</option>
+        <option value="production">Producción</option>
+        <option value="quality">Calidad</option>
+        <option value="safety">Seguridad</option>
+        <option value="maintenance">Mantenimiento</option>
+      </select>
+    </div>
+
+    <!-- Grabador de voz -->
+    <div class="voice-recorder" id="voice-recorder">
+
+      <!-- Idle: botones de entrada -->
+      <div id="recorder-idle">
+        <button class="voice-btn" id="btn-voice" onclick="startRecording()">
+          <span class="voice-btn__mic" aria-hidden="true">🎤</span>
+          <span class="voice-btn__label">Grabar comentario de voz</span>
+        </button>
+        <button class="voice-btn voice-btn--secondary" onclick="openManualEntry()">
+          <span class="voice-btn__mic" aria-hidden="true">✏️</span>
+          <span class="voice-btn__label">Escribir comentario</span>
+        </button>
+      </div>
+
+      <!-- Grabando -->
+      <div id="recorder-active" style="display:none">
+        <div class="rec-status">
+          <span class="rec-dot"></span>
+          <span id="rec-label">Escuchando...</span>
         </div>
+        <div class="rec-interim" id="transcript-interim">
+          <em>Di tu comentario en voz alta...</em>
+        </div>
+        <button class="voice-btn voice-btn--stop" onclick="stopRecording()">
+          <span class="voice-btn__mic" aria-hidden="true">⏹</span>
+          <span class="voice-btn__label">Detener grabación</span>
+        </button>
+      </div>
+
+      <!-- Confirmar transcripción -->
+      <div id="recorder-confirm" style="display:none">
+        <div class="rec-done-header">
+          <span class="rec-dot rec-dot--done"></span>
+          <span>Transcripción lista — revisa y confirma</span>
+          <button class="btn-rerecord" onclick="startRecording()" title="Volver a grabar">🔄 Repetir</button>
+        </div>
+        <textarea id="transcript-text" class="form__textarea voice-transcript-area" rows="3"
+          placeholder="Texto del comentario..."></textarea>
+
+        <!-- Selector de categoría -->
+        <div class="cat-picker" id="cat-picker">
+          <button type="button" class="cat-btn cat-btn--production cat-btn--active"
+                  data-cat="production" onclick="selectCategory(this)">Producción</button>
+          <button type="button" class="cat-btn cat-btn--quality"
+                  data-cat="quality" onclick="selectCategory(this)">Calidad</button>
+          <button type="button" class="cat-btn cat-btn--safety"
+                  data-cat="safety" onclick="selectCategory(this)">Seguridad</button>
+          <button type="button" class="cat-btn cat-btn--maintenance"
+                  data-cat="maintenance" onclick="selectCategory(this)">Mantenimiento</button>
+        </div>
+
+        <div class="recorder-confirm__actions">
+          <button class="btn btn--secondary btn--sm" onclick="cancelComment()">Cancelar</button>
+          <button class="btn btn--primary btn--sm" id="btn-save" onclick="submitComment()">
+            Guardar comentario
+          </button>
+        </div>
+      </div>
+
+      <!-- Error de acceso al micrófono -->
+      <div id="recorder-error" style="display:none">
+        <div class="rec-error">
+          <span class="rec-error__icon">⚠️</span>
+          <span id="recorder-error-msg">No se pudo acceder al micrófono.</span>
+          <button class="btn btn--secondary btn--sm" onclick="dismissError()">Cerrar</button>
+        </div>
+      </div>
+
+    </div><!-- /voice-recorder -->
+
+    <!-- Historial de comentarios -->
+    <div class="comments-scroll" id="comments-list">
+      <div class="comments-empty" id="comments-empty">
+        <span>Sin comentarios en este turno</span>
+        <small>Graba o escribe el primero</small>
       </div>
     </div>
 
-    <div id="comments-list" class="comments-list"></div>
-  </div>
+  </div><!-- /voice-panel -->
+
 </section>
 
-<div id="connection-banner" class="alert alert--danger" style="display:none">
+<div id="connection-banner" class="alert alert--danger" style="display:none; margin-top:1rem">
   ⚠ Conexión perdida — reintentando...
 </div>
 {% endblock %}
