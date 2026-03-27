@@ -1461,3 +1461,272 @@ body {
 .admin-type-badge--xlsx { background: #d4edda; color: #155724; }
 .admin-type-badge--url  { background: #fff3cd; color: #856404; }
 
+/* ============================================================
+   Asistente IA — tarjeta de sugerencia en comentarios
+   ============================================================ */
+
+/* Tarjeta de sugerencia inline (debajo del comentario) */
+.ai-suggestion {
+  margin-top: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #243447 100%);
+  border-left: 3px solid #1a6faf;
+  font-size: 0.85rem;
+  color: #cdd6e0;
+}
+
+.ai-suggestion--loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #8a9bb0;
+  font-style: italic;
+}
+
+.ai-suggestion--mock {
+  background: linear-gradient(135deg, #2a2a1e 0%, #332e1a 100%);
+  border-left-color: #e67e22;
+}
+
+.ai-suggestion--error {
+  background: #2a1a1a;
+  border-left-color: var(--color-danger);
+}
+
+.ai-suggestion__spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #1a6faf;
+  border-radius: 50%;
+  animation: ai-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-suggestion__header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-suggestion__icon { font-size: 1rem; }
+
+.ai-suggestion__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1a6faf;
+}
+
+.ai-suggestion--mock .ai-suggestion__label { color: #e67e22; }
+
+.ai-suggestion__text {
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: #cdd6e0;
+}
+
+.ai-suggestion__source {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7f94;
+  font-style: italic;
+}
+
+.ai-suggestion__error {
+  color: #e05555;
+  font-size: 0.82rem;
+}
+
+/* Feedback buttons */
+.ai-suggestion__feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.ai-suggestion__feedback-label {
+  font-size: 0.72rem;
+  color: #6b7f94;
+  margin-right: 0.25rem;
+}
+
+.ai-fb-btn {
+  padding: 0.2rem 0.65rem;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: #8a9bb0;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ai-fb-btn:hover { background: rgba(255,255,255,0.1); color: #cdd6e0; }
+.ai-fb-btn--yes:hover { border-color: var(--color-success); color: var(--color-success); }
+.ai-fb-btn--no:hover  { border-color: var(--color-danger);  color: var(--color-danger); }
+
+.ai-suggestion__feedback-done {
+  font-size: 0.78rem;
+  color: #6b7f94;
+  font-style: italic;
+}
+
+/* Botón "Pedir ayuda" en cabecera del panel de comentarios */
+.ai-ask-btn {
+  background: linear-gradient(135deg, #1a3a5f, #1a6faf);
+  color: #e0eaf5;
+  border: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ai-ask-btn:hover { filter: brightness(1.15); }
+
+/* ============================================================
+   Modal del asistente manual
+   ============================================================ */
+.ai-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.ai-modal {
+  background: #1e2a3a;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border: 1px solid #2e3f52;
+}
+
+.ai-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #2e3f52;
+}
+
+.ai-modal__icon { font-size: 1.3rem; }
+
+.ai-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #cdd6e0;
+  flex: 1;
+  margin: 0;
+}
+
+.ai-modal__close {
+  background: transparent;
+  border: none;
+  color: #6b7f94;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+.ai-modal__close:hover { background: rgba(255,255,255,0.08); color: #cdd6e0; }
+
+.ai-modal__body {
+  padding: 1.25rem;
+}
+
+.ai-modal .form__label  { color: #8a9bb0; }
+.ai-modal .form__select,
+.ai-modal .form__textarea {
+  background: #243447;
+  border-color: #2e3f52;
+  color: #cdd6e0;
+}
+.ai-modal .form__select:focus,
+.ai-modal .form__textarea:focus {
+  border-color: #1a6faf;
+  box-shadow: 0 0 0 3px rgba(26,111,175,0.2);
+  outline: none;
+}
+
+/* ============================================================
+   Resumen de turno — tarjeta IA
+   ============================================================ */
+.report-ai-card {
+  background: #f0f5ff;
+  border: 1px solid #c8dcf8;
+  border-left: 4px solid #1a6faf;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.report-ai-card--mock {
+  background: #fffbf0;
+  border-color: #fde8c0;
+  border-left-color: #e67e22;
+}
+
+.report-ai-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.report-ai-card__icon { font-size: 1rem; }
+
+.report-ai-card__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1a6faf;
+}
+
+.report-ai-card--mock .report-ai-card__label { color: #e67e22; }
+
+.report-ai-card__time {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  margin-left: 0.25rem;
+}
+
+.report-ai-card__query {
+  font-size: 0.82rem;
+  color: var(--color-gray-400);
+  margin-bottom: 0.5rem;
+}
+
+.report-ai-card__response {
+  font-size: 0.9rem;
+  color: var(--color-gray-900);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.report-ai-card__sources {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  font-style: italic;
+}
+
+

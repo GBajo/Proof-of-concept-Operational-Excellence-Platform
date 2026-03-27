@@ -4,6 +4,7 @@
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
 <script src="{{ url_for('static', filename='js/shift.js') }}"></script>
+<script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
 <script>
   const SHIFT_ID = {{ shift.id }};
   const OPERATOR_ID = {{ shift.operator_id }};
@@ -121,14 +122,20 @@
         Comentarios
         <span class="badge badge--blue" id="comments-count">0</span>
       </h2>
-      <select id="filter-category" class="form__select form__select--sm"
-              onchange="filterComments(this.value)" title="Filtrar por categoría">
-        <option value="">Todas</option>
-        <option value="production">Producción</option>
-        <option value="quality">Calidad</option>
-        <option value="safety">Seguridad</option>
-        <option value="maintenance">Mantenimiento</option>
-      </select>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <button class="btn btn--sm ai-ask-btn" onclick="openAssistantModal()"
+                title="Pedir ayuda al asistente">
+          🤖 Pedir ayuda
+        </button>
+        <select id="filter-category" class="form__select form__select--sm"
+                onchange="filterComments(this.value)" title="Filtrar por categoría">
+          <option value="">Todas</option>
+          <option value="production">Producción</option>
+          <option value="quality">Calidad</option>
+          <option value="safety">Seguridad</option>
+          <option value="maintenance">Mantenimiento</option>
+        </select>
+      </div>
     </div>
 
     <div class="voice-recorder" id="voice-recorder">
@@ -258,5 +265,37 @@
 
 <div id="connection-banner" class="alert alert--danger" style="display:none; margin-top:1rem">
   ⚠ Conexión perdida — reintentando...
+</div>
+
+<!-- ── Modal asistente manual ── -->
+<div id="assistant-modal" class="ai-modal-overlay" style="display:none;">
+  <div class="ai-modal">
+    <div class="ai-modal__header">
+      <span class="ai-modal__icon">🤖</span>
+      <h3 class="ai-modal__title">Asistente de Línea</h3>
+      <button class="ai-modal__close" onclick="closeAssistantModal()" title="Cerrar">✕</button>
+    </div>
+    <div class="ai-modal__body">
+      <div class="form__group" style="margin-bottom:0.75rem;">
+        <label class="form__label">Categoría</label>
+        <select id="assistant-modal-category" class="form__select">
+          <option value="production">Producción</option>
+          <option value="quality">Calidad</option>
+          <option value="safety">Seguridad</option>
+          <option value="maintenance">Mantenimiento</option>
+        </select>
+      </div>
+      <div class="form__group">
+        <label class="form__label">¿Cuál es tu pregunta o problema?</label>
+        <textarea id="assistant-modal-input" class="form__textarea"
+                  rows="3" placeholder="Describe el problema o escribe tu pregunta..."></textarea>
+      </div>
+      <button id="assistant-modal-btn" class="btn btn--primary"
+              style="width:100%;" onclick="submitAssistantModal()">
+        Consultar asistente
+      </button>
+      <div id="assistant-modal-response" style="margin-top:1rem; display:none;"></div>
+    </div>
+  </div>
 </div>
 {% endblock %}

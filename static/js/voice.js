@@ -186,6 +186,10 @@ async function submitComment() {
     const comment = await res.json();
     addCommentToList(comment);
     cancelComment();
+    // Disparar sugerencia automática del asistente
+    if (typeof triggerAutoSuggest === 'function') {
+      triggerAutoSuggest(comment);
+    }
   } catch (err) {
     if (btn) { btn.disabled = false; btn.textContent = 'Guardar comentario'; }
     showSaveError(err.message);

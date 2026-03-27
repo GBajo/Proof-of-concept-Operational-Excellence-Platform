@@ -235,6 +235,44 @@
     {% endif %}
   </section>
 
+  <!-- Sugerencias del asistente IA -->
+  <section class="report-section">
+    <h2 class="report-section__title">
+      Sugerencias del Asistente IA
+      <span class="report-section__count">{{ suggestions | length }}</span>
+    </h2>
+
+    {% if suggestions %}
+      {% for s in suggestions %}
+      <div class="report-ai-card {% if s.source == 'mock' %}report-ai-card--mock{% endif %}">
+        <div class="report-ai-card__header">
+          <span class="report-ai-card__icon">🤖</span>
+          <span class="report-ai-card__label">
+            {{ 'Asistente (demo)' if s.source == 'mock' else 'Asistente IA' }}
+          </span>
+          <span class="report-ai-card__time">{{ s.created_at[11:16] }}</span>
+          {% if s.feedback == 'useful' %}
+            <span class="badge badge--green" style="margin-left:auto;">👍 Útil</span>
+          {% elif s.feedback == 'not_useful' %}
+            <span class="badge badge--red" style="margin-left:auto;">👎 No útil</span>
+          {% endif %}
+        </div>
+        <div class="report-ai-card__query">
+          <strong>Consulta:</strong> {{ s.query_text }}
+        </div>
+        <div class="report-ai-card__response">{{ s.response_text }}</div>
+        {% if s.context_sources %}
+        <div class="report-ai-card__sources">
+          📄 Fuentes: {{ s.context_sources | join(', ') }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="report-empty">No se generaron sugerencias del asistente en este turno.</p>
+    {% endif %}
+  </section>
+
   <!-- Notas de traspaso -->
   <section class="report-section">
     <h2 class="report-section__title">Notas de Traspaso</h2>

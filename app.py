@@ -20,6 +20,7 @@ def create_app() -> Flask:
     from routes.shifts import bp as shifts_bp
     from routes.comments import bp as comments_bp
     from routes.kpis import bp as kpis_bp
+    from routes.assistant import bp as assistant_bp
     from routes.views import bp as views_bp
     from routes.admin import bp as admin_bp
 
@@ -27,6 +28,7 @@ def create_app() -> Flask:
     app.register_blueprint(shifts_bp)
     app.register_blueprint(comments_bp)
     app.register_blueprint(kpis_bp)
+    app.register_blueprint(assistant_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 

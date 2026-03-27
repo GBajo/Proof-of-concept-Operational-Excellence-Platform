@@ -94,6 +94,23 @@ def init_db(app) -> None:
             );
 
             CREATE INDEX IF NOT EXISTS idx_kb_source ON knowledge_base(source_file);
+
+            CREATE TABLE IF NOT EXISTS assistant_suggestions (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                shift_id        INTEGER NOT NULL REFERENCES shifts(id) ON DELETE CASCADE,
+                comment_id      INTEGER REFERENCES comments(id) ON DELETE SET NULL,
+                query_text      TEXT NOT NULL,
+                context_sources TEXT NOT NULL DEFAULT '[]',
+                response_text   TEXT NOT NULL,
+                model_used      TEXT NOT NULL DEFAULT 'unknown',
+                source          TEXT NOT NULL DEFAULT 'gateway'
+                                CHECK(source IN ('gateway','mock')),
+                feedback        TEXT CHECK(feedback IN ('useful','not_useful', NULL)),
+                created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_sugg_shift   ON assistant_suggestions(shift_id);
+            CREATE INDEX IF NOT EXISTS idx_sugg_comment ON assistant_suggestions(comment_id);
         """)
         # Índice parcial único: solo un turno activo por línea
         db.execute("""

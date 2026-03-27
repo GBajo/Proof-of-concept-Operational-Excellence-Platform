@@ -3,6 +3,7 @@ from models.shift import get_shift_by_id, get_active_lines, get_shifts_history, 
 from models.operator import get_all_operators
 from models.comment import get_comments_by_shift
 from models.kpi import calculate_oee
+import json
 
 bp = Blueprint("views", __name__)
 
@@ -85,6 +86,25 @@ def shift_summary_view(shift_id: int):
     duration_m = duration_min % 60
     generation_date = datetime.now().strftime("%d/%m/%Y %H:%M")
 
+    # Sugerencias del asistente del turno
+    from database import get_db
+    db = get_db()
+    sugg_rows = db.execute(
+        """SELECT id, comment_id, query_text, context_sources,
+                  response_text, model_used, source, feedback, created_at
+           FROM assistant_suggestions WHERE shift_id = ?
+           ORDER BY created_at ASC""",
+        (shift_id,),
+    ).fetchall()
+    suggestions = []
+    for r in sugg_rows:
+        s = dict(r)
+        try:
+            s["context_sources"] = json.loads(s["context_sources"] or "[]")
+        except Exception:
+            s["context_sources"] = []
+        suggestions.append(s)
+
     return render_template(
         "shift/summary.html",
         shift=shift,
@@ -94,6 +114,7 @@ def shift_summary_view(shift_id: int):
         duration_h=duration_h,
         duration_m=duration_m,
         generation_date=generation_date,
+        suggestions=suggestions,
     )
 
 
