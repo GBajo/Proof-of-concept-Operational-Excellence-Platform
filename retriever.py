@@ -15,7 +15,7 @@ import os
 import re
 import sqlite3
 
-DB_PATH = os.environ.get("DATABASE_PATH", "packline.db")
+DB_PATH = os.environ.get("DATABASE_PATH", "opex.db")
 
 # ── Stopwords en español ──────────────────────────────────────
 STOPWORDS: set[str] = {

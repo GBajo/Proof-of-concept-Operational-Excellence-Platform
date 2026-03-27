@@ -1,5 +1,5 @@
 """
-ingest.py — Módulo de ingesta de documentos para PackLine RAG
+ingest.py — Módulo de ingesta de documentos para OpEx Platform RAG
 
 Uso desde línea de comandos:
     python ingest.py                    # indexa todo docs/
@@ -24,7 +24,7 @@ from typing import Iterator
 
 # ── Constantes ──────────────────────────────────────────────
 DOCS_DIR    = Path(__file__).parent / "docs"
-DB_PATH     = os.environ.get("DATABASE_PATH", "packline.db")
+DB_PATH     = os.environ.get("DATABASE_PATH", "opex.db")
 CHUNK_WORDS = 500
 OVERLAP_WORDS = 50
 
@@ -324,7 +324,7 @@ def run_ingest(docs_dir: Path = DOCS_DIR, db_path: str = DB_PATH,
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="PackLine — Indexador de documentos para RAG"
+        description="OpEx Platform — Indexador de documentos para RAG"
     )
     parser.add_argument("--file",  help="Indexar un archivo concreto")
     parser.add_argument("--url",   help="Indexar una URL")

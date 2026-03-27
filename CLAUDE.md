@@ -1,4 +1,4 @@
-# PackLine Operator Assistant
+# Proof of Concept - Operational Excellence Platform
 
 ## Project overview
 Web application for packaging line operators in a pharmaceutical manufacturing plant.

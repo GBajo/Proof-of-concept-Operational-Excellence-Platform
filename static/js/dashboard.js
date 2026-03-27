@@ -1,5 +1,5 @@
 // ============================================================
-// PackLine — Dashboard con Apache ECharts
+// OpEx Platform — Dashboard con Apache ECharts
 // ============================================================
 
 // Instancias de gráficos (turno activo)

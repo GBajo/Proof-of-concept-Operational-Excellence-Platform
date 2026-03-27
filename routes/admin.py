@@ -130,7 +130,7 @@ def admin_upload():
 
     # Indexar inmediatamente
     from ingest import index_file, get_conn
-    db_path = os.environ.get("DATABASE_PATH", "packline.db")
+    db_path = os.environ.get("DATABASE_PATH", "opex.db")
     try:
         conn = get_conn(db_path)
         result = index_file(save_path, conn, force=True)
@@ -156,7 +156,7 @@ def admin_index_url():
         return jsonify({"ok": False, "message": "La URL debe empezar por http:// o https://"}), 400
 
     from ingest import index_url, get_conn
-    db_path = os.environ.get("DATABASE_PATH", "packline.db")
+    db_path = os.environ.get("DATABASE_PATH", "opex.db")
     try:
         conn = get_conn(db_path)
         result = index_url(url, conn, force=True)
@@ -176,7 +176,7 @@ def admin_index_url():
 @bp.delete("/admin/docs/delete/<path:filename>")
 def admin_delete(filename: str):
     """Elimina un documento (fragmentos KB + archivo en disco si existe)."""
-    db_path = os.environ.get("DATABASE_PATH", "packline.db")
+    db_path = os.environ.get("DATABASE_PATH", "opex.db")
     from ingest import get_conn, delete_source
     try:
         conn = get_conn(db_path)
@@ -198,7 +198,7 @@ def admin_delete(filename: str):
 def admin_reindex():
     """Re-indexa todos los documentos de docs/ (forzando actualización)."""
     from ingest import run_ingest
-    db_path = os.environ.get("DATABASE_PATH", "packline.db")
+    db_path = os.environ.get("DATABASE_PATH", "opex.db")
     try:
         summary = run_ingest(
             docs_dir=DOCS_DIR,
@@ -221,7 +221,7 @@ def admin_reindex():
 def admin_reindex_file(filename: str):
     """Re-indexa un único archivo."""
     from ingest import index_file, get_conn
-    db_path = os.environ.get("DATABASE_PATH", "packline.db")
+    db_path = os.environ.get("DATABASE_PATH", "opex.db")
     path = DOCS_DIR / filename
     if not path.exists():
         return jsonify({"ok": False, "message": "Archivo no encontrado"}), 404

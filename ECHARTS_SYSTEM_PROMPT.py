@@ -1,7 +1,7 @@
 """
 ECHARTS_SYSTEM_PROMPT.py
 System prompt detallado para que el LLM genere configuraciones Apache ECharts v5
-a partir de datos reales de la base de datos del PackLine Operator Assistant.
+a partir de datos reales de la base de datos del Proof of Concept - Operational Excellence Platform.
 """
 
 ECHARTS_SYSTEM_PROMPT = """Eres un experto en visualización de datos industriales con Apache ECharts 5.
