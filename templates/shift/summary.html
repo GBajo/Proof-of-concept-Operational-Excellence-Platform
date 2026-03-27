@@ -1,96 +1,256 @@
 {% extends "base.html" %}
-{% block title %}Resumen — Turno {{ shift.id }}{% endblock %}
+{% block title %}Resumen Turno #{{ shift.id }} — Línea {{ shift.line_number }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1>Resumen de Turno — Línea {{ shift.line_number }}</h1>
-    <p class="page-header__sub">
-      {{ shift.operator_name }} ·
-      {{ shift.start_time | replace('T',' ') }} →
-      {{ shift.end_time | replace('T',' ') if shift.end_time else 'En curso' }}
-    </p>
-  </div>
-  <a href="{{ url_for('views.index') }}" class="btn btn--secondary">Volver al inicio</a>
+
+<!-- Acciones (ocultas al imprimir) -->
+<div class="no-print" style="display:flex; gap:0.75rem; justify-content:flex-end; margin-bottom:1.25rem; flex-wrap:wrap;">
+  <a href="{{ url_for('views.index') }}" class="btn btn--secondary">← Volver al inicio</a>
+  <button class="btn btn--secondary" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
 </div>
 
-<!-- KPIs resumen -->
-<section class="section">
-  <h2 class="section__title">Indicadores del Turno</h2>
-  <div class="kpi-grid">
-    <div class="kpi-card kpi-card--oee">
-      <div class="kpi-card__label">OEE</div>
-      <div class="kpi-card__value">{{ kpi.oee }}%</div>
+<!-- ══════════════════════════════════════════
+     INFORME IMPRIMIBLE
+     ══════════════════════════════════════════ -->
+<div class="report" id="shift-report">
+
+  <!-- Cabecera del informe -->
+  <div class="report-header">
+    <div class="report-header__brand">
+      <span class="report-header__logo">⬡</span>
+      <div>
+        <div class="report-header__company">PackLine — Asistente de Línea</div>
+        <div class="report-header__subtitle">Informe de Turno</div>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Disponibilidad</div>
-      <div class="kpi-card__value">{{ kpi.availability }}%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Rendimiento</div>
-      <div class="kpi-card__value">{{ kpi.performance }}%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Calidad</div>
-      <div class="kpi-card__value">{{ kpi.quality }}%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Unidades Buenas</div>
-      <div class="kpi-card__value">{{ kpi.good_units | int }}</div>
-      <div class="kpi-card__sub">de {{ kpi.total_units_produced | int }} producidas</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Right First Time</div>
-      <div class="kpi-card__value">{{ kpi.right_first_time_pct }}%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Rechazos</div>
-      <div class="kpi-card__value">{{ kpi.total_units_rejected | int }}</div>
-      <div class="kpi-card__sub">{{ kpi.reject_rate_pct }}% tasa</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Tiempo Parada</div>
-      <div class="kpi-card__value">{{ kpi.total_downtime_minutes | int }}</div>
-      <div class="kpi-card__unit">min</div>
+    <div class="report-header__meta">
+      <div class="report-header__id">Turno #{{ shift.id }}</div>
+      <div class="report-header__date">{{ shift.start_time[:10] | replace('-', '/') }}</div>
+      <div class="report-header__status
+        {% if shift.status == 'completed' %}report-header__status--ok
+        {% elif shift.status == 'interrupted' %}report-header__status--warn
+        {% else %}report-header__status--active{% endif %}">
+        {% if shift.status == 'completed' %}Completado
+        {% elif shift.status == 'interrupted' %}Interrumpido
+        {% else %}Activo{% endif %}
+      </div>
     </div>
   </div>
-</section>
 
-<!-- Notas de traspaso -->
-{% if shift.handover_notes %}
-<section class="section">
-  <h2 class="section__title">Notas de Traspaso</h2>
-  <div class="handover-box">{{ shift.handover_notes }}</div>
-</section>
-{% endif %}
-
-<!-- Comentarios por categoría -->
-<section class="section">
-  <h2 class="section__title">Comentarios del Turno ({{ comments | length }})</h2>
-  {% set categories = [
-    ('safety', 'Seguridad', 'badge--red'),
-    ('quality', 'Calidad', 'badge--orange'),
-    ('production', 'Producción', 'badge--blue'),
-    ('maintenance', 'Mantenimiento', 'badge--gray'),
-  ] %}
-  {% for cat_key, cat_label, cat_class in categories %}
-    {% if by_category.get(cat_key) %}
-    <div class="comment-category">
-      <h3 class="comment-category__title">
-        <span class="badge {{ cat_class }}">{{ cat_label }}</span>
-        ({{ by_category[cat_key] | length }})
-      </h3>
-      <ul class="comment-list">
-        {% for c in by_category[cat_key] %}
-        <li class="comment-item">
-          <span class="comment-item__time">{{ c.timestamp[11:16] }}</span>
-          <span class="comment-item__text">{{ c.text }}</span>
-          {% if c.source == 'voice' %}<span class="comment-item__source">🎤</span>{% endif %}
-        </li>
-        {% endfor %}
-      </ul>
+  <!-- Datos del turno -->
+  <section class="report-section">
+    <h2 class="report-section__title">Datos del Turno</h2>
+    <div class="report-info-grid">
+      <div class="report-info-item">
+        <span class="report-info-item__label">Operario</span>
+        <span class="report-info-item__value">{{ shift.operator_name }}</span>
+      </div>
+      <div class="report-info-item">
+        <span class="report-info-item__label">Línea</span>
+        <span class="report-info-item__value">Línea {{ shift.line_number }}</span>
+      </div>
+      <div class="report-info-item">
+        <span class="report-info-item__label">Tipo de turno</span>
+        <span class="report-info-item__value">
+          {% if shift.shift_type == 'morning' %}☀ Mañana (06:00–14:00)
+          {% elif shift.shift_type == 'afternoon' %}🌤 Tarde (14:00–22:00)
+          {% else %}🌙 Noche (22:00–06:00){% endif %}
+        </span>
+      </div>
+      <div class="report-info-item">
+        <span class="report-info-item__label">Inicio</span>
+        <span class="report-info-item__value">{{ shift.start_time | replace('T',' ') }}</span>
+      </div>
+      <div class="report-info-item">
+        <span class="report-info-item__label">Fin</span>
+        <span class="report-info-item__value">
+          {{ shift.end_time | replace('T',' ') if shift.end_time else '—' }}
+        </span>
+      </div>
+      <div class="report-info-item">
+        <span class="report-info-item__label">Duración</span>
+        <span class="report-info-item__value report-info-item__value--highlight">
+          {{ duration_h }}h {{ duration_m }}m
+        </span>
+      </div>
     </div>
+  </section>
+
+  <!-- KPIs -->
+  <section class="report-section">
+    <h2 class="report-section__title">Indicadores de Rendimiento (KPIs)</h2>
+
+    <!-- OEE principal -->
+    <div class="report-oee-banner
+      {% if kpi.oee >= 85 %}report-oee-banner--good
+      {% elif kpi.oee >= 60 %}report-oee-banner--warn
+      {% else %}report-oee-banner--bad{% endif %}">
+      <div class="report-oee-banner__main">
+        <span class="report-oee-banner__value">{{ kpi.oee }}%</span>
+        <span class="report-oee-banner__label">OEE</span>
+      </div>
+      <div class="report-oee-banner__breakdown">
+        <div class="report-oee-factor">
+          <span class="report-oee-factor__name">Disponibilidad</span>
+          <span class="report-oee-factor__value">{{ kpi.availability }}%</span>
+          <div class="report-oee-factor__bar">
+            {% set w = kpi.availability if kpi.availability <= 100 else 100 %}
+            <div style="width:{{ w }}%"></div>
+          </div>
+        </div>
+        <div class="report-oee-factor">
+          <span class="report-oee-factor__name">Rendimiento</span>
+          <span class="report-oee-factor__value">{{ kpi.performance }}%</span>
+          <div class="report-oee-factor__bar">
+            {% set w = kpi.performance if kpi.performance <= 100 else 100 %}
+            <div style="width:{{ w }}%"></div>
+          </div>
+        </div>
+        <div class="report-oee-factor">
+          <span class="report-oee-factor__name">Calidad</span>
+          <span class="report-oee-factor__value">{{ kpi.quality }}%</span>
+          <div class="report-oee-factor__bar">
+            {% set w = kpi.quality if kpi.quality <= 100 else 100 %}
+            <div style="width:{{ w }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de KPIs -->
+    <table class="report-kpi-table">
+      <thead>
+        <tr>
+          <th>Indicador</th>
+          <th>Valor</th>
+          <th>Referencia</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Unidades producidas</td>
+          <td><strong>{{ kpi.total_units_produced | int }}</strong></td>
+          <td>Obj: {{ kpi.target_units | int }}</td>
+          <td>
+            {% if kpi.target_units > 0 %}
+              {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
+              <span class="report-badge
+                {% if pct >= 95 %}report-badge--good
+                {% elif pct >= 80 %}report-badge--warn
+                {% else %}report-badge--bad{% endif %}">
+                {{ pct }}%
+              </span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Unidades buenas</td>
+          <td><strong>{{ kpi.good_units | int }}</strong></td>
+          <td>de {{ kpi.total_units_produced | int }}</td>
+          <td>
+            <span class="report-badge
+              {% if kpi.right_first_time_pct >= 99 %}report-badge--good
+              {% elif kpi.right_first_time_pct >= 97 %}report-badge--warn
+              {% else %}report-badge--bad{% endif %}">
+              RFT {{ kpi.right_first_time_pct }}%
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>Unidades rechazadas</td>
+          <td><strong>{{ kpi.total_units_rejected | int }}</strong></td>
+          <td>Tasa: {{ kpi.reject_rate_pct }}%</td>
+          <td>
+            <span class="report-badge
+              {% if kpi.reject_rate_pct <= 1 %}report-badge--good
+              {% elif kpi.reject_rate_pct <= 3 %}report-badge--warn
+              {% else %}report-badge--bad{% endif %}">
+              {% if kpi.reject_rate_pct <= 1 %}Óptimo
+              {% elif kpi.reject_rate_pct <= 3 %}Aceptable
+              {% else %}Elevado{% endif %}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>Tiempo de parada acumulado</td>
+          <td><strong>{{ kpi.total_downtime_minutes | int }} min</strong></td>
+          <td>Disp: {{ kpi.availability }}%</td>
+          <td>
+            <span class="report-badge
+              {% if kpi.total_downtime_minutes <= 30 %}report-badge--good
+              {% elif kpi.total_downtime_minutes <= 60 %}report-badge--warn
+              {% else %}report-badge--bad{% endif %}">
+              {% if kpi.total_downtime_minutes <= 30 %}Normal
+              {% elif kpi.total_downtime_minutes <= 60 %}Moderado
+              {% else %}Elevado{% endif %}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Comentarios -->
+  <section class="report-section">
+    <h2 class="report-section__title">
+      Comentarios del Turno
+      <span class="report-section__count">{{ comments | length }}</span>
+    </h2>
+
+    {% set cat_meta = {
+      'safety':      ('Seguridad',      'report-cat--red'),
+      'quality':     ('Calidad',        'report-cat--orange'),
+      'production':  ('Producción',     'report-cat--blue'),
+      'maintenance': ('Mantenimiento',  'report-cat--gray'),
+    } %}
+
+    {% if comments | length == 0 %}
+      <p class="report-empty">No se registraron comentarios en este turno.</p>
+    {% else %}
+      {% for cat_key in ['safety', 'quality', 'production', 'maintenance'] %}
+        {% if by_category.get(cat_key) %}
+        <div class="report-cat-block">
+          <div class="report-cat-header {{ cat_meta[cat_key][1] }}">
+            {{ cat_meta[cat_key][0] }}
+            <span class="report-cat-count">{{ by_category[cat_key] | length }}</span>
+          </div>
+          <table class="report-comments-table">
+            <thead>
+              <tr><th style="width:70px">Hora</th><th>Comentario</th><th style="width:60px">Fuente</th></tr>
+            </thead>
+            <tbody>
+              {% for c in by_category[cat_key] | sort(attribute='timestamp') %}
+              <tr>
+                <td class="report-time">{{ c.timestamp[11:16] }}</td>
+                <td>{{ c.text }}</td>
+                <td class="report-source">{{ '🎤 Voz' if c.source == 'voice' else '✏ Texto' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      {% endfor %}
     {% endif %}
-  {% endfor %}
-</section>
+  </section>
+
+  <!-- Notas de traspaso -->
+  <section class="report-section">
+    <h2 class="report-section__title">Notas de Traspaso</h2>
+    {% if shift.handover_notes %}
+    <div class="report-handover">{{ shift.handover_notes }}</div>
+    {% else %}
+    <p class="report-empty">No se registraron notas de traspaso.</p>
+    {% endif %}
+  </section>
+
+  <!-- Pie del informe -->
+  <div class="report-footer">
+    <span>Generado el {{ generation_date }}</span>
+    <span>PackLine v1.0 — Prototipo</span>
+    <span>Turno #{{ shift.id }} · Línea {{ shift.line_number }}</span>
+  </div>
+
+</div><!-- /report -->
 {% endblock %}

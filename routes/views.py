@@ -73,12 +73,27 @@ def shift_summary_view(shift_id: int):
     by_category: dict = {}
     for c in comments:
         by_category.setdefault(c["category"], []).append(c)
+
+    from datetime import datetime, timezone
+    start_dt = datetime.fromisoformat(shift["start_time"])
+    if shift["end_time"]:
+        end_dt = datetime.fromisoformat(shift["end_time"])
+    else:
+        end_dt = datetime.now(timezone.utc).replace(tzinfo=None)
+    duration_min = int((end_dt - start_dt).total_seconds() / 60)
+    duration_h = duration_min // 60
+    duration_m = duration_min % 60
+    generation_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+
     return render_template(
         "shift/summary.html",
         shift=shift,
         kpi=kpi,
         comments=comments,
         by_category=by_category,
+        duration_h=duration_h,
+        duration_m=duration_m,
+        generation_date=generation_date,
     )
 
 

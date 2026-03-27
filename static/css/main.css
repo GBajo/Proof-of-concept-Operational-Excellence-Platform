@@ -766,3 +766,401 @@ body {
 .end-quick-stat { text-align: center; padding: 0.5rem 0; }
 .end-quick-stat__value { display: block; font-size: 2.5rem; font-weight: 800; line-height: 1; }
 .end-quick-stat__label { display: block; font-size: 0.75rem; color: var(--color-gray-400); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* ============================================================
+   Informe de turno (summary) — pantalla y print
+   ============================================================ */
+
+.report {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ── Cabecera ── */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 1.5rem 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.report-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.report-header__logo {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.report-header__company {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.report-header__subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.1rem;
+}
+
+.report-header__meta {
+  text-align: right;
+}
+
+.report-header__id {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.report-header__date {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin-top: 0.1rem;
+}
+
+.report-header__status {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.report-header__status--ok     { background: #d4edda; color: #155724; }
+.report-header__status--warn   { background: #fff3cd; color: #856404; }
+.report-header__status--active { background: #cce5ff; color: #004085; }
+
+/* ── Secciones ── */
+.report-section {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.report-section:last-of-type { border-bottom: none; }
+
+.report-section__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-gray-400);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-section__count {
+  background: var(--color-gray-200);
+  color: var(--color-gray-700);
+  border-radius: 99px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* ── Info grid ── */
+.report-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.report-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: var(--color-gray-100);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+}
+
+.report-info-item__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gray-400);
+}
+
+.report-info-item__value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.report-info-item__value--highlight {
+  font-size: 1.1rem;
+  color: var(--color-primary);
+}
+
+/* ── OEE Banner ── */
+.report-oee-banner {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.report-oee-banner--good { background: #d4edda; border-left: 5px solid #27ae60; }
+.report-oee-banner--warn { background: #fff3cd; border-left: 5px solid #f39c12; }
+.report-oee-banner--bad  { background: #f8d7da; border-left: 5px solid #e74c3c; }
+
+.report-oee-banner__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+}
+
+.report-oee-banner__value {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-gray-900);
+}
+
+.report-oee-banner__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray-400);
+  margin-top: 0.2rem;
+}
+
+.report-oee-banner__breakdown {
+  display: flex;
+  flex: 1;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.report-oee-factor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 120px;
+  flex: 1;
+}
+
+.report-oee-factor__name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.report-oee-factor__value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-gray-900);
+}
+
+.report-oee-factor__bar {
+  height: 6px;
+  background: rgba(0,0,0,0.12);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.report-oee-factor__bar div {
+  height: 100%;
+  background: var(--color-gray-700);
+  border-radius: 99px;
+}
+
+/* ── Tabla KPIs ── */
+.report-kpi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.report-kpi-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-gray-100);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-400);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.report-kpi-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  color: var(--color-gray-700);
+}
+
+.report-kpi-table tbody tr:last-child td { border-bottom: none; }
+.report-kpi-table tbody tr:hover td { background: var(--color-gray-100); }
+
+.report-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.report-badge--good { background: #d4edda; color: #155724; }
+.report-badge--warn { background: #fff3cd; color: #856404; }
+.report-badge--bad  { background: #f8d7da; color: #721c24; }
+
+/* ── Bloque de categoría de comentarios ── */
+.report-cat-block { margin-bottom: 1.25rem; }
+.report-cat-block:last-child { margin-bottom: 0; }
+
+.report-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px 6px 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report-cat-count {
+  background: rgba(0,0,0,0.12);
+  border-radius: 99px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.report-cat--red    { background: #f8d7da; color: #721c24; }
+.report-cat--orange { background: #fff3cd; color: #856404; }
+.report-cat--blue   { background: #d0e8ff; color: #004085; }
+.report-cat--gray   { background: var(--color-gray-200); color: var(--color-gray-700); }
+
+.report-comments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  border: 1px solid var(--color-gray-200);
+  border-top: none;
+}
+
+.report-comments-table th {
+  padding: 0.4rem 0.75rem;
+  background: var(--color-gray-100);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-400);
+  border-bottom: 1px solid var(--color-gray-200);
+  text-align: left;
+}
+
+.report-comments-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  color: var(--color-gray-700);
+  vertical-align: top;
+}
+
+.report-comments-table tbody tr:last-child td { border-bottom: none; }
+
+.report-time   { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--color-gray-400); white-space: nowrap; }
+.report-source { font-size: 0.75rem; color: var(--color-gray-400); white-space: nowrap; }
+
+/* ── Notas de traspaso ── */
+.report-handover {
+  background: #fffbf0;
+  border: 1.5px solid #f39c12;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-gray-900);
+  white-space: pre-wrap;
+}
+
+.report-empty {
+  color: var(--color-gray-400);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* ── Pie ── */
+.report-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.9rem 2rem;
+  background: var(--color-gray-100);
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  border-top: 1px solid var(--color-gray-200);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ============================================================
+   Print — ocultar chrome, optimizar para papel A4
+   ============================================================ */
+@media print {
+  /* Ocultar elementos de navegación */
+  .topbar,
+  .footer,
+  .no-print,
+  #connection-banner { display: none !important; }
+
+  /* Reset de página */
+  body {
+    background: #fff !important;
+    font-size: 11pt;
+  }
+
+  .main-content { padding: 0 !important; }
+
+  /* El informe ocupa todo el ancho */
+  .report {
+    max-width: 100%;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Evitar saltos de página en medio de secciones */
+  .report-section { page-break-inside: avoid; }
+  .report-cat-block { page-break-inside: avoid; }
+  .report-kpi-table { page-break-inside: avoid; }
+
+  /* Forzar salto antes de comentarios si hay muchos */
+  .report-section:nth-child(3) { page-break-before: auto; }
+
+  /* Colores de fondo visibles en impresión */
+  .report-header,
+  .report-oee-banner,
+  .report-cat-header,
+  .report-kpi-table th,
+  .report-footer {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Tamaño de página */
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm 1.5cm 2cm 1.5cm;
+  }
+}
