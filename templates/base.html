@@ -22,6 +22,20 @@
       background: var(--color-primary); color: #fff;
       border-color: var(--color-primary);
     }
+    /* Site switcher */
+    .site-switcher { display:flex; align-items:center; gap:0.35rem; }
+    .site-switcher form { margin:0; }
+    .site-select {
+      background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 7px; padding: 0.22rem 0.55rem; font-size: 0.78rem; font-weight: 600;
+      color: #e2e8f0; cursor: pointer; transition: all .15s;
+      max-width: 140px; appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a0aab4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 0.4rem center;
+      padding-right: 1.5rem;
+    }
+    .site-select:focus { outline:none; border-color: rgba(255,255,255,0.5); }
+    .site-select option { background: #1e2a3a; color: #e2e8f0; }
   </style>
 </head>
 <body>
@@ -66,6 +80,10 @@
          class="nav-link {% if request.path.startswith('/vsm') %}nav-link--active{% endif %}">
         ⬡ {{ t('nav_vsm') }}
       </a>
+      <a href="{{ url_for('views.global_view') }}"
+         class="nav-link {% if request.path == '/global' %}nav-link--active{% endif %}">
+        🌍 {{ t('nav_global') }}
+      </a>
     </nav>
 
     <!-- Indicador de turno(s) activo(s) -->
@@ -96,6 +114,24 @@
           {{ t('nav_start_shift') }}
         </a>
       {% endif %}
+    </div>
+
+    <!-- Selector de planta -->
+    <div class="site-switcher">
+      <form method="post" action="{{ url_for('views.set_site') }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <select name="site" class="site-select" onchange="this.form.submit()"
+                aria-label="{{ t('site_label') }}" title="{{ t('site_label') }}">
+          <option value="global" {% if current_site == 'global' %}selected{% endif %}>
+            🌍 Global
+          </option>
+          {% for site_id, site_info in sites.items() %}
+          <option value="{{ site_id }}" {% if current_site == site_id %}selected{% endif %}>
+            {{ site_info.flag }} {{ site_info.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </form>
     </div>
 
     <!-- Selector de idioma -->

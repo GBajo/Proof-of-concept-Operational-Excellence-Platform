@@ -20,6 +20,38 @@ def set_lang():
     return resp
 
 
+@bp.post("/set-site")
+def set_site():
+    """Guarda la planta activa en una cookie y redirige."""
+    from site_aggregator import SITES, DEFAULT_SITE
+    site = request.form.get("site", DEFAULT_SITE)
+    if site not in SITES and site != "global":
+        site = DEFAULT_SITE
+    redirect_to = request.form.get("next") or request.referrer or "/"
+    if site == "global":
+        redirect_to = "/global"
+    resp = make_response(redirect(redirect_to))
+    resp.set_cookie("site", site, max_age=60 * 60 * 24 * 365, samesite="Lax")
+    return resp
+
+
+@bp.get("/global")
+def global_view():
+    """Vista global: comparativa y ranking de todas las plantas."""
+    from site_aggregator import get_site_rankings, get_cross_site_comparison, get_global_summary
+    days       = int(request.args.get("days", 7))
+    rankings   = get_site_rankings("oee", days)
+    summary    = get_global_summary(days)
+    comparison = get_cross_site_comparison("oee", days)
+    return render_template(
+        "global/index.html",
+        rankings=rankings,
+        summary=summary,
+        comparison=comparison,
+        days=days,
+    )
+
+
 @bp.get("/")
 def index():
     active_lines = get_active_lines()

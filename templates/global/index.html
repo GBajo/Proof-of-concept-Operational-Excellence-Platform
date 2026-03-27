@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}{{ t('global_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="padding: 1.25rem 1.5rem 0;">
+  <div>
+    <h1>{{ t('global_title') }}</h1>
+    <p class="page-header__sub">{{ t('global_subtitle') }}</p>
+  </div>
+  <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+    <span class="badge badge--gray">{{ t('days_selector') }}</span>
+    {% for d in [7, 14, 30] %}
+    <a href="{{ url_for('views.global_view', days=d) }}"
+       class="btn btn--sm {% if days == d %}btn--primary{% else %}btn--secondary{% endif %}">
+      {{ t('days_' ~ d) }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ── Tarjetas resumen global ───────────────────────────── -->
+<section class="section" style="padding: 1rem 1.5rem;">
+  <div class="global-summary-row">
+    <div class="global-summary-card global-summary-card--blue">
+      <div class="global-summary-icon">🏭</div>
+      <div>
+        <div class="global-summary-value">{{ summary.sites }}</div>
+        <div class="global-summary-label">{{ t('col_site') }}s</div>
+      </div>
+    </div>
+    <div class="global-summary-card global-summary-card--green">
+      <div class="global-summary-icon">📦</div>
+      <div>
+        <div class="global-summary-value">{{ "{:,}".format(summary.total_units).replace(",", ".") }}</div>
+        <div class="global-summary-label">{{ t('global_total_units') }}</div>
+      </div>
+    </div>
+    <div class="global-summary-card global-summary-card--yellow">
+      <div class="global-summary-icon">🎯</div>
+      <div>
+        <div class="global-summary-value">{{ summary.oee }}%</div>
+        <div class="global-summary-label">{{ t('global_avg_oee') }}</div>
+      </div>
+    </div>
+    <div class="global-summary-card global-summary-card--purple">
+      <div class="global-summary-icon">⏱</div>
+      <div>
+        <div class="global-summary-value">{{ summary.total_downtime | int }} min</div>
+        <div class="global-summary-label">{{ t('global_total_downtime') }}</div>
+      </div>
+    </div>
+    <div class="global-summary-card global-summary-card--teal">
+      <div class="global-summary-icon">✅</div>
+      <div>
+        <div class="global-summary-value">{{ summary.total_shifts }}</div>
+        <div class="global-summary-label">{{ t('global_total_shifts') }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Gráfico comparativo OEE ──────────────────────────── -->
+<section class="section" style="padding: 0 1.5rem 1rem;">
+  <div class="global-chart-card">
+    <div class="global-chart-header">
+      <h3 class="global-chart-title">
+        {{ t('global_oee_trend_title').replace('{days}', days | string) }}
+      </h3>
+    </div>
+    <div id="oeeCompareChart" style="width:100%; height:300px;"></div>
+  </div>
+</section>
+
+<!-- ── Ranking de plantas ─────────────────────────────────── -->
+<section class="section" style="padding: 0 1.5rem 1.5rem;">
+  <div class="global-chart-card">
+    <div class="global-chart-header">
+      <h3 class="global-chart-title">{{ t('global_ranking_title') }}</h3>
+    </div>
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>{{ t('col_rank') }}</th>
+            <th>{{ t('col_site') }}</th>
+            <th>{{ t('col_oee') }}</th>
+            <th>{{ t('col_availability') }}</th>
+            <th>{{ t('col_performance') }}</th>
+            <th>{{ t('col_quality') }}</th>
+            <th>{{ t('col_units') }}</th>
+            <th>{{ t('col_target') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rankings %}
+          {% set vs_target = r.oee - r.target_oee %}
+          <tr class="history-row">
+            <td>
+              <span class="rank-badge rank-badge--{{ loop.index }}">{{ r.rank }}</span>
+            </td>
+            <td>
+              <strong>{{ r.flag }} {{ r.site_name }}</strong>
+              <div style="font-size:0.75rem; color:var(--color-gray-400);">{{ r.country }}</div>
+            </td>
+            <td>
+              <span class="oee-pill {% if vs_target >= 0 %}oee-pill--good{% else %}oee-pill--bad{% endif %}">
+                {{ r.oee }}%
+              </span>
+            </td>
+            <td>{{ r.availability }}%</td>
+            <td>{{ r.performance }}%</td>
+            <td>{{ r.quality }}%</td>
+            <td>{{ "{:,}".format(r.total_units).replace(",", ".") }}</td>
+            <td>
+              <span class="badge {% if vs_target >= 0 %}badge--green{% else %}badge--orange{% endif %}" style="font-size:0.7rem;">
+                {% if vs_target >= 0 %}↑ +{{ vs_target | round(1) }}%{% else %}↓ {{ vs_target | round(1) }}%{% endif %}
+                vs {{ r.target_oee }}%
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.global-summary-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.85rem;
+}
+@media (max-width: 1100px) { .global-summary-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px)  { .global-summary-row { grid-template-columns: repeat(2, 1fr); } }
+
+.global-summary-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: #fff; border-radius: 10px; padding: 1rem 1.1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-left: 4px solid transparent;
+}
+.global-summary-card--blue   { border-left-color: #1a6faf; }
+.global-summary-card--green  { border-left-color: #27ae60; }
+.global-summary-card--yellow { border-left-color: #e67e22; }
+.global-summary-card--purple { border-left-color: #8e44ad; }
+.global-summary-card--teal   { border-left-color: #16a085; }
+.global-summary-icon  { font-size: 1.5rem; flex-shrink: 0; }
+.global-summary-value { font-size: 1.4rem; font-weight: 800; color: #2d3748; line-height: 1.1; }
+.global-summary-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #718096; margin-top: 0.1rem; }
+
+.global-chart-card {
+  background: #fff; border-radius: 10px; padding: 1.1rem 1.25rem 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid var(--color-gray-200);
+}
+.global-chart-header { display: flex; align-items: center; margin-bottom: 0.6rem; }
+.global-chart-title  { font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #2d3748; margin: 0; }
+
+.rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  font-size: 0.8rem; font-weight: 800; color: #fff;
+}
+.rank-badge--1 { background: #e6a817; }
+.rank-badge--2 { background: #a0aab4; }
+.rank-badge--3 { background: #cd7f32; }
+.rank-badge--4, .rank-badge--5 { background: #718096; }
+
+.oee-pill {
+  display: inline-block; padding: 0.2rem 0.6rem; border-radius: 99px;
+  font-size: 0.85rem; font-weight: 800;
+}
+.oee-pill--good { background: #e8f8f0; color: #27ae60; }
+.oee-pill--bad  { background: #fde8e8; color: #c0392b; }
+
+.badge--gray { background: var(--color-gray-200); color: var(--color-gray-600); }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  // Datos de comparativa inyectados desde el servidor
+  const COMPARISON = {{ comparison | tojson }};
+  const COLORS = ["#0057a8", "#27ae60", "#e67e22", "#8e44ad"];
+
+  function renderOeeChart() {
+    const container = document.getElementById("oeeCompareChart");
+    if (!container || typeof echarts === "undefined") return;
+
+    const chart = echarts.init(container, null, { renderer: "canvas" });
+    window.addEventListener("resize", () => chart.resize());
+
+    // Collect all unique dates
+    const allDates = new Set();
+    Object.values(COMPARISON).forEach(s => s.series.forEach(p => allDates.add(p.date)));
+    const dates = Array.from(allDates).sort();
+
+    const series = Object.entries(COMPARISON).map(([sid, sdata], i) => {
+      const map = Object.fromEntries(sdata.series.map(p => [p.date, p.value]));
+      return {
+        name:      sdata.flag + " " + sdata.name,
+        type:      "line",
+        smooth:    true,
+        data:      dates.map(d => map[d] ?? null),
+        lineStyle: { width: 2.5, color: COLORS[i % COLORS.length] },
+        itemStyle: { color: COLORS[i % COLORS.length] },
+        connectNulls: true,
+      };
+    });
+
+    chart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { fontFamily: "inherit", color: "#4a5568", fontSize: 11 },
+      tooltip: { trigger: "axis", formatter: params =>
+        "<b>" + (params[0]?.axisValue || "") + "</b><br>" +
+        params.map(p => `${p.marker}${p.seriesName}: <b>${p.value ?? "—"}%</b>`).join("<br>")
+      },
+      legend: { bottom: 0, textStyle: { fontSize: 10 } },
+      grid:   { top: 15, right: 20, bottom: 45, left: 42 },
+      xAxis:  { type: "category", data: dates,
+                axisLabel: { fontSize: 9, rotate: 30, formatter: v => v.slice(5) } },
+      yAxis:  { type: "value", name: "OEE%", min: 60, max: 100,
+                axisLabel: { fontSize: 9, formatter: "{value}%" },
+                nameTextStyle: { fontSize: 9 } },
+      series,
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", renderOeeChart);
+})();
+</script>
+{% endblock %}

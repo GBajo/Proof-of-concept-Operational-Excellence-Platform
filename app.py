@@ -1,4 +1,4 @@
-from flask import Flask, request as flask_request
+from flask import Flask, request as flask_request, g
 from config import config
 from database import close_db, init_db
 from translations import get_text
@@ -10,10 +10,10 @@ def create_app() -> Flask:
     app.config["DEBUG"] = config.DEBUG
     app.config["SECRET_KEY"] = config.SECRET_KEY
 
-    # Inicializar base de datos
+    # Inicializar bases de datos (todas las plantas)
     init_db(app)
 
-    # Cerrar conexión al finalizar cada solicitud
+    # Cerrar conexiones al finalizar cada solicitud
     app.teardown_appcontext(close_db)
 
     # Registrar blueprints API (primero)
@@ -37,24 +37,41 @@ def create_app() -> Flask:
     app.register_blueprint(vsm_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
+    @app.before_request
+    def set_current_site():
+        """Lee el site activo desde cookie y lo guarda en g."""
+        from site_aggregator import SITES, DEFAULT_SITE
+        site = flask_request.cookies.get("site", DEFAULT_SITE)
+        if site not in SITES and site != "global":
+            site = DEFAULT_SITE
+        g.current_site = site
+
     @app.context_processor
     def inject_globals():
+        from site_aggregator import SITES, DEFAULT_SITE
         from models.shift import get_active_lines
         try:
             active = get_active_lines()
         except Exception:
             active = []
+
         # Idioma desde cookie (es por defecto)
         lang = flask_request.cookies.get("lang", "es")
         if lang not in ("es", "en"):
             lang = "es"
-        # t() es el helper de traducción disponible en todos los templates
+
+        # Site activo
+        current_site = getattr(g, "current_site", DEFAULT_SITE)
+
         def t(key: str) -> str:
             return get_text(key, lang)
+
         return {
-            'navbar_active_shifts': active,
-            'lang': lang,
-            't': t,
+            "navbar_active_shifts": active,
+            "lang":                 lang,
+            "t":                    t,
+            "current_site":         current_site,
+            "sites":                SITES,
         }
 
     return app
