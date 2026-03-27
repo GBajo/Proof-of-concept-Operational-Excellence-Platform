@@ -94,7 +94,8 @@ async function handleStartShift(e) {
   errorBox.style.display = 'none';
 
   // Validación manual de radios (required no funciona con radio custom)
-  const operatorId = form.querySelector('input[name="operator_id"]:checked');
+  const operatorSelect = form.querySelector('select[name="operator_id"]');
+  const operatorId = operatorSelect ? operatorSelect.value : null;
   const lineNumber  = form.querySelector('input[name="line_number"]:checked');
   const shiftType   = form.querySelector('input[name="shift_type"]:checked');
 
@@ -113,7 +114,7 @@ async function handleStartShift(e) {
   submitBtn.innerHTML = '<span class="btn-icon">⏳</span> Iniciando…';
 
   const payload = {
-    operator_id: parseInt(operatorId.value),
+    operator_id: parseInt(operatorId),
     line_number:  parseInt(lineNumber.value),
     shift_type:   shiftType ? shiftType.value : 'morning',
   };

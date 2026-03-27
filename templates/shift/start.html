@@ -23,27 +23,16 @@
           <span class="sf-section__icon">👤</span>
           <span>Operario</span>
         </div>
-        <div class="operator-grid">
+        {% if operators %}
+        <select name="operator_id" id="operator_id" class="form__select" required>
+          <option value="">-- Seleccione un operario --</option>
           {% for op in operators %}
-          <label class="operator-card" data-role="{{ op.role }}">
-            <input type="radio" name="operator_id" value="{{ op.id }}" required>
-            <div class="operator-card__inner">
-              <div class="operator-card__avatar">{{ op.name[0] }}</div>
-              <div class="operator-card__info">
-                <span class="operator-card__name">{{ op.name }}</span>
-                <span class="operator-card__badge">{{ op.badge_number }}</span>
-              </div>
-              <div class="operator-card__role operator-card__role--{{ op.role }}">
-                {% if op.role == 'operator' %}OP
-                {% elif op.role == 'supervisor' %}SV
-                {% elif op.role == 'quality' %}QA
-                {% elif op.role == 'maintenance' %}MT
-                {% endif %}
-              </div>
-            </div>
-          </label>
+          <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
           {% endfor %}
-        </div>
+        </select>
+        {% else %}
+        <p class="alert alert--danger">No hay operarios en la base de datos. Ejecuta <code>python seed_data.py</code> para cargar los datos de ejemplo.</p>
+        {% endif %}
       </div>
 
       <!-- Línea de packaging -->
