@@ -26,6 +26,8 @@ def create_app() -> Flask:
     from routes.admin import bp as admin_bp
     from routes.chart_builder import bp as chart_builder_bp
     from routes.vsm import bp as vsm_bp
+    from routes.problems import bp as problems_bp
+    from routes.initiatives import bp as initiatives_bp
 
     app.register_blueprint(operators_bp)
     app.register_blueprint(shifts_bp)
@@ -35,6 +37,8 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(chart_builder_bp)
     app.register_blueprint(vsm_bp)
+    app.register_blueprint(problems_bp)
+    app.register_blueprint(initiatives_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
     @app.before_request

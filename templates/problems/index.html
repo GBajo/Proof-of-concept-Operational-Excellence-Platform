@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+{% block title %}Top Problemas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <h1 class="page-title">⚠ Top Problemas</h1>
+    <p class="page-subtitle">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Análisis de problemas recurrentes</p>
+  </div>
+  <div class="page-header__actions">
+    <!-- Filtros -->
+    <form method="get" class="filter-bar" id="filterForm">
+      <label class="filter-label">Período:</label>
+      <select name="period" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+        <option value="week"    {% if current_period=='week'    %}selected{% endif %}>Última semana</option>
+        <option value="month"   {% if current_period=='month'   %}selected{% endif %}>Último mes</option>
+        <option value="quarter" {% if current_period=='quarter' %}selected{% endif %}>Último trimestre</option>
+      </select>
+      <label class="filter-label">Línea:</label>
+      <select name="line" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+        <option value="">Todas</option>
+        {% for l in site_lines %}
+        <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+<!-- TOP 3 POR SITE ──────────────────────────────────────────────────────── -->
+<section class="problems-section">
+  <h2 class="section-title">🏭 Top 3 Problemas del Site</h2>
+  {% if top_site %}
+  <div class="problems-grid problems-grid--top">
+    {% for p in top_site %}
+    <div class="problem-card problem-card--{{ p.status }}" data-id="{{ p.id }}" onclick="toggleDetail(this)">
+      <div class="problem-card__header">
+        <span class="problem-badge problem-badge--{{ p.category }}">{{ p.category }}</span>
+        <span class="problem-status problem-status--{{ p.status }}">
+          {% if p.status == 'open' %}● Abierto
+          {% elif p.status == 'investigating' %}◑ Investigando
+          {% else %}✓ Resuelto{% endif %}
+        </span>
+        {% if p.line_number %}<span class="problem-line">L{{ p.line_number }}</span>{% endif %}
+      </div>
+      <p class="problem-desc">{{ p.problem_description }}</p>
+      <div class="problem-metrics">
+        <span class="metric-chip">📊 {{ p.frequency }}/sem</span>
+        <span class="metric-chip metric-chip--impact" data-impact="{{ p.impact_score }}">⚡ Impacto {{ p.impact_score }}/10</span>
+      </div>
+      {% if p.initiative_id %}
+      <div class="problem-link-row">
+        <a href="/initiatives?highlight={{ p.initiative_id }}" class="problem-link" onclick="event.stopPropagation()">
+          📋 Ver iniciativa de mejora
+        </a>
+      </div>
+      {% endif %}
+      <!-- Detalle expandible -->
+      <div class="problem-detail" style="display:none">
+        <hr>
+        {% if p.root_cause %}
+        <div class="detail-block">
+          <strong>🔍 Causa raíz:</strong>
+          <p>{{ p.root_cause }}</p>
+        </div>
+        {% endif %}
+        {% if p.countermeasure %}
+        <div class="detail-block">
+          <strong>🛡 Contramedida:</strong>
+          <p>{{ p.countermeasure }}</p>
+        </div>
+        {% endif %}
+        <div class="detail-block detail-block--dates">
+          <span>📅 Detectado: {{ p.first_detected }}</span>
+          <span>🔁 Último: {{ p.last_occurrence }}</span>
+        </div>
+        <button class="btn btn--sm btn--outline ai-btn"
+                onclick="event.stopPropagation(); askAI('{{ p.problem_description|replace("'","\\'")|replace('"','&quot;') }}')">
+          ✦ Pedir análisis al asistente
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty-state">No hay problemas registrados para el período seleccionado.</p>
+  {% endif %}
+</section>
+
+<!-- TOP 3 POR LÍNEA ──────────────────────────────────────────────────────── -->
+<section class="problems-section">
+  <h2 class="section-title">📊 Top 3 por Línea</h2>
+  <div class="lines-grid">
+    {% for line_num in site_lines %}
+    <div class="line-column">
+      <h3 class="line-column__title">Línea {{ line_num }}</h3>
+      {% set line_probs = by_line.get(line_num, []) %}
+      {% if line_probs %}
+        {% for p in line_probs %}
+        <div class="problem-card problem-card--{{ p.status }}" data-id="{{ p.id }}" onclick="toggleDetail(this)">
+          <div class="problem-card__header">
+            <span class="problem-badge problem-badge--{{ p.category }}">{{ p.category }}</span>
+            <span class="problem-status problem-status--{{ p.status }}">
+              {% if p.status == 'open' %}● Abierto
+              {% elif p.status == 'investigating' %}◑ Investigando
+              {% else %}✓ Resuelto{% endif %}
+            </span>
+          </div>
+          <p class="problem-desc">{{ p.problem_description }}</p>
+          <div class="problem-metrics">
+            <span class="metric-chip">📊 {{ p.frequency }}/sem</span>
+            <span class="metric-chip metric-chip--impact" data-impact="{{ p.impact_score }}">⚡ {{ p.impact_score }}/10</span>
+          </div>
+          {% if p.initiative_id %}
+          <div class="problem-link-row">
+            <a href="/initiatives?highlight={{ p.initiative_id }}" class="problem-link" onclick="event.stopPropagation()">
+              📋 Ver iniciativa
+            </a>
+          </div>
+          {% endif %}
+          <div class="problem-detail" style="display:none">
+            <hr>
+            {% if p.root_cause %}
+            <div class="detail-block"><strong>🔍 Causa raíz:</strong><p>{{ p.root_cause }}</p></div>
+            {% endif %}
+            {% if p.countermeasure %}
+            <div class="detail-block"><strong>🛡 Contramedida:</strong><p>{{ p.countermeasure }}</p></div>
+            {% endif %}
+            <div class="detail-block detail-block--dates">
+              <span>📅 {{ p.first_detected }}</span>
+              <span>🔁 {{ p.last_occurrence }}</span>
+            </div>
+            <button class="btn btn--sm btn--outline ai-btn"
+                    onclick="event.stopPropagation(); askAI('{{ p.problem_description|replace("'","\\'")|replace('"','&quot;') }}')">
+              ✦ Pedir análisis al asistente
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <p class="empty-state empty-state--sm">Sin problemas registrados</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- GRÁFICO PARETO ────────────────────────────────────────────────────────── -->
+<section class="problems-section">
+  <h2 class="section-title">📈 Gráfico Pareto — Frecuencia de Problemas</h2>
+  <div class="chart-card">
+    <div id="paretoChart" style="width:100%;height:380px"></div>
+  </div>
+</section>
+
+<!-- MODAL ASISTENTE ──────────────────────────────────────────────────────── -->
+<div id="aiModal" class="modal" style="display:none" onclick="closeAIModal(event)">
+  <div class="modal__box" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3>✦ Análisis del Asistente IA</h3>
+      <button class="modal__close" onclick="closeAIModal()">✕</button>
+    </div>
+    <div class="modal__body">
+      <p id="aiQuery" class="ai-query-text"></p>
+      <div id="aiResult" class="ai-result">
+        <div class="ai-loading">Consultando al asistente…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Page layout ────────────────────────────────── */
+.page-header { display:flex; justify-content:space-between; align-items:flex-start;
+  flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+.page-title { font-size:1.6rem; font-weight:700; margin:0; }
+.page-subtitle { color:var(--color-gray-500); margin:0.25rem 0 0; font-size:0.9rem; }
+.filter-bar { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+.filter-label { font-size:0.82rem; font-weight:600; color:var(--color-gray-500); }
+.filter-select { font-size:0.82rem; padding:0.3rem 0.6rem; border-radius:6px;
+  border:1.5px solid var(--color-gray-200); background:var(--color-bg);
+  color:var(--color-text); cursor:pointer; }
+.section-title { font-size:1.1rem; font-weight:700; margin:0 0 1rem;
+  color:var(--color-primary); }
+.problems-section { margin-bottom:2.5rem; }
+
+/* ── Grids ──────────────────────────────────────── */
+.problems-grid { display:grid; gap:1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.lines-grid { display:grid; gap:1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.line-column__title { font-size:0.95rem; font-weight:700; color:var(--color-gray-600);
+  margin:0 0 0.75rem; padding-bottom:0.4rem;
+  border-bottom:2px solid var(--color-primary); }
+
+/* ── Problem cards ──────────────────────────────── */
+.problem-card {
+  background:var(--color-surface); border-radius:10px; padding:1rem;
+  cursor:pointer; transition:box-shadow .15s, transform .1s;
+  border-left:4px solid var(--color-gray-300);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.problem-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.10); transform:translateY(-1px); }
+.problem-card--open    { border-left-color: #e53e3e; }
+.problem-card--investigating { border-left-color: #d97706; }
+.problem-card--resolved { border-left-color: #38a169; }
+
+.problem-card__header { display:flex; align-items:center; gap:0.4rem;
+  flex-wrap:wrap; margin-bottom:0.5rem; }
+.problem-badge { font-size:0.68rem; font-weight:700; text-transform:uppercase;
+  padding:0.15rem 0.5rem; border-radius:4px; letter-spacing:.04em; }
+.problem-badge--quality    { background:#bee3f8; color:#2c5282; }
+.problem-badge--equipment  { background:#fed7aa; color:#7c2d12; }
+.problem-badge--process    { background:#d9f99d; color:#365314; }
+.problem-badge--safety     { background:#fecaca; color:#7f1d1d; }
+.problem-badge--material   { background:#e9d5ff; color:#4c1d95; }
+
+.problem-status { font-size:0.72rem; font-weight:600; margin-left:auto; }
+.problem-status--open    { color:#e53e3e; }
+.problem-status--investigating { color:#d97706; }
+.problem-status--resolved { color:#38a169; }
+
+.problem-line { font-size:0.72rem; font-weight:700; background:var(--color-gray-100);
+  padding:0.1rem 0.45rem; border-radius:4px; color:var(--color-gray-600); }
+
+.problem-desc { font-size:0.88rem; font-weight:500; margin:0 0 0.6rem;
+  line-height:1.4; color:var(--color-text); }
+.problem-metrics { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.5rem; }
+.metric-chip { font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:5px;
+  background:var(--color-gray-100); color:var(--color-gray-600); font-weight:600; }
+.metric-chip--impact[data-impact="9"],
+.metric-chip--impact[data-impact="10"] { background:#fed7d7; color:#9b2c2c; }
+.metric-chip--impact[data-impact="7"],
+.metric-chip--impact[data-impact="8"]  { background:#feebc8; color:#744210; }
+
+.problem-link-row { margin:0.4rem 0; }
+.problem-link { font-size:0.78rem; color:var(--color-primary); text-decoration:none;
+  font-weight:600; }
+.problem-link:hover { text-decoration:underline; }
+
+.problem-detail { margin-top:0.75rem; font-size:0.84rem; }
+.detail-block { margin-bottom:0.6rem; }
+.detail-block p { margin:0.2rem 0 0; color:var(--color-gray-600); }
+.detail-block--dates { display:flex; gap:1rem; color:var(--color-gray-500);
+  font-size:0.78rem; flex-wrap:wrap; }
+
+.empty-state { color:var(--color-gray-400); font-style:italic; font-size:0.88rem; }
+.empty-state--sm { font-size:0.82rem; }
+
+/* ── Chart card ─────────────────────────────────── */
+.chart-card { background:var(--color-surface); border-radius:10px; padding:1.25rem;
+  box-shadow:0 1px 4px rgba(0,0,0,.06); }
+
+/* ── Buttons ────────────────────────────────────── */
+.btn { display:inline-flex; align-items:center; gap:0.3rem; border-radius:7px;
+  font-weight:600; cursor:pointer; border:none; transition:all .15s; }
+.btn--sm { font-size:0.78rem; padding:0.3rem 0.7rem; }
+.btn--outline { background:none; border:1.5px solid var(--color-primary);
+  color:var(--color-primary); }
+.btn--outline:hover { background:var(--color-primary); color:#fff; }
+
+/* ── Modal ──────────────────────────────────────── */
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center; z-index:1000; }
+.modal__box { background:var(--color-surface); border-radius:12px; padding:1.5rem;
+  max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
+.modal__header { display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:1rem; }
+.modal__header h3 { margin:0; font-size:1.05rem; }
+.modal__close { background:none; border:none; font-size:1.2rem; cursor:pointer;
+  color:var(--color-gray-500); }
+.ai-query-text { font-size:0.85rem; color:var(--color-gray-500); font-style:italic;
+  margin-bottom:0.75rem; }
+.ai-result { font-size:0.9rem; line-height:1.6; }
+.ai-loading { color:var(--color-gray-400); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SITE_ID  = "{{ site_id }}";
+const PERIOD   = "{{ current_period }}";
+
+/* ── Pareto chart ──────────────────────────────────────────────── */
+(async function loadPareto() {
+  const r = await fetch(`/api/problems/pareto?site=${SITE_ID}&period=${PERIOD}`);
+  const d = await r.json();
+  if (!d.names.length) return;
+
+  const chart = echarts.init(document.getElementById("paretoChart"), null,
+                             { renderer: "canvas" });
+  chart.setOption({
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    legend: { data: ["Frecuencia (veces/sem)", "% acumulado"] },
+    grid: { left: "3%", right: "4%", bottom: "18%", containLabel: true },
+    xAxis: {
+      type: "category", data: d.names, axisLabel: {
+        rotate: 35, fontSize: 11, interval: 0,
+        formatter: v => v.length > 28 ? v.slice(0, 28) + "…" : v,
+      }
+    },
+    yAxis: [
+      { type: "value", name: "Frec./sem", nameTextStyle: { fontSize: 11 } },
+      { type: "value", name: "% Acum.", min: 0, max: 100,
+        axisLabel: { formatter: "{value}%" }, nameTextStyle: { fontSize: 11 } },
+    ],
+    series: [
+      {
+        name: "Frecuencia (veces/sem)",
+        type: "bar", data: d.values,
+        itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1,
+          [{ offset: 0, color: "#4299e1" }, { offset: 1, color: "#2b6cb0" }]) },
+        label: { show: true, position: "top", fontSize: 11,
+                 formatter: v => v.value.toFixed(1) },
+      },
+      {
+        name: "% acumulado",
+        type: "line", yAxisIndex: 1, data: d.cumulative,
+        smooth: true, symbol: "circle", symbolSize: 7,
+        lineStyle: { color: "#e53e3e", width: 2 },
+        itemStyle: { color: "#e53e3e" },
+        label: { show: true, fontSize: 10, formatter: v => v.value + "%" },
+      },
+    ],
+  });
+  window.addEventListener("resize", () => chart.resize());
+})();
+
+/* ── Expandir/colapsar tarjeta ──────────────────────────────────── */
+function toggleDetail(card) {
+  const detail = card.querySelector(".problem-detail");
+  if (!detail) return;
+  const open = detail.style.display !== "none";
+  detail.style.display = open ? "none" : "block";
+  card.classList.toggle("problem-card--expanded", !open);
+}
+
+/* ── Modal Asistente IA ─────────────────────────────────────────── */
+function askAI(problemText) {
+  const modal = document.getElementById("aiModal");
+  document.getElementById("aiQuery").textContent = "Consulta: " + problemText;
+  document.getElementById("aiResult").innerHTML = '<div class="ai-loading">Consultando al asistente…</div>';
+  modal.style.display = "flex";
+
+  // Buscar el shift activo (si hay) o usar 1
+  fetch("/api/problems?" + new URLSearchParams({ site: SITE_ID, period: PERIOD }))
+    .then(() => {
+      // Intentar pedir análisis al asistente (endpoint manual)
+      return fetch("/api/assistant/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shift_id: 1,
+          text: "Analiza el siguiente problema recurrente en planta y sugiere acciones de mejora basadas en mejores prácticas de manufacturing farmacéutico: " + problemText,
+          mode: "manual",
+        }),
+      });
+    })
+    .then(r => r.json())
+    .then(data => {
+      const result = document.getElementById("aiResult");
+      if (data.response) {
+        result.innerHTML = `<div style="white-space:pre-wrap">${data.response}</div>`;
+        if (data.sources && data.sources.length) {
+          result.innerHTML += `<p style="font-size:0.78rem;color:var(--color-gray-500);margin-top:0.5rem">
+            Fuentes: ${data.sources.map(s => `<em>${s}</em>`).join(", ")}</p>`;
+        }
+      } else {
+        result.innerHTML = '<p style="color:var(--color-gray-400)">El asistente no pudo generar una respuesta en este momento.</p>';
+      }
+    })
+    .catch(() => {
+      document.getElementById("aiResult").innerHTML =
+        '<p style="color:var(--color-gray-400)">Error al contactar al asistente.</p>';
+    });
+}
+
+function closeAIModal(e) {
+  if (!e || e.target === document.getElementById("aiModal")) {
+    document.getElementById("aiModal").style.display = "none";
+  }
+}
+</script>
+{% endblock %}

@@ -80,6 +80,14 @@
          class="nav-link {% if request.path.startswith('/vsm') %}nav-link--active{% endif %}">
         ⬡ {{ t('nav_vsm') }}
       </a>
+      <a href="{{ url_for('problems.problems_page') }}"
+         class="nav-link {% if request.path.startswith('/problems') %}nav-link--active{% endif %}">
+        ⚠ {{ t('nav_problems') }}
+      </a>
+      <a href="{{ url_for('initiatives.initiatives_page') }}"
+         class="nav-link {% if request.path.startswith('/initiatives') %}nav-link--active{% endif %}">
+        📋 {{ t('nav_initiatives') }}
+      </a>
       <a href="{{ url_for('views.global_view') }}"
          class="nav-link {% if request.path == '/global' %}nav-link--active{% endif %}">
         🌍 {{ t('nav_global') }}

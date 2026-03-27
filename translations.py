@@ -477,6 +477,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 
     # ── VSM ────────────────────────────────────────────────────
     "nav_vsm":               {"es": "VSM",                  "en": "VSM"},
+    "nav_problems":          {"es": "Problemas",             "en": "Problems"},
+    "nav_initiatives":       {"es": "Iniciativas",           "en": "Initiatives"},
     "vsm_title":             {"es": "Value Stream Map",     "en": "Value Stream Map"},
     "vsm_subtitle":          {"es": "Flujo de valor en tiempo real — línea de empaquetado",
                               "en": "Real-time value stream — packaging line"},
