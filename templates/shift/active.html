@@ -3,6 +3,7 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script src="{{ url_for('static', filename='js/shift.js') }}"></script>
 <script>
   const SHIFT_ID = {{ shift.id }};
   const OPERATOR_ID = {{ shift.operator_id }};
