@@ -53,3 +53,13 @@ Displays real-time production KPIs and line performance dashboards.
 - Single-user prototype (no authentication needed for now)
 - All data stored locally in SQLite
 - Must work in GitHub Codespaces
+
+## Asistente inteligente (RAG)
+- La app conecta con el LLM Gateway de Lilly para generar sugerencias
+- Endpoint del gateway: https://lilly-code.gateway.llm.lilly.com (o el que corresponda)
+- Los documentos de contexto (SOPs, manuales, errores) se almacenan en una carpeta docs/
+- Se extraen, fragmentan e indexan en SQLite para búsqueda por palabras clave
+- Formatos soportados: PDF, Word (.docx), Excel (.xlsx), enlaces web
+- El sistema busca fragmentos relevantes al comentario del operador y los envía al LLM junto con el comentario
+- Dos modos de activación: automático (tras cada comentario) y manual (botón "Pedir ayuda")
+- Las respuestas del LLM se muestran como sugerencias, siempre referenciando el documento fuente
