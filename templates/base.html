@@ -39,6 +39,10 @@
          class="nav-link {% if request.path == '/shifts' %}nav-link--active{% endif %}">
         Historial
       </a>
+      <a href="{{ url_for('admin.admin_docs') }}"
+         class="nav-link {% if request.path.startswith('/admin') %}nav-link--active{% endif %}">
+        📚 Docs
+      </a>
     </nav>
 
     <!-- Indicador de turno(s) activo(s) -->

@@ -21,11 +21,13 @@ def create_app() -> Flask:
     from routes.comments import bp as comments_bp
     from routes.kpis import bp as kpis_bp
     from routes.views import bp as views_bp
+    from routes.admin import bp as admin_bp
 
     app.register_blueprint(operators_bp)
     app.register_blueprint(shifts_bp)
     app.register_blueprint(comments_bp)
     app.register_blueprint(kpis_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
     # Inyectar turnos activos en todos los templates para la barra de nav

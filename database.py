@@ -82,6 +82,18 @@ def init_db(app) -> None:
             CREATE INDEX IF NOT EXISTS idx_comments_ts       ON comments(timestamp);
             CREATE INDEX IF NOT EXISTS idx_kpi_shift         ON kpi_readings(shift_id);
             CREATE INDEX IF NOT EXISTS idx_kpi_ts            ON kpi_readings(timestamp);
+
+            CREATE TABLE IF NOT EXISTS knowledge_base (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_file TEXT NOT NULL,
+                source_type TEXT NOT NULL DEFAULT 'file'
+                            CHECK(source_type IN ('pdf','docx','xlsx','url')),
+                chunk_index INTEGER NOT NULL,
+                chunk_text  TEXT NOT NULL,
+                indexed_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_kb_source ON knowledge_base(source_file);
         """)
         # Índice parcial único: solo un turno activo por línea
         db.execute("""
