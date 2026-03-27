@@ -23,6 +23,28 @@ from database import get_db
 
 bp = Blueprint("vsm", __name__)
 
+# ── Traducciones de nombres de paso ──────────────────────────────────────────
+
+STEP_NAME_EN = {
+    "Recepción granel":  "Bulk Reception",
+    "Alimentación":      "Feeding",
+    "Llenado":           "Filling",
+    "Pesaje":            "Weighing",
+    "Cierre":            "Capping",
+    "Etiquetado":        "Labelling",
+    "Serialización":     "Serialization",
+    "Estuchado":         "Cartoning",
+    "Encajado":          "Case Packing",
+    "Paletizado":        "Palletizing",
+}
+
+
+def _translate_step_name(name: str, lang: str) -> str:
+    if lang == "en":
+        return STEP_NAME_EN.get(name, name)
+    return name
+
+
 # ── Definición de pasos para empaquetado farmacéutico ─────────────────────────
 
 PHARMA_STEPS = [
@@ -218,6 +240,7 @@ def vsm_page():
 @bp.get("/api/vsm/steps")
 def api_vsm_steps():
     line = int(request.args.get("line", 1))
+    lang = request.args.get("lang", "es")
     db = get_db()
     rows = db.execute(
         """SELECT id, step_order, step_name, step_type,
@@ -225,17 +248,24 @@ def api_vsm_steps():
            FROM process_steps WHERE line_number=? ORDER BY step_order""",
         (line,),
     ).fetchall()
-    return jsonify([dict(r) for r in rows])
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["step_name"] = _translate_step_name(d["step_name"], lang)
+        result.append(d)
+    return jsonify(result)
 
 
 @bp.get("/api/vsm/live-data")
 def api_vsm_live():
     line = int(request.args.get("line", 1))
+    lang = request.args.get("lang", "es")
     db = get_db()
     steps = _latest_per_step(db, line)
 
-    # Añadir color dinámico
+    # Traducir nombres y añadir color dinámico
     for s in steps:
+        s["step_name"] = _translate_step_name(s["step_name"], lang)
         s["color"] = _step_color(s)
         s["ratio"] = round((s.get("actual_cycle_time") or s.get("nom_ct") or 1)
                            / (s.get("nom_ct") or 1), 3)
@@ -246,12 +276,16 @@ def api_vsm_live():
 
 @bp.get("/api/vsm/step-history/<int:step_id>")
 def api_step_history(step_id: int):
+    lang = request.args.get("lang", "es")
     db = get_db()
     step = db.execute(
         "SELECT * FROM process_steps WHERE id=?", (step_id,)
     ).fetchone()
     if not step:
         return jsonify({"error": "Step not found"}), 404
+
+    step_dict = dict(step)
+    step_dict["step_name"] = _translate_step_name(step_dict["step_name"], lang)
 
     history = db.execute(
         """SELECT timestamp, actual_cycle_time, units_in_wip,
@@ -271,7 +305,7 @@ def api_step_history(step_id: int):
     ).fetchall()
 
     return jsonify({
-        "step": dict(step),
+        "step": step_dict,
         "history": [dict(r) for r in reversed(history)],
         "recent_stops": [dict(r) for r in stops],
     })

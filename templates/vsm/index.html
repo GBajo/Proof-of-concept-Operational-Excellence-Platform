@@ -281,6 +281,7 @@
   };
 
   // ── Estado ───────────────────────────────────────────────────
+  const APP_LANG = "{{ lang }}";
   let currentLine = {{ selected_line }};
   let stepsData = [];
   let detailChartInst = null;
@@ -572,7 +573,7 @@
   // ── Refresh live data ─────────────────────────────────────────
   async function refreshLive() {
     try {
-      const res = await fetch(`/api/vsm/live-data?line=${currentLine}`);
+      const res = await fetch(`/api/vsm/live-data?line=${currentLine}&lang=${APP_LANG}`);
       const data = await res.json();
       if (!data.steps || !data.steps.length) return;
 
@@ -606,7 +607,7 @@
     detailStops.innerHTML = "";
 
     try {
-      const res = await fetch(`/api/vsm/step-history/${stepId}`);
+      const res = await fetch(`/api/vsm/step-history/${stepId}?lang=${APP_LANG}`);
       const data = await res.json();
       const step = data.step;
       const history = data.history || [];
