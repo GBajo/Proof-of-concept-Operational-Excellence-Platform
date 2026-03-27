@@ -474,6 +474,39 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 
     # ── Lang selector ─────────────────────────────────────────
     "lang_label":            {"es": "Idioma",               "en": "Language"},
+
+    # ── VSM ────────────────────────────────────────────────────
+    "nav_vsm":               {"es": "VSM",                  "en": "VSM"},
+    "vsm_title":             {"es": "Value Stream Map",     "en": "Value Stream Map"},
+    "vsm_subtitle":          {"es": "Flujo de valor en tiempo real — línea de empaquetado",
+                              "en": "Real-time value stream — packaging line"},
+    "vsm_line_label":        {"es": "Línea:",               "en": "Line:"},
+    "vsm_lead_time":         {"es": "Lead Time total",      "en": "Total Lead Time"},
+    "vsm_va_time":           {"es": "Tiempo VA",            "en": "VA Time"},
+    "vsm_va_ratio":          {"es": "Ratio VA/NVA",         "en": "VA/NVA Ratio"},
+    "vsm_bottleneck":        {"es": "Cuello de botella",    "en": "Bottleneck"},
+    "vsm_total_wip":         {"es": "WIP total",            "en": "Total WIP"},
+    "vsm_oee":               {"es": "OEE estimado",         "en": "Estimated OEE"},
+    "vsm_ct":                {"es": "C/T",                  "en": "C/T"},
+    "vsm_co":                {"es": "C/O",                  "en": "C/O"},
+    "vsm_wip_label":         {"es": "WIP",                  "en": "WIP"},
+    "vsm_status_running":    {"es": "En marcha",            "en": "Running"},
+    "vsm_status_stopped":    {"es": "Parado",               "en": "Stopped"},
+    "vsm_status_changeover": {"es": "Cambio de formato",    "en": "Changeover"},
+    "vsm_status_waiting":    {"es": "Esperando",            "en": "Waiting"},
+    "vsm_ct_history":        {"es": "Historial Cycle Time", "en": "Cycle Time History"},
+    "vsm_recent_stops":      {"es": "Paradas recientes",    "en": "Recent Stops"},
+    "vsm_no_stops":          {"es": "Sin paradas recientes","en": "No recent stops"},
+    "vsm_ask_ai":            {"es": "Pedir análisis al asistente",
+                              "en": "Ask AI assistant for analysis"},
+    "vsm_ai_suggestion":     {"es": "Sugerencia IA",        "en": "AI Suggestion"},
+    "vsm_ai_loading":        {"es": "Analizando...",        "en": "Analysing..."},
+    "vsm_ai_error":          {"es": "Error al conectar con el asistente.",
+                              "en": "Error connecting to assistant."},
+    "vsm_supplier":          {"es": "Granel",               "en": "Bulk"},
+    "vsm_customer":          {"es": "Almacén",              "en": "Warehouse"},
+    "vsm_ct_axis":           {"es": "Ciclo (s)",            "en": "Cycle (s)"},
+    "vsm_nominal":           {"es": "Nominal",              "en": "Nominal"},
 }
 
 

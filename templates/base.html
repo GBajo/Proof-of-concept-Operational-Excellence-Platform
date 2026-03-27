@@ -62,6 +62,10 @@
          class="nav-link {% if request.path.startswith('/dashboard/builder') %}nav-link--active{% endif %}">
         ✦ {{ t('nav_ai_charts') }}
       </a>
+      <a href="{{ url_for('vsm.vsm_page') }}"
+         class="nav-link {% if request.path.startswith('/vsm') %}nav-link--active{% endif %}">
+        ⬡ {{ t('nav_vsm') }}
+      </a>
     </nav>
 
     <!-- Indicador de turno(s) activo(s) -->

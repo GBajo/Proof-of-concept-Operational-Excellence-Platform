@@ -121,6 +121,36 @@ def init_db(app) -> None:
             );
 
             CREATE INDEX IF NOT EXISTS idx_charts_created ON saved_charts(created_at);
+
+            -- ── VSM: pasos de proceso por línea ──────────────────────────
+            CREATE TABLE IF NOT EXISTS process_steps (
+                id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+                site_id                     INTEGER NOT NULL DEFAULT 1,
+                line_number                 INTEGER NOT NULL CHECK(line_number BETWEEN 1 AND 20),
+                step_order                  INTEGER NOT NULL,
+                step_name                   TEXT NOT NULL,
+                step_type                   TEXT NOT NULL DEFAULT 'value-add'
+                                            CHECK(step_type IN ('value-add','non-value-add','wait')),
+                nominal_cycle_time_seconds  REAL NOT NULL DEFAULT 10.0,
+                nominal_changeover_minutes  REAL NOT NULL DEFAULT 30.0,
+                UNIQUE(line_number, step_order)
+            );
+
+            CREATE TABLE IF NOT EXISTS step_live_data (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                step_id           INTEGER NOT NULL REFERENCES process_steps(id) ON DELETE CASCADE,
+                timestamp         TEXT NOT NULL DEFAULT (datetime('now')),
+                actual_cycle_time REAL NOT NULL DEFAULT 0.0,
+                units_in_wip      INTEGER NOT NULL DEFAULT 0,
+                status            TEXT NOT NULL DEFAULT 'running'
+                                  CHECK(status IN ('running','stopped','changeover','waiting')),
+                current_speed     REAL NOT NULL DEFAULT 0.0,
+                defect_count      INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_process_steps_line ON process_steps(line_number);
+            CREATE INDEX IF NOT EXISTS idx_step_live_step      ON step_live_data(step_id);
+            CREATE INDEX IF NOT EXISTS idx_step_live_ts        ON step_live_data(timestamp);
         """)
         # Índice parcial único: solo un turno activo por línea
         db.execute("""

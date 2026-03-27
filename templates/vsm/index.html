@@ -1,0 +1,737 @@
+{% extends "base.html" %}
+{% block title %}{{ t('vsm_title') }}{% endblock %}
+
+{% block content %}
+<div class="vsm-page">
+
+  <!-- ── Cabecera ────────────────────────────────────────────── -->
+  <div class="page-header vsm-header">
+    <div>
+      <h1>{{ t('vsm_title') }} <span class="badge badge--blue">VSM</span></h1>
+      <p class="page-header__sub">{{ t('vsm_subtitle') }}</p>
+    </div>
+    <div class="vsm-controls">
+      <label class="vsm-select-label" for="lineSelect">{{ t('vsm_line_label') }}</label>
+      <select id="lineSelect" class="form__select form__select--sm">
+        {% for l in lines %}
+        <option value="{{ l }}" {% if l == selected_line %}selected{% endif %}>
+          {{ t('line_label') }} {{ l }}
+        </option>
+        {% endfor %}
+      </select>
+      <span class="badge badge--green" id="liveIndicator">● {{ t('badge_live') }}</span>
+    </div>
+  </div>
+
+  <!-- ── VSM Canvas ───────────────────────────────────────────── -->
+  <section class="section vsm-canvas-section">
+    <div class="vsm-scroll-wrap" id="vsmScrollWrap">
+      <svg id="vsmSvg" class="vsm-svg" xmlns="http://www.w3.org/2000/svg">
+        <!-- Renderizado dinámico por JavaScript -->
+      </svg>
+    </div>
+  </section>
+
+  <!-- ── Métricas resumen ─────────────────────────────────────── -->
+  <section class="section">
+    <div class="vsm-metrics-row" id="vsmMetrics">
+      <div class="vsm-metric-card vsm-metric-card--blue">
+        <div class="vsm-metric-icon">⏱</div>
+        <div>
+          <div class="vsm-metric-value" id="mLeadTime">—</div>
+          <div class="vsm-metric-label">{{ t('vsm_lead_time') }}</div>
+        </div>
+      </div>
+      <div class="vsm-metric-card vsm-metric-card--green">
+        <div class="vsm-metric-icon">✅</div>
+        <div>
+          <div class="vsm-metric-value" id="mVaTime">—</div>
+          <div class="vsm-metric-label">{{ t('vsm_va_time') }}</div>
+        </div>
+      </div>
+      <div class="vsm-metric-card vsm-metric-card--purple">
+        <div class="vsm-metric-icon">📊</div>
+        <div>
+          <div class="vsm-metric-value" id="mVaRatio">—</div>
+          <div class="vsm-metric-label">{{ t('vsm_va_ratio') }}</div>
+        </div>
+      </div>
+      <div class="vsm-metric-card vsm-metric-card--red">
+        <div class="vsm-metric-icon">🚧</div>
+        <div>
+          <div class="vsm-metric-value" id="mBottleneck">—</div>
+          <div class="vsm-metric-label">{{ t('vsm_bottleneck') }}</div>
+        </div>
+      </div>
+      <div class="vsm-metric-card vsm-metric-card--teal">
+        <div class="vsm-metric-icon">📦</div>
+        <div>
+          <div class="vsm-metric-value" id="mWip">—</div>
+          <div class="vsm-metric-label">{{ t('vsm_total_wip') }}</div>
+        </div>
+      </div>
+      <div class="vsm-metric-card vsm-metric-card--yellow">
+        <div class="vsm-metric-icon">🎯</div>
+        <div>
+          <div class="vsm-metric-value" id="mOee">—</div>
+          <div class="vsm-metric-label">{{ t('vsm_oee') }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ── Panel lateral de detalle ─────────────────────────────── -->
+<div class="vsm-detail-overlay" id="detailOverlay" hidden>
+  <div class="vsm-detail-panel" id="detailPanel">
+    <div class="vsm-detail-header">
+      <h3 id="detailTitle">—</h3>
+      <button class="vsm-detail-close" id="detailClose">✕</button>
+    </div>
+
+    <div class="vsm-detail-kpis" id="detailKpis"></div>
+
+    <div class="vsm-detail-section">
+      <p class="vsm-detail-section-title">{{ t('vsm_ct_history') }}</p>
+      <div id="detailChart" style="width:100%; height:180px;"></div>
+    </div>
+
+    <div class="vsm-detail-section" id="detailStopsSection">
+      <p class="vsm-detail-section-title">{{ t('vsm_recent_stops') }}</p>
+      <div id="detailStops"></div>
+    </div>
+
+    <div class="vsm-detail-section">
+      <button class="btn btn--primary" style="width:100%" id="detailAiBtn">
+        🤖 {{ t('vsm_ask_ai') }}
+      </button>
+    </div>
+
+    <div class="vsm-detail-section" id="detailAiSection" hidden>
+      <p class="vsm-detail-section-title">{{ t('vsm_ai_suggestion') }}</p>
+      <div class="vsm-ai-response" id="detailAiResponse">
+        <span class="vsm-spinner">⏳</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────── */
+.vsm-page { padding: 0; }
+.vsm-header { padding: 1.25rem 1.5rem 0; }
+.vsm-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.vsm-select-label { font-size: 0.82rem; color: var(--color-gray-500); font-weight: 600; }
+
+/* ── Canvas scroll ───────────────────────────────────────────── */
+.vsm-canvas-section { padding: 1.25rem 1.5rem; }
+.vsm-scroll-wrap {
+  overflow-x: auto;
+  background: #f0f4f8;
+  border-radius: 10px;
+  border: 1px solid var(--color-gray-200);
+  padding: 1rem 0.5rem;
+  min-height: 320px;
+}
+.vsm-svg { display: block; min-width: 100%; }
+
+/* ── Métricas ────────────────────────────────────────────────── */
+.vsm-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.85rem;
+}
+@media (max-width: 1100px) { .vsm-metrics-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px)  { .vsm-metrics-row { grid-template-columns: repeat(2, 1fr); } }
+
+.vsm-metric-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: #fff; border-radius: 10px; padding: 1rem 1.1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-left: 4px solid transparent;
+}
+.vsm-metric-card--blue   { border-left-color: #1a6faf; }
+.vsm-metric-card--green  { border-left-color: #27ae60; }
+.vsm-metric-card--purple { border-left-color: #8e44ad; }
+.vsm-metric-card--red    { border-left-color: #c0392b; }
+.vsm-metric-card--teal   { border-left-color: #16a085; }
+.vsm-metric-card--yellow { border-left-color: #e67e22; }
+
+.vsm-metric-icon { font-size: 1.4rem; flex-shrink: 0; }
+.vsm-metric-value {
+  font-size: 1.4rem; font-weight: 800; color: #2d3748; line-height: 1.1;
+  transition: color 0.4s;
+}
+.vsm-metric-label {
+  font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #718096; margin-top: 0.1rem;
+}
+
+/* ── Panel lateral ───────────────────────────────────────────── */
+.vsm-detail-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  pointer-events: none;
+}
+.vsm-detail-overlay:not([hidden]) { pointer-events: auto; }
+
+.vsm-detail-panel {
+  position: fixed; top: 56px; right: 0; bottom: 0;
+  width: 340px; background: #fff;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; gap: 0;
+  overflow-y: auto; z-index: 901;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+.vsm-detail-overlay:not([hidden]) .vsm-detail-panel {
+  transform: translateX(0);
+}
+
+.vsm-detail-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0;
+  background: #fff; position: sticky; top: 0; z-index: 1;
+}
+.vsm-detail-header h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+.vsm-detail-close {
+  background: none; border: none; font-size: 1.1rem; cursor: pointer;
+  color: #718096; padding: 0.2rem 0.4rem;
+}
+.vsm-detail-close:hover { color: #2d3748; }
+
+.vsm-detail-section { padding: 1rem 1.25rem; border-bottom: 1px solid #f0f4f8; }
+.vsm-detail-section-title {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #718096; margin-bottom: 0.6rem;
+}
+
+.vsm-detail-kpis {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem; padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #f0f4f8;
+}
+.vsm-kpi-chip {
+  background: #f7fafc; border-radius: 8px; padding: 0.5rem 0.4rem;
+  text-align: center;
+}
+.vsm-kpi-chip__val {
+  font-size: 1.1rem; font-weight: 800; color: #2d3748;
+  display: block; line-height: 1.1;
+}
+.vsm-kpi-chip__lbl {
+  font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+  color: #718096; display: block; margin-top: 0.15rem;
+}
+
+.vsm-stop-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0; font-size: 0.8rem; color: #4a5568;
+  border-bottom: 1px solid #f7fafc;
+}
+.vsm-stop-badge {
+  padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.7rem;
+  font-weight: 700; flex-shrink: 0;
+}
+.vsm-stop-badge--stopped    { background: #fde8e8; color: #c0392b; }
+.vsm-stop-badge--changeover { background: #e8f0fb; color: #1a6faf; }
+.vsm-stop-badge--waiting    { background: #f0f4f8; color: #718096; }
+
+.vsm-ai-response {
+  background: #f7fafc; border-radius: 8px; padding: 0.75rem;
+  font-size: 0.82rem; color: #4a5568; line-height: 1.55;
+  min-height: 60px;
+}
+.vsm-spinner { animation: vsm-pulse 1s infinite; display: inline-block; }
+@keyframes vsm-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── SVG estado colors ───────────────────────────────────────── */
+.vsm-step--green     { fill: #e8f8f0; stroke: #27ae60; }
+.vsm-step--yellow    { fill: #fef9e7; stroke: #e6a817; }
+.vsm-step--red       { fill: #fde8e8; stroke: #c0392b; }
+.vsm-step--blue      { fill: #e8f0fb; stroke: #1a6faf; }
+.vsm-step--gray      { fill: #f0f4f8; stroke: #a0aab4; }
+.vsm-step-rect       { stroke-width: 2; rx: 6; cursor: pointer; transition: fill 0.4s, stroke 0.4s; }
+.vsm-step-rect:hover { filter: brightness(0.95); }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── i18n desde servidor ───────────────────────────────────────
+  const I18N = {
+    linea:       {{ t('line_label') | tojson }},
+    ct:          {{ t('vsm_ct') | tojson }},
+    co:          {{ t('vsm_co') | tojson }},
+    wip:         {{ t('vsm_wip_label') | tojson }},
+    running:     {{ t('vsm_status_running') | tojson }},
+    stopped:     {{ t('vsm_status_stopped') | tojson }},
+    changeover:  {{ t('vsm_status_changeover') | tojson }},
+    waiting:     {{ t('vsm_status_waiting') | tojson }},
+    noStops:     {{ t('vsm_no_stops') | tojson }},
+    aiLoading:   {{ t('vsm_ai_loading') | tojson }},
+    aiError:     {{ t('vsm_ai_error') | tojson }},
+    supplier:    {{ t('vsm_supplier') | tojson }},
+    customer:    {{ t('vsm_customer') | tojson }},
+    ctHistory:   {{ t('vsm_ct_axis') | tojson }},
+    nominal:     {{ t('vsm_nominal') | tojson }},
+  };
+
+  // ── Estado ───────────────────────────────────────────────────
+  let currentLine = {{ selected_line }};
+  let stepsData = [];
+  let detailChartInst = null;
+  let activeStepId = null;
+  let refreshTimer = null;
+
+  // ── DOM refs ─────────────────────────────────────────────────
+  const lineSelect      = document.getElementById("lineSelect");
+  const vsmSvg          = document.getElementById("vsmSvg");
+  const detailOverlay   = document.getElementById("detailOverlay");
+  const detailPanel     = document.getElementById("detailPanel");
+  const detailClose     = document.getElementById("detailClose");
+  const detailTitle     = document.getElementById("detailTitle");
+  const detailKpis      = document.getElementById("detailKpis");
+  const detailChart     = document.getElementById("detailChart");
+  const detailStops     = document.getElementById("detailStops");
+  const detailStopsSection = document.getElementById("detailStopsSection");
+  const detailAiBtn     = document.getElementById("detailAiBtn");
+  const detailAiSection = document.getElementById("detailAiSection");
+  const detailAiResp    = document.getElementById("detailAiResponse");
+
+  // ── SVG Layout constants ──────────────────────────────────────
+  const STEP_W      = 120;
+  const STEP_H      = 90;
+  const STEP_GAP    = 70;   // gap between boxes (for arrow + WIP)
+  const SVG_TOP     = 60;   // space for supplier/customer bar
+  const SVG_BOT_TL  = 50;   // space for timeline below
+  const STEP_Y      = SVG_TOP + 20;
+  const TL_Y        = STEP_Y + STEP_H + 30;  // timeline Y
+  const SVG_H       = TL_Y + SVG_BOT_TL + 20;
+  const INV_SIZE    = 18;   // triangle size
+
+  const COLOR_MAP = {
+    green:  { fill: "#e8f8f0", stroke: "#27ae60", text: "#1a5c38" },
+    yellow: { fill: "#fef9e7", stroke: "#e6a817", text: "#7a5800" },
+    red:    { fill: "#fde8e8", stroke: "#c0392b", text: "#7a1515" },
+    blue:   { fill: "#e8f0fb", stroke: "#1a6faf", text: "#0c3a6e" },
+    gray:   { fill: "#f0f4f8", stroke: "#a0aab4", text: "#4a5568" },
+  };
+
+  // ── SVG helpers ───────────────────────────────────────────────
+  function svgEl(tag, attrs = {}) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  function svgText(txt, x, y, attrs = {}) {
+    const el = svgEl("text", { x, y, "text-anchor": "middle", ...attrs });
+    el.textContent = txt;
+    return el;
+  }
+
+  function truncate(s, maxLen = 14) {
+    return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
+  }
+
+  function fmtCT(s) {
+    if (!s) return "—";
+    return s >= 60 ? `${Math.round(s / 60)}m${Math.round(s % 60)}s` : `${Number(s).toFixed(1)}s`;
+  }
+
+  // ── Draw VSM ──────────────────────────────────────────────────
+  function drawVSM(steps) {
+    stepsData = steps;
+    const n = steps.length;
+    const totalW = n * STEP_W + (n - 1) * STEP_GAP + 160; // +padding supplier/customer
+    const startX = 80; // offset for supplier icon
+
+    vsmSvg.setAttribute("width",  Math.max(totalW, 900));
+    vsmSvg.setAttribute("height", SVG_H);
+    vsmSvg.innerHTML = "";
+
+    // ── Background ──
+    vsmSvg.appendChild(svgEl("rect", {
+      x: 0, y: 0, width: totalW, height: SVG_H,
+      fill: "#f0f4f8", rx: 10,
+    }));
+
+    // ── Supplier icon (left) ──
+    drawActorIcon(vsmSvg, 10, STEP_Y, I18N.supplier, "📦");
+
+    // ── Customer icon (right) ──
+    const lastX = startX + (n - 1) * (STEP_W + STEP_GAP);
+    drawActorIcon(vsmSvg, lastX + STEP_W + 10, STEP_Y, I18N.customer, "🏭");
+
+    // ── Timeline base line ──
+    const tlX1 = startX;
+    const tlX2 = lastX + STEP_W;
+    vsmSvg.appendChild(svgEl("line", {
+      x1: tlX1, y1: TL_Y + 10, x2: tlX2, y2: TL_Y + 10,
+      stroke: "#4a5568", "stroke-width": 2,
+    }));
+
+    // ── Draw each step ──
+    let tlX = tlX1;
+    for (let i = 0; i < n; i++) {
+      const step  = steps[i];
+      const boxX  = startX + i * (STEP_W + STEP_GAP);
+      const color = step.color || "gray";
+      const c     = COLOR_MAP[color];
+
+      // Process box
+      drawProcessBox(vsmSvg, step, boxX, STEP_Y, c);
+
+      // Timeline segment (VA = green strip, NVA = red strip)
+      const ctSec = step.actual_cycle_time || step.nom_ct || 10;
+      const isVA  = step.step_type === "value-add";
+      const tlW   = Math.max(8, Math.min(STEP_W, ctSec * 2.5));
+
+      vsmSvg.appendChild(svgEl("rect", {
+        x: tlX, y: TL_Y, width: tlW, height: 20,
+        fill: isVA ? "#c6f6d5" : "#fed7d7",
+        rx: 3,
+      }));
+      vsmSvg.appendChild(svgText(fmtCT(ctSec), tlX + tlW / 2, TL_Y + 14, {
+        "font-size": "9", fill: isVA ? "#1a5c38" : "#7a1515", "font-weight": "600",
+      }));
+      tlX += tlW + (STEP_GAP - tlW < 0 ? 0 : STEP_GAP - tlW);
+
+      // Arrow + WIP triangle (between steps)
+      if (i < n - 1) {
+        const arrowX = boxX + STEP_W;
+        const arrowMid = arrowX + STEP_GAP / 2;
+        const arrowY = STEP_Y + STEP_H / 2;
+
+        // Push arrow (VSM style)
+        drawPushArrow(vsmSvg, arrowX + 4, arrowY, STEP_GAP - 8);
+
+        // WIP triangle above arrow
+        const nextStep = steps[i + 1];
+        const wip = (step.units_in_wip || 0);
+        drawWIPTriangle(vsmSvg, arrowMid, STEP_Y - 5, wip);
+      }
+    }
+
+    // ── Timeline label ──
+    vsmSvg.appendChild(svgText("← VA / NVA →", (tlX1 + tlX2) / 2, TL_Y + 38, {
+      "font-size": "9", fill: "#718096", "font-style": "italic",
+    }));
+  }
+
+  function drawActorIcon(svg, x, y, label, icon) {
+    // Factory rectangle (VSM standard: box with D-line)
+    const g = svgEl("g");
+    g.appendChild(svgEl("rect", {
+      x, y, width: 44, height: 44, fill: "#fff",
+      stroke: "#4a5568", "stroke-width": 1.5, rx: 4,
+    }));
+    const t = svgEl("text", { x: x + 22, y: y + 28, "text-anchor": "middle", "font-size": "20" });
+    t.textContent = icon;
+    g.appendChild(t);
+    g.appendChild(svgText(label, x + 22, y + 58, {
+      "font-size": "10", fill: "#4a5568", "font-weight": "600",
+    }));
+    svg.appendChild(g);
+  }
+
+  function drawProcessBox(svg, step, x, y, c) {
+    const g = svgEl("g", { "data-step-id": step.step_id, class: "vsm-step-group" });
+    g.style.cursor = "pointer";
+
+    // Main box
+    const rect = svgEl("rect", {
+      x, y, width: STEP_W, height: STEP_H,
+      fill: c.fill, stroke: c.stroke, "stroke-width": 2, rx: 6,
+      class: "vsm-step-rect",
+    });
+    g.appendChild(rect);
+
+    // Bottom status bar
+    const statusColors = { running: "#27ae60", stopped: "#c0392b", changeover: "#1a6faf", waiting: "#a0aab4" };
+    const barColor = statusColors[step.status] || "#a0aab4";
+    g.appendChild(svgEl("rect", {
+      x, y: y + STEP_H - 14, width: STEP_W, height: 14,
+      fill: barColor, rx: 4,
+    }));
+    // Mask top of bar to keep bottom rounded only
+    g.appendChild(svgEl("rect", {
+      x, y: y + STEP_H - 14, width: STEP_W, height: 7,
+      fill: barColor,
+    }));
+
+    // Step name
+    const nameLines = wrapText(step.step_name, 16);
+    nameLines.forEach((line, i) => {
+      g.appendChild(svgText(line, x + STEP_W / 2, y + 18 + i * 14, {
+        "font-size": "11", "font-weight": "700", fill: c.text,
+      }));
+    });
+
+    // KPIs inside box
+    const ctVal = fmtCT(step.actual_cycle_time);
+    const nomVal = fmtCT(step.nom_ct);
+    const coVal = step.nom_co ? `${step.nom_co}m` : "—";
+    const wipVal = step.units_in_wip != null ? step.units_in_wip : "—";
+
+    const kyStart = y + 44;
+    [
+      [`C/T: ${ctVal}`, c.text],
+      [`C/O: ${coVal}`, c.text],
+      [`WIP: ${wipVal}`, c.text],
+    ].forEach(([txt, col], i) => {
+      g.appendChild(svgText(txt, x + STEP_W / 2, kyStart + i * 12, {
+        "font-size": "9.5", fill: col,
+      }));
+    });
+
+    // Status label in bar
+    const statusLabel = { running: "▶ RUN", stopped: "■ STOP", changeover: "⟳ C/O", waiting: "◌ WAIT" };
+    g.appendChild(svgText(statusLabel[step.status] || "◌ WAIT", x + STEP_W / 2, y + STEP_H - 3, {
+      "font-size": "8.5", fill: "#fff", "font-weight": "700",
+    }));
+
+    g.addEventListener("click", () => openDetail(step.step_id));
+    svg.appendChild(g);
+  }
+
+  function drawPushArrow(svg, x, y, length) {
+    // VSM push arrow: filled block arrow
+    const arrowHead = 10;
+    const shaftH = 8;
+    const pts = [
+      `${x},${y - shaftH / 2}`,
+      `${x + length - arrowHead},${y - shaftH / 2}`,
+      `${x + length - arrowHead},${y - shaftH}`,
+      `${x + length},${y}`,
+      `${x + length - arrowHead},${y + shaftH}`,
+      `${x + length - arrowHead},${y + shaftH / 2}`,
+      `${x},${y + shaftH / 2}`,
+    ].join(" ");
+    svg.appendChild(svgEl("polygon", {
+      points: pts, fill: "#4a5568", stroke: "none",
+    }));
+  }
+
+  function drawWIPTriangle(svg, cx, cy, wip) {
+    const s = INV_SIZE;
+    const pts = `${cx},${cy - s} ${cx - s},${cy + 4} ${cx + s},${cy + 4}`;
+    const g = svgEl("g");
+    g.appendChild(svgEl("polygon", {
+      points: pts, fill: "#fef9e7", stroke: "#e6a817", "stroke-width": 1.5,
+    }));
+    g.appendChild(svgText(wip.toString(), cx, cy + 2, {
+      "font-size": "8", fill: "#7a5800", "font-weight": "700",
+    }));
+    svg.appendChild(g);
+  }
+
+  function wrapText(text, maxLen) {
+    if (text.length <= maxLen) return [text];
+    const words = text.split(" ");
+    const lines = [];
+    let cur = "";
+    for (const w of words) {
+      if ((cur + " " + w).trim().length > maxLen) {
+        if (cur) lines.push(cur);
+        cur = w;
+      } else {
+        cur = (cur + " " + w).trim();
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.slice(0, 2);
+  }
+
+  // ── Update metrics ────────────────────────────────────────────
+  function updateMetrics(m) {
+    const s = m.lead_time_s || 0;
+    const va = m.va_time_s || 0;
+
+    function setVal(id, val) {
+      const el = document.getElementById(id);
+      if (el && el.textContent !== val) {
+        el.style.transition = "opacity .3s";
+        el.style.opacity = "0.3";
+        setTimeout(() => { el.textContent = val; el.style.opacity = "1"; }, 200);
+      }
+    }
+
+    setVal("mLeadTime", fmtCT(s));
+    setVal("mVaTime",   fmtCT(va));
+    setVal("mVaRatio",  (m.va_ratio_pct || 0) + "%");
+    setVal("mBottleneck", m.bottleneck || "—");
+    setVal("mWip",      (m.total_wip || 0) + " uds");
+    setVal("mOee",      (m.oee_pct || 0) + "%");
+  }
+
+  // ── Refresh live data ─────────────────────────────────────────
+  async function refreshLive() {
+    try {
+      const res = await fetch(`/api/vsm/live-data?line=${currentLine}`);
+      const data = await res.json();
+      if (!data.steps || !data.steps.length) return;
+
+      if (stepsData.length !== data.steps.length) {
+        // First load or line change → full redraw
+        drawVSM(data.steps);
+      } else {
+        // Incremental update: update colors + values in-place
+        data.steps.forEach(step => {
+          const g = vsmSvg.querySelector(`[data-step-id="${step.step_id}"]`);
+          if (!g) return;
+          const c = COLOR_MAP[step.color] || COLOR_MAP.gray;
+          const rect = g.querySelector(".vsm-step-rect");
+          if (rect) { rect.setAttribute("fill", c.fill); rect.setAttribute("stroke", c.stroke); }
+        });
+        stepsData = data.steps;
+      }
+      updateMetrics(data.metrics);
+    } catch (e) {
+      console.warn("VSM refresh error", e);
+    }
+  }
+
+  // ── Detail panel ──────────────────────────────────────────────
+  async function openDetail(stepId) {
+    activeStepId = stepId;
+    detailOverlay.hidden = false;
+    detailAiSection.hidden = true;
+    detailTitle.textContent = "…";
+    detailKpis.innerHTML = "";
+    detailStops.innerHTML = "";
+
+    try {
+      const res = await fetch(`/api/vsm/step-history/${stepId}`);
+      const data = await res.json();
+      const step = data.step;
+      const history = data.history || [];
+      const stops = data.recent_stops || [];
+
+      detailTitle.textContent = step.step_name;
+
+      // KPI chips
+      const latest = history[history.length - 1];
+      const chips = [
+        { val: fmtCT(latest?.actual_cycle_time), lbl: "C/T actual" },
+        { val: (latest?.units_in_wip ?? "—"), lbl: "WIP" },
+        { val: (latest?.defect_count ?? "—"), lbl: "Defectos" },
+      ];
+      detailKpis.innerHTML = chips.map(c => `
+        <div class="vsm-kpi-chip">
+          <span class="vsm-kpi-chip__val">${c.val}</span>
+          <span class="vsm-kpi-chip__lbl">${c.lbl}</span>
+        </div>`).join("");
+
+      // ECharts CT history
+      renderDetailChart(history, step.nominal_cycle_time_seconds);
+
+      // Stops
+      if (stops.length) {
+        detailStops.innerHTML = stops.map(s => `
+          <div class="vsm-stop-item">
+            <span class="vsm-stop-badge vsm-stop-badge--${s.status}">${s.status.toUpperCase()}</span>
+            <span>${(s.timestamp || "").slice(11, 16)}</span>
+            <span>${fmtCT(s.actual_cycle_time)}</span>
+          </div>`).join("");
+      } else {
+        detailStops.innerHTML = `<p style="font-size:.8rem;color:#718096;">${I18N.noStops}</p>`;
+      }
+
+    } catch (e) {
+      detailTitle.textContent = "Error";
+    }
+  }
+
+  function renderDetailChart(history, nomCT) {
+    if (!detailChartInst) {
+      detailChartInst = echarts.init(detailChart, null, { renderer: "canvas" });
+      window.addEventListener("resize", () => detailChartInst && detailChartInst.resize());
+    }
+    const times = history.map(r => (r.timestamp || "").slice(11, 16));
+    const vals  = history.map(r => +(r.actual_cycle_time || 0).toFixed(2));
+    const nomLine = history.map(() => nomCT);
+
+    detailChartInst.setOption({
+      backgroundColor: "transparent",
+      textStyle: { fontFamily: "inherit", fontSize: 10, color: "#4a5568" },
+      tooltip: { trigger: "axis", formatter: params =>
+        params.map(p => `${p.seriesName}: ${p.value}s`).join("<br>")
+      },
+      legend: { bottom: 0, textStyle: { fontSize: 9 }, data: ["C/T real", I18N.nominal] },
+      grid: { top: 10, right: 10, bottom: 30, left: 38 },
+      xAxis: { type: "category", data: times, axisLabel: { fontSize: 8, rotate: 30 } },
+      yAxis: { type: "value", name: "seg", nameTextStyle: { fontSize: 8 },
+               axisLabel: { fontSize: 8 } },
+      series: [
+        { name: "C/T real", type: "line", data: vals, smooth: true,
+          lineStyle: { width: 2, color: "#0057a8" },
+          areaStyle: { opacity: 0.1, color: "#0057a8" },
+          itemStyle: { color: "#0057a8" } },
+        { name: I18N.nominal, type: "line", data: nomLine,
+          lineStyle: { width: 1.5, color: "#e6a817", type: "dashed" },
+          itemStyle: { color: "#e6a817" }, symbol: "none" },
+      ],
+    });
+    setTimeout(() => detailChartInst.resize(), 50);
+  }
+
+  // ── AI Analysis ───────────────────────────────────────────────
+  detailAiBtn.addEventListener("click", async () => {
+    if (!activeStepId) return;
+    detailAiSection.hidden = false;
+    detailAiResp.innerHTML = `<span class="vsm-spinner">⏳</span> ${I18N.aiLoading}`;
+
+    const step = stepsData.find(s => s.step_id === activeStepId);
+    if (!step) { detailAiResp.textContent = I18N.aiError; return; }
+
+    const prompt = `Analiza el paso de proceso "${step.step_name}" en la línea ${currentLine}.
+Cycle time actual: ${fmtCT(step.actual_cycle_time)} (nominal: ${fmtCT(step.nom_ct)}).
+Estado: ${step.status}. WIP: ${step.units_in_wip} unidades.
+Tipo: ${step.step_type}.
+¿Cuáles son las causas más probables de desviación y qué mejoras Lean/VSM recomiendas?`;
+
+    try {
+      const res = await fetch("/api/assistant/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: prompt, shift_id: null }),
+      });
+      const data = await res.json();
+      detailAiResp.textContent = data.response || data.text || I18N.aiError;
+    } catch {
+      detailAiResp.textContent = I18N.aiError;
+    }
+  });
+
+  // ── Close panel ───────────────────────────────────────────────
+  detailClose.addEventListener("click", () => {
+    detailOverlay.hidden = true;
+    activeStepId = null;
+  });
+  detailOverlay.addEventListener("click", (e) => {
+    if (e.target === detailOverlay) {
+      detailOverlay.hidden = true;
+      activeStepId = null;
+    }
+  });
+
+  // ── Line selector ─────────────────────────────────────────────
+  lineSelect.addEventListener("change", () => {
+    currentLine = parseInt(lineSelect.value, 10);
+    stepsData = [];
+    vsmSvg.innerHTML = "";
+    refreshLive();
+  });
+
+  // ── Init + polling ────────────────────────────────────────────
+  refreshLive();
+  refreshTimer = setInterval(refreshLive, 15000);
+
+})();
+</script>
+{% endblock %}
