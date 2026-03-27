@@ -1,5 +1,119 @@
 /* ============================================================
-   KPI Cards (dashboard turno activo)
+   Dashboard — estilos para ECharts y layout industrial
+   ============================================================ */
+
+/* ── Variables de tema oscuro para gráficos ── */
+:root {
+  --dash-bg:        #1e2a3a;
+  --dash-card:      #243447;
+  --dash-border:    #2e3f52;
+  --dash-text:      #cdd6e0;
+  --dash-text-dim:  #6b7f94;
+}
+
+/* ============================================================
+   Tarjetas métricas superiores (supervisor)
+   ============================================================ */
+.sv-metric-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 1200px) { .sv-metric-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px)  { .sv-metric-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 420px)  { .sv-metric-row { grid-template-columns: 1fr; } }
+
+.sv-metric-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--dash-card);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  border-left: 4px solid transparent;
+  transition: transform 0.15s;
+}
+.sv-metric-card:hover { transform: translateY(-2px); }
+
+.sv-metric-card--blue   { border-left-color: #1a6faf; }
+.sv-metric-card--green  { border-left-color: #27ae60; }
+.sv-metric-card--yellow { border-left-color: #e67e22; }
+.sv-metric-card--red    { border-left-color: #c0392b; }
+.sv-metric-card--purple { border-left-color: #8e44ad; }
+.sv-metric-card--teal   { border-left-color: #16a085; }
+
+.sv-metric-card__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.sv-metric-card__value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--dash-text);
+  line-height: 1.1;
+}
+
+.sv-metric-card__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dash-text-dim);
+  margin-top: 0.15rem;
+}
+
+/* ============================================================
+   Grid de gráficos supervisor (2-3 columnas)
+   ============================================================ */
+.sv-charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 960px) { .sv-charts-grid { grid-template-columns: 1fr; } }
+
+.sv-chart-card {
+  background: var(--dash-card);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem 0.75rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  border: 1px solid var(--dash-border);
+}
+
+.sv-chart-card--wide { grid-column: 1; }
+.sv-chart-card--full { grid-column: 1 / -1; }
+
+@media (max-width: 960px) {
+  .sv-chart-card--wide,
+  .sv-chart-card--full { grid-column: 1; }
+}
+
+.sv-chart-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.sv-chart-card__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dash-text);
+  margin: 0;
+}
+
+/* ============================================================
+   KPI Cards (turno activo)
    ============================================================ */
 .kpi-grid {
   display: grid;
@@ -8,19 +122,15 @@
 }
 
 .kpi-card {
-  background: #fff;
+  background: var(--dash-card);
   border-radius: 10px;
   padding: 1.25rem 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   text-align: center;
   border-top: 3px solid var(--color-primary);
 }
 
-.kpi-card--oee {
-  border-top-color: var(--color-success);
-  grid-column: span 1;
-}
-
+.kpi-card--oee   { border-top-color: var(--color-success); }
 .kpi-card--alert { border-top-color: var(--color-danger); }
 
 .kpi-card__label {
@@ -28,64 +138,36 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
   margin-bottom: 0.4rem;
 }
 
 .kpi-card__value {
   font-size: 2rem;
   font-weight: 800;
-  color: var(--color-gray-900);
+  color: var(--dash-text);
   line-height: 1.1;
 }
 
-.kpi-card--oee .kpi-card__value { color: var(--color-success); }
+.kpi-card--oee .kpi-card__value   { color: var(--color-success); }
 .kpi-card--alert .kpi-card__value { color: var(--color-danger); }
 
 .kpi-card__unit {
   font-size: 0.75rem;
-  color: var(--color-gray-400);
-  margin-top: 0.2rem;
-}
-
-.kpi-card__sub {
-  font-size: 0.75rem;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
   margin-top: 0.2rem;
 }
 
 /* ============================================================
-   Chart container
+   Chart container (turno activo)
    ============================================================ */
 .chart-container {
-  background: #fff;
+  background: var(--dash-card);
   border-radius: 10px;
   padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border: 1px solid var(--dash-border);
   min-height: 280px;
-}
-
-/* ============================================================
-   Comments panel
-   ============================================================ */
-.comments-panel {
-  background: #fff;
-  border-radius: 10px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  max-height: 520px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  flex: 1;
-  overflow-y: auto;
 }
 
 /* ============================================================
@@ -93,23 +175,20 @@
    ============================================================ */
 .dash-top {
   display: grid;
-  grid-template-columns: 260px 1fr 1fr;
+  grid-template-columns: 280px 1fr 1fr;
   gap: 1rem;
   align-items: start;
 }
 
-@media (max-width: 900px) {
-  .dash-top { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 580px) {
-  .dash-top { grid-template-columns: 1fr; }
-}
+@media (max-width: 900px) { .dash-top { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 580px) { .dash-top { grid-template-columns: 1fr; } }
 
 .dash-card {
-  background: #fff;
+  background: var(--dash-card);
   border-radius: 10px;
   padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border: 1px solid var(--dash-border);
 }
 
 .dash-card__label {
@@ -117,20 +196,20 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
   margin-bottom: 0.5rem;
 }
 
 .dash-card__value {
   font-size: 2.4rem;
   font-weight: 800;
-  color: var(--color-gray-900);
+  color: var(--dash-text);
   line-height: 1;
 }
 
 .dash-card__unit {
   font-size: 0.78rem;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
   margin-top: 0.2rem;
 }
 
@@ -139,65 +218,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   border-top: 3px solid var(--color-success);
-}
-
-.dash-gauge-wrap {
-  position: relative;
-  width: 200px;
-  height: 110px;
-}
-
-.dash-gauge-wrap canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.dash-gauge-center {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  pointer-events: none;
-}
-
-.dash-gauge-value {
-  display: block;
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--color-gray-900);
-  line-height: 1;
-}
-
-.dash-gauge-unit {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-gray-400);
-}
-
-.dash-gauge-label {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-gray-400);
 }
 
 .dash-gauge-breakdown {
   display: flex;
   gap: 1rem;
   font-size: 0.8rem;
-  color: var(--color-gray-700);
+  color: var(--dash-text-dim);
 }
 
-.dash-gauge-breakdown strong { color: var(--color-gray-900); }
+.dash-gauge-breakdown strong { color: var(--dash-text); }
 
 .dash-updated {
   font-size: 0.72rem;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
 }
 
 /* ── Unidades ── */
@@ -212,18 +248,18 @@
   display: flex;
   gap: 1rem;
   font-size: 0.82rem;
-  color: var(--color-gray-700);
+  color: var(--dash-text-dim);
   flex-wrap: wrap;
 }
 
-.dash-mini-stat strong { color: var(--color-gray-900); }
+.dash-mini-stat strong { color: var(--dash-text); }
 
 /* ── Progress bars ── */
 .dash-progress-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
 
 .dash-progress-bar {
   height: 10px;
-  background: var(--color-gray-200);
+  background: var(--dash-border);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -241,15 +277,13 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
 }
 
-.dash-progress-meta strong { color: var(--color-gray-700); }
+.dash-progress-meta strong { color: var(--dash-text); }
 
 /* ── Velocidad ── */
-.dash-speed-card {
-  border-top: 3px solid #8e44ad;
-}
+.dash-speed-card { border-top: 3px solid #8e44ad; }
 
 .dash-speed-badge {
   display: inline-block;
@@ -260,9 +294,9 @@
   font-weight: 700;
 }
 
-.dash-speed-badge--good { background: #d4edda; color: #155724; }
-.dash-speed-badge--warn { background: #fff3cd; color: #856404; }
-.dash-speed-badge--bad  { background: #f8d7da; color: #721c24; }
+.dash-speed-badge--good { background: #1a3a26; color: #5cb85c; }
+.dash-speed-badge--warn { background: #3a2e10; color: #e6a817; }
+.dash-speed-badge--bad  { background: #3a1a1a; color: #e05555; }
 
 /* ── Header actions ── */
 .page-header__actions {
@@ -274,10 +308,10 @@
 
 /* ── Formulario manual KPI ── */
 .kpi-entry-panel {
-  background: #fff;
+  background: var(--dash-card);
   border-radius: 10px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   border-top: 3px solid var(--color-primary);
 }
 
@@ -290,7 +324,7 @@
 
 .kpi-entry-hint {
   font-size: 0.85rem;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
   margin-bottom: 1.25rem;
 }
 
@@ -303,19 +337,19 @@
 .form__input {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1.5px solid var(--color-gray-200);
+  border: 1.5px solid var(--dash-border);
   border-radius: var(--radius);
   font-size: 0.9rem;
   font-family: var(--font);
-  color: var(--color-gray-900);
-  background: #fff;
+  color: var(--dash-text);
+  background: var(--dash-bg);
   transition: border-color 0.15s;
 }
 
 .form__input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0,87,168,0.12);
+  box-shadow: 0 0 0 3px rgba(0,87,168,0.18);
 }
 
 .kpi-entry-actions {
@@ -325,7 +359,7 @@
 }
 
 /* ============================================================
-   Supervisor dashboard grid
+   Supervisor: tarjetas de línea activa
    ============================================================ */
 .supervisor-grid {
   display: grid;
@@ -334,10 +368,12 @@
 }
 
 .supervisor-card {
-  background: #fff;
+  background: var(--dash-card);
   border-radius: 10px;
   padding: 1.25rem;
   box-shadow: var(--shadow);
+  border-top: 3px solid var(--color-primary);
+  border: 1px solid var(--dash-border);
   border-top: 3px solid var(--color-primary);
 }
 
@@ -350,8 +386,7 @@
 
 .supervisor-card__operator {
   font-size: 0.85rem;
-  color: var(--color-gray-400);
-  margin-bottom: 0.75rem;
+  color: var(--dash-text-dim);
 }
 
 .supervisor-card__kpis {
@@ -363,7 +398,7 @@
 .mini-kpi {
   flex: 1;
   text-align: center;
-  background: var(--color-gray-100);
+  background: rgba(255,255,255,0.05);
   border-radius: 6px;
   padding: 0.4rem;
 }
@@ -372,7 +407,7 @@
   display: block;
   font-size: 0.65rem;
   text-transform: uppercase;
-  color: var(--color-gray-400);
+  color: var(--dash-text-dim);
   font-weight: 600;
 }
 
@@ -380,5 +415,12 @@
   display: block;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--color-gray-900);
+  color: var(--dash-text);
+}
+
+/* badge naranja oscuro exclusivo del dashboard */
+.sv-chart-card .badge--orange {
+  background: rgba(230,126,34,0.18);
+  color: #e6a817;
+  border: 1px solid rgba(230,126,34,0.35);
 }

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Dashboard KPI — Todas las Líneas{% endblock %}
+{% block title %}Dashboard KPI — Supervisor{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
@@ -10,23 +10,153 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- ── Cabecera ─────────────────────────────────────────────── -->
 <div class="page-header">
   <div>
     <h1>Dashboard — Supervisor</h1>
-    <p class="page-header__sub">Visión global de todas las líneas</p>
+    <p class="page-header__sub">Visión global · Actualización automática cada 30 s</p>
   </div>
-  <div style="display:flex; gap:0.75rem; align-items:center;">
+  <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
     <span class="badge badge--green" id="live-indicator">● EN VIVO</span>
+
+    <!-- Filtro de línea -->
+    <select id="filter-line-select" class="form__select form__select--sm"
+            title="Filtrar por línea">
+      <option value="">Todas las líneas</option>
+      {% for n in range(1,6) %}
+      <option value="{{ n }}" {% if request.args.get('line')|int == n %}selected{% endif %}>
+        Línea {{ n }}
+      </option>
+      {% endfor %}
+    </select>
+
     <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary btn--sm">
-      Ver historial completo
+      Ver historial
     </a>
   </div>
 </div>
 
-<!-- ── Líneas activas ── -->
+<!-- ── Tarjetas métricas superiores ─────────────────────────── -->
 <section class="section">
-  <h2 class="section__title">Líneas Activas</h2>
-  {% if active_lines %}
+  <div class="sv-metric-row">
+
+    {% if active_lines %}
+    {% set total_lines = active_lines | length %}
+    {% else %}
+    {% set total_lines = 0 %}
+    {% endif %}
+
+    <div class="sv-metric-card sv-metric-card--blue">
+      <div class="sv-metric-card__icon">⚡</div>
+      <div class="sv-metric-card__body">
+        <div class="sv-metric-card__value">{{ total_lines }}</div>
+        <div class="sv-metric-card__label">Líneas Activas</div>
+      </div>
+    </div>
+
+    <div class="sv-metric-card sv-metric-card--green">
+      <div class="sv-metric-card__icon">📦</div>
+      <div class="sv-metric-card__body">
+        <div class="sv-metric-card__value" id="sv-total-units">—</div>
+        <div class="sv-metric-card__label">Uds. Producidas (turno)</div>
+      </div>
+    </div>
+
+    <div class="sv-metric-card sv-metric-card--yellow">
+      <div class="sv-metric-card__icon">🎯</div>
+      <div class="sv-metric-card__body">
+        <div class="sv-metric-card__value" id="sv-avg-oee">—</div>
+        <div class="sv-metric-card__label">OEE Promedio</div>
+      </div>
+    </div>
+
+    <div class="sv-metric-card sv-metric-card--red">
+      <div class="sv-metric-card__icon">⚠</div>
+      <div class="sv-metric-card__body">
+        <div class="sv-metric-card__value" id="sv-avg-reject">—</div>
+        <div class="sv-metric-card__label">Tasa Rechazo Prom.</div>
+      </div>
+    </div>
+
+    <div class="sv-metric-card sv-metric-card--purple">
+      <div class="sv-metric-card__icon">⏱</div>
+      <div class="sv-metric-card__body">
+        <div class="sv-metric-card__value" id="sv-total-downtime">—</div>
+        <div class="sv-metric-card__label">Parada Total (min)</div>
+      </div>
+    </div>
+
+    <div class="sv-metric-card sv-metric-card--teal">
+      <div class="sv-metric-card__icon">✅</div>
+      <div class="sv-metric-card__body">
+        <div class="sv-metric-card__value" id="sv-avg-rft">—</div>
+        <div class="sv-metric-card__label">Right First Time</div>
+      </div>
+    </div>
+
+  </div>
+  <div style="text-align:right; font-size:0.72rem; color:var(--color-gray-400); margin-top:0.4rem;">
+    Última actualización: <span id="sv-last-update">—</span>
+  </div>
+</section>
+
+<!-- ── Grid principal de gráficos ───────────────────────────── -->
+<section class="section">
+  <div class="sv-charts-grid">
+
+    <!-- Fila 1 izquierda: Producción real vs objetivo -->
+    <div class="sv-chart-card sv-chart-card--wide">
+      <div class="sv-chart-card__header">
+        <h3 class="sv-chart-card__title">Producción Real vs Objetivo por Línea</h3>
+        <span class="badge badge--blue">Turno actual</span>
+      </div>
+      <div id="chart-bars" style="width:100%; height:240px;"></div>
+    </div>
+
+    <!-- Fila 1 derecha: Donut tipos de parada -->
+    <div class="sv-chart-card">
+      <div class="sv-chart-card__header">
+        <h3 class="sv-chart-card__title">Distribución de Paradas</h3>
+        <span class="badge badge--orange">Por tipo</span>
+      </div>
+      <div id="chart-donut" style="width:100%; height:240px;"></div>
+    </div>
+
+    <!-- Fila 2 izquierda: Área apilada D×R×C -->
+    <div class="sv-chart-card">
+      <div class="sv-chart-card__header">
+        <h3 class="sv-chart-card__title">Componentes OEE en el Turno</h3>
+        <span class="badge badge--green">Disponib. · Rend. · Calidad</span>
+      </div>
+      <div id="chart-area" style="width:100%; height:240px;"></div>
+    </div>
+
+    <!-- Fila 2 derecha: Línea OEE histórico -->
+    <div class="sv-chart-card">
+      <div class="sv-chart-card__header">
+        <h3 class="sv-chart-card__title">Tendencia OEE — Últimos Turnos</h3>
+        <span class="badge badge--blue">14 turnos</span>
+      </div>
+      <div id="chart-oee-line" style="width:100%; height:240px;"></div>
+    </div>
+
+    <!-- Fila 3: Heatmap ancho completo -->
+    <div class="sv-chart-card sv-chart-card--full">
+      <div class="sv-chart-card__header">
+        <h3 class="sv-chart-card__title">Mapa de Calor — Paradas por Hora y Día</h3>
+        <span class="badge badge--red">minutos de parada</span>
+      </div>
+      <div id="chart-heatmap" style="width:100%; height:220px;"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Líneas activas ────────────────────────────────────────── -->
+{% if active_lines %}
+<section class="section">
+  <h2 class="section__title">Líneas en Producción</h2>
   <div class="supervisor-grid" id="supervisor-grid">
     {% for line in active_lines %}
     <div class="supervisor-card" id="line-card-{{ line.line_number }}"
@@ -36,7 +166,7 @@
         <span class="badge badge--green">ACTIVO</span>
       </div>
       <p class="supervisor-card__operator">{{ line.operator_name }}</p>
-      <p class="supervisor-card__operator" style="font-size:0.78rem;">
+      <p class="supervisor-card__operator" style="font-size:0.78rem; margin-bottom:0.75rem;">
         Desde: {{ line.start_time[11:16] }}
       </p>
       <div class="supervisor-card__kpis">
@@ -62,15 +192,17 @@
     </div>
     {% endfor %}
   </div>
-  {% else %}
+</section>
+{% else %}
+<section class="section">
   <div class="empty-state">
     <p>No hay líneas activas en este momento.</p>
     <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">Iniciar turno</a>
   </div>
-  {% endif %}
 </section>
+{% endif %}
 
-<!-- ── Rendimiento últimos 7 días por línea ── -->
+<!-- ── Rendimiento últimos 7 días ────────────────────────────── -->
 {% if line_perf %}
 <section class="section">
   <h2 class="section__title">Rendimiento por Línea — Últimos 7 días</h2>
@@ -95,7 +227,7 @@
         <div class="dash-progress-bar" style="margin-top:0.4rem;">
           <div class="dash-progress-fill"
                style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%;
-                      background:{% if pct >= 95 %}#27ae60{% elif pct >= 80 %}#f39c12{% else %}#e74c3c{% endif %}">
+                      background:{% if pct >= 95 %}#27ae60{% elif pct >= 80 %}#e67e22{% else %}#c0392b{% endif %}">
           </div>
         </div>
         <div class="dash-progress-meta">
@@ -109,7 +241,7 @@
 </section>
 {% endif %}
 
-<!-- ── Últimos turnos completados ── -->
+<!-- ── Últimos turnos ────────────────────────────────────────── -->
 <section class="section">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
     <h2 class="section__title" style="margin:0;">Últimos Turnos</h2>

@@ -31,14 +31,7 @@
 
     <!-- Gauge OEE -->
     <div class="dash-card dash-gauge-card">
-      <div class="dash-gauge-wrap">
-        <canvas id="oee-gauge"></canvas>
-        <div class="dash-gauge-center">
-          <span class="dash-gauge-value" id="kpi-oee">—</span>
-          <span class="dash-gauge-unit">%</span>
-          <span class="dash-gauge-label">OEE</span>
-        </div>
-      </div>
+      <div id="oee-gauge" style="width:100%; height:200px;"></div>
       <div class="dash-gauge-breakdown">
         <span title="Disponibilidad">D <strong id="kpi-availability">—</strong>%</span>
         <span title="Rendimiento">R <strong id="kpi-performance">—</strong>%</span>
@@ -117,7 +110,7 @@
 
   <div class="chart-container">
     <h2 class="section__title">Evolución OEE</h2>
-    <canvas id="oee-chart"></canvas>
+    <div id="oee-chart" style="width:100%; height:260px;"></div>
   </div>
 
   <!-- Panel de comentarios de voz -->
