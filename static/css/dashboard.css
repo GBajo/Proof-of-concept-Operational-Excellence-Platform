@@ -89,6 +89,242 @@
 }
 
 /* ============================================================
+   Dashboard top row: gauge + units + speed
+   ============================================================ */
+.dash-top {
+  display: grid;
+  grid-template-columns: 260px 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dash-top { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 580px) {
+  .dash-top { grid-template-columns: 1fr; }
+}
+
+.dash-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.dash-card__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gray-400);
+  margin-bottom: 0.5rem;
+}
+
+.dash-card__value {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--color-gray-900);
+  line-height: 1;
+}
+
+.dash-card__unit {
+  font-size: 0.78rem;
+  color: var(--color-gray-400);
+  margin-top: 0.2rem;
+}
+
+/* ── Gauge OEE ── */
+.dash-gauge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 3px solid var(--color-success);
+}
+
+.dash-gauge-wrap {
+  position: relative;
+  width: 200px;
+  height: 110px;
+}
+
+.dash-gauge-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.dash-gauge-center {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.dash-gauge-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-gray-900);
+  line-height: 1;
+}
+
+.dash-gauge-unit {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-gray-400);
+}
+
+.dash-gauge-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray-400);
+}
+
+.dash-gauge-breakdown {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--color-gray-700);
+}
+
+.dash-gauge-breakdown strong { color: var(--color-gray-900); }
+
+.dash-updated {
+  font-size: 0.72rem;
+  color: var(--color-gray-400);
+}
+
+/* ── Unidades ── */
+.dash-units-card {
+  border-top: 3px solid var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dash-units-sub {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.82rem;
+  color: var(--color-gray-700);
+  flex-wrap: wrap;
+}
+
+.dash-mini-stat strong { color: var(--color-gray-900); }
+
+/* ── Progress bars ── */
+.dash-progress-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.dash-progress-bar {
+  height: 10px;
+  background: var(--color-gray-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--color-success);
+  transition: width 0.6s ease, background 0.3s;
+}
+
+.dash-progress-fill--speed { background: var(--color-primary); }
+
+.dash-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+}
+
+.dash-progress-meta strong { color: var(--color-gray-700); }
+
+/* ── Velocidad ── */
+.dash-speed-card {
+  border-top: 3px solid #8e44ad;
+}
+
+.dash-speed-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dash-speed-badge--good { background: #d4edda; color: #155724; }
+.dash-speed-badge--warn { background: #fff3cd; color: #856404; }
+.dash-speed-badge--bad  { background: #f8d7da; color: #721c24; }
+
+/* ── Header actions ── */
+.page-header__actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Formulario manual KPI ── */
+.kpi-entry-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-top: 3px solid var(--color-primary);
+}
+
+.kpi-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-entry-hint {
+  font-size: 0.85rem;
+  color: var(--color-gray-400);
+  margin-bottom: 1.25rem;
+}
+
+.kpi-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+.form__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-family: var(--font);
+  color: var(--color-gray-900);
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.form__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0,87,168,0.12);
+}
+
+.kpi-entry-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+/* ============================================================
    Supervisor dashboard grid
    ============================================================ */
 .supervisor-grid {

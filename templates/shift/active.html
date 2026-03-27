@@ -17,46 +17,102 @@
     <h1>Línea {{ shift.line_number }} — Turno Activo</h1>
     <p class="page-header__sub">{{ shift.operator_name }} · Inicio: {{ shift.start_time[11:16] }}</p>
   </div>
-  <button class="btn btn--danger" onclick="endShift()">Finalizar Turno</button>
+  <div class="page-header__actions">
+    <button class="btn btn--secondary" onclick="toggleKpiForm()">
+      <span aria-hidden="true">📊</span> Registrar KPI
+    </button>
+    <button class="btn btn--danger" onclick="endShift()">Finalizar Turno</button>
+  </div>
 </div>
 
-<!-- KPI Cards -->
+<!-- ── Fila principal: Gauge OEE + Unidades + Velocidad ── -->
+<section class="section">
+  <div class="dash-top">
+
+    <!-- Gauge OEE -->
+    <div class="dash-card dash-gauge-card">
+      <div class="dash-gauge-wrap">
+        <canvas id="oee-gauge"></canvas>
+        <div class="dash-gauge-center">
+          <span class="dash-gauge-value" id="kpi-oee">—</span>
+          <span class="dash-gauge-unit">%</span>
+          <span class="dash-gauge-label">OEE</span>
+        </div>
+      </div>
+      <div class="dash-gauge-breakdown">
+        <span title="Disponibilidad">D <strong id="kpi-availability">—</strong>%</span>
+        <span title="Rendimiento">R <strong id="kpi-performance">—</strong>%</span>
+        <span title="Calidad">C <strong id="kpi-quality-val">—</strong>%</span>
+      </div>
+      <div class="dash-updated">↻ 30 s · <span id="kpi-last-update">—</span></div>
+    </div>
+
+    <!-- Unidades producidas -->
+    <div class="dash-card dash-units-card">
+      <div class="dash-card__label">Unidades Producidas</div>
+      <div class="dash-card__value" id="kpi-units">—</div>
+      <div class="dash-progress-wrap">
+        <div class="dash-progress-bar">
+          <div class="dash-progress-fill" id="units-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="dash-progress-meta">
+          <span id="units-pct-label">0%</span>
+          <span>Obj: <strong id="kpi-units-target">—</strong></span>
+        </div>
+      </div>
+      <div class="dash-units-sub">
+        <span class="dash-mini-stat">Rechazadas <strong id="kpi-rejected-count">—</strong></span>
+        <span class="dash-mini-stat">RFT <strong id="kpi-rft">—</strong>%</span>
+      </div>
+    </div>
+
+    <!-- Velocidad de línea -->
+    <div class="dash-card dash-speed-card">
+      <div class="dash-card__label">Velocidad de Línea</div>
+      <div class="dash-card__value" id="kpi-speed">—</div>
+      <div class="dash-card__unit">uds / hora</div>
+      <div class="dash-progress-wrap" style="margin-top:0.75rem">
+        <div class="dash-progress-bar">
+          <div class="dash-progress-fill dash-progress-fill--speed" id="speed-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="dash-progress-meta">
+          <span>0</span>
+          <span>Nominal: <strong id="kpi-nominal">—</strong></span>
+        </div>
+      </div>
+      <div class="dash-speed-badge" id="speed-indicator"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── KPIs secundarios ── -->
 <section class="section">
   <div class="kpi-grid">
-    <div class="kpi-card kpi-card--oee">
-      <div class="kpi-card__label">OEE</div>
-      <div class="kpi-card__value" id="kpi-oee">—</div>
-      <div class="kpi-card__unit">%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Unidades Producidas</div>
-      <div class="kpi-card__value" id="kpi-units">—</div>
-      <div class="kpi-card__sub" id="kpi-units-target"></div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-card__label">Velocidad Línea</div>
-      <div class="kpi-card__value" id="kpi-speed">—</div>
-      <div class="kpi-card__unit">uds/h</div>
-    </div>
     <div class="kpi-card kpi-card--alert" id="card-reject">
       <div class="kpi-card__label">Tasa de Rechazo</div>
       <div class="kpi-card__value" id="kpi-reject">—</div>
       <div class="kpi-card__unit">%</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-card__label">Tiempo Parada</div>
+      <div class="kpi-card__label">Tiempo de Parada</div>
       <div class="kpi-card__value" id="kpi-downtime">—</div>
       <div class="kpi-card__unit">min</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-card__label">Right First Time</div>
-      <div class="kpi-card__value" id="kpi-rft">—</div>
+      <div class="kpi-card__label">Disponibilidad</div>
+      <div class="kpi-card__value" id="kpi-avail-card">—</div>
+      <div class="kpi-card__unit">%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__label">Rendimiento</div>
+      <div class="kpi-card__value" id="kpi-perf-card">—</div>
       <div class="kpi-card__unit">%</div>
     </div>
   </div>
 </section>
 
-<!-- Gráfico OEE + Panel de comentarios -->
+<!-- ── Gráfico OEE + Panel de voz ── -->
 <section class="section section--row">
 
   <div class="chart-container">
@@ -67,7 +123,6 @@
   <!-- Panel de comentarios de voz -->
   <div class="voice-panel">
 
-    <!-- Cabecera -->
     <div class="voice-panel__header">
       <h2 class="voice-panel__title">
         Comentarios
@@ -75,7 +130,7 @@
       </h2>
       <select id="filter-category" class="form__select form__select--sm"
               onchange="filterComments(this.value)" title="Filtrar por categoría">
-        <option value="">Todas las categorías</option>
+        <option value="">Todas</option>
         <option value="production">Producción</option>
         <option value="quality">Calidad</option>
         <option value="safety">Seguridad</option>
@@ -83,12 +138,10 @@
       </select>
     </div>
 
-    <!-- Grabador de voz -->
     <div class="voice-recorder" id="voice-recorder">
 
-      <!-- Idle: botones de entrada -->
       <div id="recorder-idle">
-        <button class="voice-btn" id="btn-voice" onclick="startRecording()">
+        <button class="voice-btn" onclick="startRecording()">
           <span class="voice-btn__mic" aria-hidden="true">🎤</span>
           <span class="voice-btn__label">Grabar comentario de voz</span>
         </button>
@@ -98,7 +151,6 @@
         </button>
       </div>
 
-      <!-- Grabando -->
       <div id="recorder-active" style="display:none">
         <div class="rec-status">
           <span class="rec-dot"></span>
@@ -113,17 +165,14 @@
         </button>
       </div>
 
-      <!-- Confirmar transcripción -->
       <div id="recorder-confirm" style="display:none">
         <div class="rec-done-header">
           <span class="rec-dot rec-dot--done"></span>
           <span>Transcripción lista — revisa y confirma</span>
-          <button class="btn-rerecord" onclick="startRecording()" title="Volver a grabar">🔄 Repetir</button>
+          <button class="btn-rerecord" onclick="startRecording()">🔄 Repetir</button>
         </div>
         <textarea id="transcript-text" class="form__textarea voice-transcript-area" rows="3"
           placeholder="Texto del comentario..."></textarea>
-
-        <!-- Selector de categoría -->
         <div class="cat-picker" id="cat-picker">
           <button type="button" class="cat-btn cat-btn--production cat-btn--active"
                   data-cat="production" onclick="selectCategory(this)">Producción</button>
@@ -134,7 +183,6 @@
           <button type="button" class="cat-btn cat-btn--maintenance"
                   data-cat="maintenance" onclick="selectCategory(this)">Mantenimiento</button>
         </div>
-
         <div class="recorder-confirm__actions">
           <button class="btn btn--secondary btn--sm" onclick="cancelComment()">Cancelar</button>
           <button class="btn btn--primary btn--sm" id="btn-save" onclick="submitComment()">
@@ -143,7 +191,6 @@
         </div>
       </div>
 
-      <!-- Error de acceso al micrófono -->
       <div id="recorder-error" style="display:none">
         <div class="rec-error">
           <span class="rec-error__icon">⚠️</span>
@@ -152,9 +199,8 @@
         </div>
       </div>
 
-    </div><!-- /voice-recorder -->
+    </div>
 
-    <!-- Historial de comentarios -->
     <div class="comments-scroll" id="comments-list">
       <div class="comments-empty" id="comments-empty">
         <span>Sin comentarios en este turno</span>
@@ -162,8 +208,59 @@
       </div>
     </div>
 
-  </div><!-- /voice-panel -->
+  </div>
 
+</section>
+
+<!-- ── Formulario manual de KPI ── -->
+<section class="section" id="kpi-entry-section" style="display:none">
+  <div class="kpi-entry-panel">
+    <div class="kpi-entry-header">
+      <h2 class="section__title" style="margin:0">Registrar Lectura KPI Manual</h2>
+      <button class="btn btn--secondary btn--sm" onclick="toggleKpiForm()">✕ Cerrar</button>
+    </div>
+    <p class="kpi-entry-hint">Introduce los valores acumulados desde el inicio del turno.</p>
+    <form id="kpi-manual-form" class="kpi-manual-form" onsubmit="submitManualKpi(event)">
+      <div class="kpi-form-grid">
+        <div class="form__group">
+          <label class="form__label" for="f-units-produced">Unidades producidas (acum.)</label>
+          <input type="number" id="f-units-produced" name="units_produced" class="form__input"
+                 min="0" required placeholder="Ej: 4800">
+        </div>
+        <div class="form__group">
+          <label class="form__label" for="f-units-rejected">Unidades rechazadas (acum.)</label>
+          <input type="number" id="f-units-rejected" name="units_rejected" class="form__input"
+                 min="0" required placeholder="Ej: 120">
+        </div>
+        <div class="form__group">
+          <label class="form__label" for="f-downtime">Tiempo de parada acumulado (min)</label>
+          <input type="number" id="f-downtime" name="downtime_minutes" class="form__input"
+                 min="0" step="0.5" required placeholder="Ej: 15">
+        </div>
+        <div class="form__group">
+          <label class="form__label" for="f-speed">Velocidad actual (uds/hora)</label>
+          <input type="number" id="f-speed" name="line_speed" class="form__input"
+                 min="0" required placeholder="Ej: 1150">
+        </div>
+        <div class="form__group">
+          <label class="form__label" for="f-target">Objetivo de producción (uds/turno)</label>
+          <input type="number" id="f-target" name="target_units" class="form__input"
+                 min="1" required value="9600">
+        </div>
+        <div class="form__group">
+          <label class="form__label" for="f-nominal">Velocidad nominal (uds/hora)</label>
+          <input type="number" id="f-nominal" name="nominal_speed" class="form__input"
+                 min="1" required value="1200">
+        </div>
+      </div>
+      <div id="kpi-form-error" class="alert alert--danger" style="display:none"></div>
+      <div class="kpi-entry-actions">
+        <button type="submit" class="btn btn--primary" id="kpi-submit-btn">
+          Guardar lectura
+        </button>
+      </div>
+    </form>
+  </div>
 </section>
 
 <div id="connection-banner" class="alert alert--danger" style="display:none; margin-top:1rem">
