@@ -111,6 +111,16 @@ def init_db(app) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_sugg_shift   ON assistant_suggestions(shift_id);
             CREATE INDEX IF NOT EXISTS idx_sugg_comment ON assistant_suggestions(comment_id);
+
+            CREATE TABLE IF NOT EXISTS saved_charts (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                title        TEXT NOT NULL,
+                prompt_text  TEXT NOT NULL,
+                echarts_json TEXT NOT NULL,
+                created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_charts_created ON saved_charts(created_at);
         """)
         # Índice parcial único: solo un turno activo por línea
         db.execute("""

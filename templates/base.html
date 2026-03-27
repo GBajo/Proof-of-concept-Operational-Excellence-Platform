@@ -43,6 +43,10 @@
          class="nav-link {% if request.path.startswith('/admin') %}nav-link--active{% endif %}">
         📚 Docs
       </a>
+      <a href="{{ url_for('chart_builder.chart_builder') }}"
+         class="nav-link {% if request.path.startswith('/dashboard/builder') %}nav-link--active{% endif %}">
+        ✦ Gráficos IA
+      </a>
     </nav>
 
     <!-- Indicador de turno(s) activo(s) -->

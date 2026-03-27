@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+{% block title %}Generador de Gráficos{% endblock %}
+
+{% block content %}
+<div class="builder-layout">
+
+  <!-- ── Panel lateral: historial ──────────────────────────── -->
+  <aside class="builder-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3 class="sidebar-title">Mis gráficos</h3>
+      <button class="btn btn--icon" id="refreshHistory" title="Actualizar">↻</button>
+    </div>
+
+    <!-- Sugerencias predefinidas -->
+    <div class="sidebar-section">
+      <p class="sidebar-label">Sugerencias rápidas</p>
+      <div class="suggestions-list">
+        <button class="suggestion-chip" data-prompt="OEE de las últimas 24 horas por turno">OEE últimas 24h</button>
+        <button class="suggestion-chip" data-prompt="Top causas de parada de las últimas 2 semanas">Top causas de parada</button>
+        <button class="suggestion-chip" data-prompt="Producción real vs objetivo semanal por línea">Producción vs objetivo</button>
+        <button class="suggestion-chip" data-prompt="Tendencia de rechazos y tasa de rechazo de los últimos 7 días">Tendencia de rechazos</button>
+        <button class="suggestion-chip" data-prompt="Comparativa de rendimiento entre todas las líneas">Comparativa líneas</button>
+        <button class="suggestion-chip" data-prompt="Distribución de comentarios por categoría esta semana">Comentarios por categoría</button>
+      </div>
+    </div>
+
+    <!-- Historial de gráficos guardados -->
+    <div class="sidebar-section sidebar-section--grow">
+      <p class="sidebar-label">Guardados <span class="badge" id="historyCount">0</span></p>
+      <div class="history-list" id="historyList">
+        <p class="history-empty">No hay gráficos guardados aún.</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Área principal ─────────────────────────────────────── -->
+  <main class="builder-main">
+
+    <!-- Cabecera -->
+    <div class="builder-header">
+      <div>
+        <h1 class="page-title">Generador de gráficos <span class="badge badge--blue">IA</span></h1>
+        <p class="page-subtitle">Describe en lenguaje natural el gráfico que necesitas y la IA lo creará automáticamente.</p>
+      </div>
+    </div>
+
+    <!-- Formulario de prompt -->
+    <div class="card builder-prompt-card">
+      <div class="prompt-input-wrap">
+        <textarea
+          id="promptInput"
+          class="prompt-textarea"
+          rows="3"
+          placeholder="Describe el gráfico que necesitas... p.ej. &quot;Muéstrame la tendencia de OEE de la última semana&quot;"
+          maxlength="500"
+        ></textarea>
+        <div class="prompt-actions">
+          <button class="btn btn--icon btn--voice" id="voiceBtn" title="Dictar prompt">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
+            </svg>
+          </button>
+          <span class="prompt-chars" id="promptChars">0 / 500</span>
+          <button class="btn btn--primary btn--generate" id="generateBtn">
+            <span id="generateBtnText">✦ Generar gráfico</span>
+            <span id="generateBtnSpinner" class="spinner" hidden></span>
+          </button>
+        </div>
+      </div>
+      <!-- Estado de voz -->
+      <div id="voiceStatus" class="voice-status" hidden>
+        <span class="voice-dot"></span> Escuchando…
+        <button class="btn btn--sm btn--outline" id="stopVoiceBtn">Detener</button>
+      </div>
+    </div>
+
+    <!-- Área del gráfico generado -->
+    <div class="card chart-area" id="chartArea" hidden>
+      <div class="chart-area-header">
+        <div class="chart-meta">
+          <span class="chart-source-badge" id="chartSourceBadge"></span>
+          <span class="chart-rows-info" id="chartRowsInfo"></span>
+        </div>
+        <div class="chart-area-actions">
+          <button class="btn btn--sm btn--outline" id="modifyBtn">✎ Modificar</button>
+          <button class="btn btn--sm btn--primary" id="saveBtn">⊕ Guardar en mi dashboard</button>
+        </div>
+      </div>
+
+      <!-- Mensaje de error no fatal -->
+      <div class="alert alert--warning" id="chartWarning" hidden></div>
+
+      <!-- Contenedor del gráfico ECharts -->
+      <div id="echartsContainer" class="echarts-container"></div>
+    </div>
+
+    <!-- Estado: error fatal -->
+    <div class="card chart-error" id="chartError" hidden>
+      <p class="chart-error__icon">⚠</p>
+      <p class="chart-error__msg" id="chartErrorMsg">Error al generar el gráfico.</p>
+      <button class="btn btn--outline" id="retryBtn">Reintentar</button>
+    </div>
+
+    <!-- Estado vacío inicial -->
+    <div class="builder-empty" id="builderEmpty">
+      <div class="builder-empty__inner">
+        <p class="builder-empty__icon">📊</p>
+        <p class="builder-empty__title">Tu gráfico aparecerá aquí</p>
+        <p class="builder-empty__sub">Escribe una petición arriba o elige una sugerencia del panel lateral.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: guardar gráfico -->
+<div class="modal-overlay" id="saveModal" hidden>
+  <div class="modal">
+    <h3 class="modal__title">Guardar gráfico</h3>
+    <label class="form-label" for="chartTitleInput">Título</label>
+    <input class="form-control" id="chartTitleInput" type="text" maxlength="100"
+           placeholder="Ej: OEE semana 13">
+    <div class="modal__actions">
+      <button class="btn btn--outline" id="cancelSaveBtn">Cancelar</button>
+      <button class="btn btn--primary" id="confirmSaveBtn">Guardar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* ── Layout ──────────────────────────────────────────────── */
+.builder-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  min-height: calc(100vh - 56px - 48px);
+  align-items: start;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.builder-sidebar {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 80px);
+  overflow: hidden;
+}
+.sidebar-header { display: flex; align-items: center; justify-content: space-between; }
+.sidebar-title { font-size: 0.9rem; font-weight: 700; color: var(--color-gray-900); }
+.sidebar-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--color-gray-400); margin-bottom: .4rem; }
+.sidebar-section { display: flex; flex-direction: column; }
+.sidebar-section--grow { flex: 1; min-height: 0; }
+.suggestions-list { display: flex; flex-direction: column; gap: .35rem; }
+.suggestion-chip {
+  background: var(--color-gray-100); border: 1px solid var(--color-gray-200);
+  border-radius: 6px; padding: .35rem .65rem; font-size: .8rem;
+  text-align: left; cursor: pointer; transition: background .15s, border-color .15s;
+  color: var(--color-gray-700);
+}
+.suggestion-chip:hover { background: #e8f0fb; border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Historial */
+.history-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: .4rem; }
+.history-empty { font-size: .8rem; color: var(--color-gray-400); text-align: center; padding: .75rem 0; }
+.history-item {
+  background: var(--color-gray-100); border-radius: 6px; padding: .5rem .65rem;
+  cursor: pointer; display: flex; align-items: flex-start; justify-content: space-between;
+  gap: .4rem; transition: background .15s;
+}
+.history-item:hover { background: #e8f0fb; }
+.history-item__title { font-size: .8rem; font-weight: 600; color: var(--color-gray-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.history-item__date { font-size: .7rem; color: var(--color-gray-400); white-space: nowrap; }
+.history-item__del { font-size: .9rem; color: var(--color-gray-400); background: none;
+  border: none; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+.history-item__del:hover { color: var(--color-danger); }
+
+/* ── Main ────────────────────────────────────────────────── */
+.builder-main { display: flex; flex-direction: column; gap: 1rem; }
+.builder-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.page-title { font-size: 1.35rem; font-weight: 700; color: var(--color-gray-900); display: flex; align-items: center; gap: .5rem; }
+.page-subtitle { font-size: .85rem; color: var(--color-gray-400); margin-top: .2rem; }
+
+/* ── Prompt card ─────────────────────────────────────────── */
+.builder-prompt-card { padding: 1rem; }
+.prompt-input-wrap { display: flex; flex-direction: column; gap: .5rem; }
+.prompt-textarea {
+  width: 100%; border: 1.5px solid var(--color-gray-200); border-radius: var(--radius);
+  padding: .75rem 1rem; font-size: .95rem; font-family: var(--font); resize: vertical;
+  min-height: 80px; transition: border-color .15s; outline: none;
+  color: var(--color-gray-900); background: #fff;
+}
+.prompt-textarea:focus { border-color: var(--color-primary); }
+.prompt-actions { display: flex; align-items: center; gap: .5rem; }
+.prompt-chars { font-size: .75rem; color: var(--color-gray-400); flex: 1; }
+.btn--generate { padding: .55rem 1.2rem; font-size: .9rem; display: flex; align-items: center; gap: .4rem; }
+.btn--voice {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--color-gray-100);
+  border: 1.5px solid var(--color-gray-200); color: var(--color-gray-700);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.btn--voice:hover { background: #e8f0fb; color: var(--color-primary); }
+.btn--voice.active { background: var(--color-danger); color: #fff; border-color: var(--color-danger); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+.voice-status { display: flex; align-items: center; gap: .5rem; margin-top: .25rem; font-size: .85rem; color: var(--color-danger); }
+.voice-dot { width: 8px; height: 8px; background: var(--color-danger); border-radius: 50%; animation: pulse 1s infinite; }
+
+/* ── Chart area ──────────────────────────────────────────── */
+.chart-area { padding: 1rem; }
+.chart-area-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; flex-wrap: wrap; gap: .5rem; }
+.chart-meta { display: flex; align-items: center; gap: .5rem; }
+.chart-source-badge { font-size: .72rem; padding: .2rem .5rem; border-radius: 4px; font-weight: 600; }
+.chart-source-badge.gateway { background: #e8f5e9; color: #27ae60; }
+.chart-source-badge.mock { background: #fff3cd; color: #856404; }
+.chart-rows-info { font-size: .75rem; color: var(--color-gray-400); }
+.chart-area-actions { display: flex; gap: .5rem; }
+.echarts-container { width: 100%; height: 420px; }
+
+/* ── Error / empty states ────────────────────────────────── */
+.chart-error { padding: 2rem; text-align: center; }
+.chart-error__icon { font-size: 2.5rem; margin-bottom: .5rem; }
+.chart-error__msg { color: var(--color-gray-700); margin-bottom: 1rem; }
+.builder-empty { display: flex; align-items: center; justify-content: center; min-height: 300px; }
+.builder-empty__inner { text-align: center; }
+.builder-empty__icon { font-size: 4rem; margin-bottom: .75rem; }
+.builder-empty__title { font-size: 1.1rem; font-weight: 600; color: var(--color-gray-700); }
+.builder-empty__sub { font-size: .85rem; color: var(--color-gray-400); margin-top: .3rem; }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge { background: var(--color-gray-200); color: var(--color-gray-700);
+  border-radius: 10px; padding: .1rem .45rem; font-size: .7rem; font-weight: 700; }
+.badge--blue { background: #e8f0fb; color: var(--color-primary); }
+
+/* ── Modal ───────────────────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  display: none; align-items: center; justify-content: center; z-index: 1000; }
+.modal-overlay.is-open { display: flex; }
+.modal { background: #fff; border-radius: var(--radius); padding: 1.5rem;
+  width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+.modal__title { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; }
+.modal__actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1rem; }
+
+/* ── Spinner ─────────────────────────────────────────────── */
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .builder-layout { grid-template-columns: 1fr; }
+  .builder-sidebar { position: static; max-height: none; }
+}
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── Referencias DOM ──────────────────────────────────────
+  const promptInput    = document.getElementById("promptInput");
+  const promptChars    = document.getElementById("promptChars");
+  const generateBtn    = document.getElementById("generateBtn");
+  const generateBtnText= document.getElementById("generateBtnText");
+  const generateBtnSpinner= document.getElementById("generateBtnSpinner");
+  const voiceBtn       = document.getElementById("voiceBtn");
+  const stopVoiceBtn   = document.getElementById("stopVoiceBtn");
+  const voiceStatus    = document.getElementById("voiceStatus");
+  const chartArea      = document.getElementById("chartArea");
+  const chartError     = document.getElementById("chartError");
+  const chartErrorMsg  = document.getElementById("chartErrorMsg");
+  const builderEmpty   = document.getElementById("builderEmpty");
+  const chartWarning   = document.getElementById("chartWarning");
+  const chartSourceBadge= document.getElementById("chartSourceBadge");
+  const chartRowsInfo  = document.getElementById("chartRowsInfo");
+  const modifyBtn      = document.getElementById("modifyBtn");
+  const saveBtn        = document.getElementById("saveBtn");
+  const retryBtn       = document.getElementById("retryBtn");
+  const refreshHistory = document.getElementById("refreshHistory");
+  const historyList    = document.getElementById("historyList");
+  const historyCount   = document.getElementById("historyCount");
+  const saveModal      = document.getElementById("saveModal");
+  const chartTitleInput= document.getElementById("chartTitleInput");
+  const cancelSaveBtn  = document.getElementById("cancelSaveBtn");
+  const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+
+  // ── Estado ───────────────────────────────────────────────
+  let currentOption = null;
+  let currentPrompt = "";
+  let echartsInstance = null;
+  let recognition = null;
+
+  // ── ECharts init ────────────────────────────────────────
+  function getChart() {
+    const container = document.getElementById("echartsContainer");
+    if (!echartsInstance) {
+      echartsInstance = echarts.init(container, null, { renderer: "canvas" });
+      window.addEventListener("resize", () => echartsInstance && echartsInstance.resize());
+    }
+    return echartsInstance;
+  }
+
+  function renderChart(option) {
+    const chart = getChart();
+    chart.clear();
+    // Inyectar colores corporativos como paleta por defecto si no se especifican
+    const defaults = {
+      color: ["#0057a8","#27ae60","#e67e22","#c0392b","#8e44ad","#2980b9","#16a085"],
+      backgroundColor: "transparent",
+      textStyle: { fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#3d4a58" },
+    };
+    chart.setOption({ ...defaults, ...option });
+    setTimeout(() => chart.resize(), 50);
+  }
+
+  // ── Prompt input ─────────────────────────────────────────
+  promptInput.addEventListener("input", () => {
+    promptChars.textContent = `${promptInput.value.length} / 500`;
+  });
+
+  promptInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
+  });
+
+  // ── Voz ──────────────────────────────────────────────────
+  voiceBtn.addEventListener("click", startVoice);
+  stopVoiceBtn.addEventListener("click", stopVoice);
+
+  function startVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome.");
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = "es-ES";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      voiceBtn.classList.add("active");
+      voiceStatus.hidden = false;
+    };
+    recognition.onresult = (e) => {
+      let transcript = "";
+      for (const res of e.results) transcript += res[0].transcript;
+      promptInput.value = transcript;
+      promptChars.textContent = `${transcript.length} / 500`;
+    };
+    recognition.onend = () => {
+      voiceBtn.classList.remove("active");
+      voiceStatus.hidden = true;
+      recognition = null;
+    };
+    recognition.onerror = () => {
+      voiceBtn.classList.remove("active");
+      voiceStatus.hidden = true;
+      recognition = null;
+    };
+    recognition.start();
+  }
+
+  function stopVoice() {
+    if (recognition) { recognition.stop(); recognition = null; }
+    voiceBtn.classList.remove("active");
+    voiceStatus.hidden = true;
+  }
+
+  // ── Sugerencias predefinidas ─────────────────────────────
+  document.querySelectorAll(".suggestion-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      promptInput.value = chip.dataset.prompt;
+      promptChars.textContent = `${chip.dataset.prompt.length} / 500`;
+      promptInput.focus();
+      generate();
+    });
+  });
+
+  // ── Generar gráfico ──────────────────────────────────────
+  generateBtn.addEventListener("click", generate);
+  retryBtn.addEventListener("click", generate);
+
+  async function generate() {
+    const prompt = promptInput.value.trim();
+    if (!prompt) { promptInput.focus(); return; }
+
+    currentPrompt = prompt;
+    setGenerating(true);
+    chartArea.hidden = true;
+    chartError.hidden = true;
+    builderEmpty.hidden = true;
+
+    try {
+      const res = await fetch("/api/chart-builder/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Error del servidor");
+
+      currentOption = data.option;
+
+      // Mostrar advertencia si hubo error no fatal
+      if (data.error) {
+        chartWarning.textContent = "⚠ " + data.error;
+        chartWarning.hidden = false;
+      } else {
+        chartWarning.hidden = true;
+      }
+
+      // Badge de fuente
+      chartSourceBadge.textContent = data.source === "gateway" ? "Gateway IA" : "Ejemplo (mock)";
+      chartSourceBadge.className = "chart-source-badge " + (data.source === "gateway" ? "gateway" : "mock");
+      chartRowsInfo.textContent = data.data_rows ? `${data.data_rows} registros consultados` : "";
+
+      chartArea.hidden = false;
+      renderChart(currentOption);
+
+    } catch (err) {
+      chartErrorMsg.textContent = err.message || "Error desconocido al generar el gráfico.";
+      chartError.hidden = false;
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  function setGenerating(on) {
+    generateBtn.disabled = on;
+    generateBtnText.hidden = on;
+    generateBtnSpinner.hidden = !on;
+  }
+
+  // ── Modificar ────────────────────────────────────────────
+  modifyBtn.addEventListener("click", () => {
+    promptInput.focus();
+    promptInput.select();
+    chartArea.hidden = true;
+    builderEmpty.hidden = false;
+  });
+
+  // ── Guardar ──────────────────────────────────────────────
+  saveBtn.addEventListener("click", () => {
+    if (!currentOption) return;
+    chartTitleInput.value = currentPrompt.slice(0, 80);
+    saveModal.hidden = false;
+    chartTitleInput.focus();
+    chartTitleInput.select();
+  });
+
+  cancelSaveBtn.addEventListener("click", () => { saveModal.hidden = true; });
+  saveModal.addEventListener("click", (e) => { if (e.target === saveModal) saveModal.hidden = true; });
+
+  confirmSaveBtn.addEventListener("click", async () => {
+    const title = chartTitleInput.value.trim() || currentPrompt.slice(0, 60);
+    confirmSaveBtn.disabled = true;
+    try {
+      const res = await fetch("/api/chart-builder/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: currentPrompt, title, option: currentOption }),
+      });
+      if (!res.ok) throw new Error("Error al guardar");
+      saveModal.hidden = true;
+      loadHistory();
+      // Feedback visual breve
+      saveBtn.textContent = "✓ Guardado";
+      setTimeout(() => { saveBtn.textContent = "⊕ Guardar en mi dashboard"; }, 2000);
+    } catch (err) {
+      alert("Error al guardar: " + err.message);
+    } finally {
+      confirmSaveBtn.disabled = false;
+    }
+  });
+
+  // ── Historial ─────────────────────────────────────────────
+  refreshHistory.addEventListener("click", loadHistory);
+
+  async function loadHistory() {
+    try {
+      const res = await fetch("/api/chart-builder/history");
+      const items = await res.json();
+      historyCount.textContent = items.length;
+
+      if (!items.length) {
+        historyList.innerHTML = '<p class="history-empty">No hay gráficos guardados aún.</p>';
+        return;
+      }
+
+      historyList.innerHTML = items.map(item => `
+        <div class="history-item" data-id="${item.id}" data-prompt="${encodeURIComponent(item.prompt_text)}">
+          <div>
+            <div class="history-item__title" title="${escHtml(item.title)}">${escHtml(item.title)}</div>
+            <div class="history-item__date">${formatDate(item.created_at)}</div>
+          </div>
+          <button class="history-item__del" data-del="${item.id}" title="Eliminar">✕</button>
+        </div>
+      `).join("");
+
+      // Click en ítem → cargar prompt y regenerar
+      historyList.querySelectorAll(".history-item").forEach(el => {
+        el.addEventListener("click", (e) => {
+          if (e.target.dataset.del) return;
+          const p = decodeURIComponent(el.dataset.prompt);
+          promptInput.value = p;
+          promptChars.textContent = `${p.length} / 500`;
+          generate();
+        });
+      });
+
+      // Botones de eliminar
+      historyList.querySelectorAll("[data-del]").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.del;
+          await fetch(`/api/chart-builder/${id}`, { method: "DELETE" });
+          loadHistory();
+        });
+      });
+
+    } catch (err) {
+      historyList.innerHTML = '<p class="history-empty">Error al cargar historial.</p>';
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso.replace(" ", "T") + "Z");
+      return d.toLocaleDateString("es-ES", { day:"2-digit", month:"short" })
+           + " " + d.toLocaleTimeString("es-ES", { hour:"2-digit", minute:"2-digit" });
+    } catch { return iso.slice(0,16); }
+  }
+
+  // ── Init ──────────────────────────────────────────────────
+  loadHistory();
+
+})();
+</script>
+{% endblock %}

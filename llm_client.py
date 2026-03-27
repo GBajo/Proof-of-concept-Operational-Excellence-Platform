@@ -26,7 +26,7 @@ GATEWAY_BASE_URL = os.environ.get(
     "ANTHROPIC_BASE_URL",
     "https://lilly-code-server.api.gateway.llm.lilly.com",
 )
-MODEL = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "sonnet-latest")
+MODEL = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-sonnet-4.6")
 TIMEOUT = 30          # segundos
 MAX_TOKENS = 1024
 
@@ -106,11 +106,14 @@ def _build_user_message(
 
 # ── Llamada al gateway ────────────────────────────────────────
 
-def _call_gateway(user_message: str, api_key: str) -> dict:
+def _call_gateway(user_message: str, api_key: str, system: Optional[str] = None) -> dict:
     """
     Llama al LLM Gateway usando la librería anthropic con base_url personalizada.
     Devuelve dict con 'text' y 'model'.
     Lanza excepciones en caso de error para que ask_assistant las gestione.
+
+    Parámetros:
+        system — System prompt personalizado. Si no se indica, usa SYSTEM_PROMPT por defecto.
     """
     try:
         import anthropic
@@ -120,15 +123,16 @@ def _call_gateway(user_message: str, api_key: str) -> dict:
         )
 
     client = anthropic.Anthropic(
-        api_key=api_key,
+        api_key="placeholder",
         base_url=GATEWAY_BASE_URL,
         timeout=TIMEOUT,
+        default_headers={"Authorization": f"Bearer {api_key}"},
     )
 
     message = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system=SYSTEM_PROMPT,
+        system=system if system is not None else SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )
 
