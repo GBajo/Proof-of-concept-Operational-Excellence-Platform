@@ -262,7 +262,7 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.6rem;
 }
-.operator-card { cursor: pointer; }
+.operator-card { cursor: pointer; position: relative; }
 .operator-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
 .operator-card__inner {
   display: flex;
@@ -335,7 +335,7 @@ body {
 @media (max-width: 700px) {
   .line-grid { grid-template-columns: repeat(3, 1fr); }
 }
-.line-card { cursor: pointer; }
+.line-card { cursor: pointer; position: relative; }
 .line-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
 .line-card__inner {
   display: flex;
@@ -410,7 +410,7 @@ body {
 @media (max-width: 500px) {
   .shift-type-grid { grid-template-columns: 1fr; }
 }
-.shift-type-card { cursor: pointer; }
+.shift-type-card { cursor: pointer; position: relative; }
 .shift-type-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
 .shift-type-card__inner {
   display: flex;
