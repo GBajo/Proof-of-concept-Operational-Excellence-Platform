@@ -55,11 +55,12 @@
           maxlength="500"
         ></textarea>
         <div class="prompt-actions">
-          <button class="btn btn--icon btn--voice" id="voiceBtn" title="{{ t('btn_record_voice') }}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <button class="btn btn--secondary btn--voice-labeled" id="voiceBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="flex-shrink:0">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
             </svg>
+            {{ t('btn_record_voice') }}
           </button>
           <span class="prompt-chars" id="promptChars">0 / 500</span>
           <button class="btn btn--primary btn--generate" id="generateBtn">
@@ -68,8 +69,8 @@
           </button>
         </div>
       </div>
-      <!-- Estado de voz -->
-      <div id="voiceStatus" class="voice-status" hidden>
+      <!-- Estado de voz (oculto hasta que se activa) -->
+      <div id="voiceStatus" class="voice-status" style="display:none">
         <span class="voice-dot"></span> {{ t('voice_listening') }}
         <button class="btn btn--sm btn--outline" id="stopVoiceBtn">{{ t('btn_stop_voice') }}</button>
       </div>
@@ -213,6 +214,15 @@
 }
 .btn--voice:hover { background: #e8f0fb; color: var(--color-primary); }
 .btn--voice.active { background: var(--color-danger); color: #fff; border-color: var(--color-danger); animation: pulse 1s infinite; }
+.btn--voice-labeled {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .45rem .9rem; font-size: .85rem; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.btn--voice-labeled.active {
+  background: var(--color-danger); color: #fff;
+  border-color: var(--color-danger); animation: pulse 1s infinite;
+}
 @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
 
 .voice-status { display: flex; align-items: center; gap: .5rem; margin-top: .25rem; font-size: .85rem; color: var(--color-danger); }
@@ -363,7 +373,7 @@
 
     recognition.onstart = () => {
       voiceBtn.classList.add("active");
-      voiceStatus.hidden = false;
+      voiceStatus.style.display = "flex";
     };
     recognition.onresult = (e) => {
       let transcript = "";
@@ -373,12 +383,12 @@
     };
     recognition.onend = () => {
       voiceBtn.classList.remove("active");
-      voiceStatus.hidden = true;
+      voiceStatus.style.display = "none";
       recognition = null;
     };
     recognition.onerror = () => {
       voiceBtn.classList.remove("active");
-      voiceStatus.hidden = true;
+      voiceStatus.style.display = "none";
       recognition = null;
     };
     recognition.start();
@@ -387,7 +397,7 @@
   function stopVoice() {
     if (recognition) { recognition.stop(); recognition = null; }
     voiceBtn.classList.remove("active");
-    voiceStatus.hidden = true;
+    voiceStatus.style.display = "none";
   }
 
   // ── Sugerencias predefinidas ─────────────────────────────
