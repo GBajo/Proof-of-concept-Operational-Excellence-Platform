@@ -3,46 +3,195 @@
 
 {% block scripts %}
 <script>
-async function reindexAll() {
-  const btn = document.getElementById('btn-reindex-all');
-  const status = document.getElementById('reindex-status');
+// ── Helpers ────────────────────────────────────────────────────
+function showBanner(msg, isOk) {
+  const el = document.getElementById('admin-banner');
+  el.textContent = msg;
+  el.className = 'admin-banner ' + (isOk ? 'admin-banner--ok' : 'admin-banner--err');
+  el.style.display = '';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+function setRowLoading(rowId, loading) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  if (loading) row.classList.add('admin-row--loading');
+  else row.classList.remove('admin-row--loading');
+}
+
+// ── Upload drag-and-drop ──────────────────────────────────────
+const dropZone = document.querySelector ? null : null; // inicializado en DOMContentLoaded
+
+function initDropZone() {
+  const zone = document.getElementById('drop-zone');
+  const input = document.getElementById('file-input');
+  if (!zone || !input) return;
+
+  zone.addEventListener('click', () => input.click());
+
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('drop-zone--over');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drop-zone--over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drop-zone--over');
+    const files = e.dataTransfer.files;
+    if (files.length) uploadFile(files[0]);
+  });
+
+  input.addEventListener('change', () => {
+    if (input.files.length) uploadFile(input.files[0]);
+    input.value = '';
+  });
+}
+
+async function uploadFile(file) {
+  const allowed = ['application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['pdf','docx','xlsx','xls'].includes(ext)) {
+    showBanner('Formato no soportado. Usa PDF, DOCX o XLSX.', false);
+    return;
+  }
+
+  setUploadProgress(true, 0, file.name);
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    // XMLHttpRequest para obtener progreso real
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/admin/docs/upload');
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) setUploadProgress(true, Math.round(e.loaded/e.total*90), file.name);
+      };
+      xhr.onload = () => {
+        let data;
+        try { data = JSON.parse(xhr.responseText); } catch { data = {ok:false, message:'Respuesta inválida'}; }
+        if (data.ok) {
+          setUploadProgress(true, 100, file.name);
+          setTimeout(() => { setUploadProgress(false); location.reload(); }, 800);
+          resolve(data);
+        } else {
+          reject(new Error(data.message || 'Error al subir'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Error de red'));
+      xhr.send(fd);
+    });
+  } catch(err) {
+    setUploadProgress(false);
+    showBanner('Error: ' + err.message, false);
+  }
+}
+
+function setUploadProgress(show, pct, filename) {
+  const bar  = document.getElementById('upload-progress');
+  const fill = document.getElementById('upload-progress-fill');
+  const label = document.getElementById('upload-progress-label');
+  if (!bar) return;
+  if (!show) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  if (fill) fill.style.width = pct + '%';
+  if (label) label.textContent = pct < 100
+    ? `Subiendo ${filename} — ${pct}%`
+    : `Indexando ${filename}...`;
+}
+
+// ── URL indexing ──────────────────────────────────────────────
+async function indexUrl() {
+  const input = document.getElementById('url-input');
+  const btn   = document.getElementById('btn-index-url');
+  const url   = (input ? input.value : '').trim();
+  if (!url) { showBanner('Introduce una URL válida.', false); return; }
+
   btn.disabled = true;
   btn.textContent = 'Indexando...';
-  status.textContent = '';
-  status.className = '';
+
+  try {
+    const res = await fetch('/admin/docs/index-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    showBanner(data.message, data.ok);
+    if (data.ok) { input.value = ''; setTimeout(() => location.reload(), 1500); }
+  } catch {
+    showBanner('Error de conexión.', false);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Indexar URL';
+}
+
+// ── Delete document ───────────────────────────────────────────
+async function deleteDoc(filename, rowId) {
+  if (!confirm(`¿Eliminar "${filename}" y todos sus fragmentos?`)) return;
+  setRowLoading(rowId, true);
+  try {
+    const res = await fetch('/admin/docs/delete/' + encodeURIComponent(filename), { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.classList.add('admin-row--deleted');
+        setTimeout(() => location.reload(), 600);
+      }
+    } else {
+      setRowLoading(rowId, false);
+      showBanner('Error: ' + data.message, false);
+    }
+  } catch {
+    setRowLoading(rowId, false);
+    showBanner('Error de conexión.', false);
+  }
+}
+
+// ── Reindex ───────────────────────────────────────────────────
+async function reindexAll() {
+  const btn = document.getElementById('btn-reindex-all');
+  btn.disabled = true;
+  btn.textContent = 'Indexando...';
   try {
     const res = await fetch('/admin/docs/reindex', { method: 'POST' });
     const data = await res.json();
-    status.textContent = data.message;
-    status.className = data.ok ? 'alert alert--success' : 'alert alert--danger';
+    showBanner(data.message, data.ok);
     if (data.ok) setTimeout(() => location.reload(), 1500);
   } catch {
-    status.textContent = 'Error de conexión.';
-    status.className = 'alert alert--danger';
+    showBanner('Error de conexión.', false);
   }
   btn.disabled = false;
-  btn.textContent = 'Re-indexar todos';
+  btn.textContent = '↺ Re-indexar todos';
 }
 
-async function reindexFile(filename) {
-  const btn = document.getElementById('btn-' + CSS.escape(filename));
-  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+async function reindexFile(filename, rowId) {
+  setRowLoading(rowId, true);
   try {
     const res = await fetch('/admin/docs/reindex/' + encodeURIComponent(filename), { method: 'POST' });
     const data = await res.json();
     if (data.ok) location.reload();
-    else alert('Error: ' + data.message);
+    else { setRowLoading(rowId, false); showBanner('Error: ' + data.message, false); }
   } catch {
-    alert('Error de conexión.');
+    setRowLoading(rowId, false);
+    showBanner('Error de conexión.', false);
   }
 }
 
 async function clearAll() {
-  if (!confirm('¿Seguro que quieres vaciar toda la base de conocimiento?')) return;
+  if (!confirm('¿Seguro que quieres vaciar toda la base de conocimiento? Esta acción no se puede deshacer.')) return;
   const res = await fetch('/admin/docs/clear', { method: 'POST' });
   const data = await res.json();
   if (data.ok) location.reload();
 }
+
+document.addEventListener('DOMContentLoaded', initDropZone);
 </script>
 {% endblock %}
 
@@ -51,11 +200,8 @@ async function clearAll() {
 <!-- ── Cabecera ── -->
 <div class="page-header">
   <div>
-    <h1>Gestión de Base de Conocimiento</h1>
-    <p class="page-header__sub">
-      Documentos indexados para el asistente RAG ·
-      <strong>{{ total_chunks }}</strong> fragmento{{ 's' if total_chunks != 1 }} en total
-    </p>
+    <h1>Base de Conocimiento</h1>
+    <p class="page-header__sub">Documentos RAG para el asistente · <strong>{{ total_chunks }}</strong> fragmento{{ 's' if total_chunks != 1 }} indexado{{ 's' if total_chunks != 1 }}</p>
   </div>
   <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
     <button id="btn-reindex-all" class="btn btn--primary" onclick="reindexAll()">
@@ -67,37 +213,116 @@ async function clearAll() {
   </div>
 </div>
 
-<div id="reindex-status" style="margin-bottom:1rem;"></div>
+<!-- Banner de estado -->
+<div id="admin-banner" style="display:none; margin-bottom:1rem;"></div>
 
-<!-- ── Tarjetas métricas ── -->
+<!-- ── Estadísticas ── -->
 <section class="section">
   <div class="admin-metric-row">
-    <div class="admin-metric-card">
+
+    <div class="admin-metric-card admin-metric-card--blue">
+      <div class="admin-metric-card__icon">📄</div>
       <div class="admin-metric-card__value">{{ disk_files | length }}</div>
       <div class="admin-metric-card__label">Archivos en docs/</div>
     </div>
-    <div class="admin-metric-card">
-      <div class="admin-metric-card__value">{{ indexed | length }}</div>
-      <div class="admin-metric-card__label">Fuentes indexadas</div>
+
+    <div class="admin-metric-card admin-metric-card--teal">
+      <div class="admin-metric-card__icon">🔗</div>
+      <div class="admin-metric-card__value">{{ url_sources | length }}</div>
+      <div class="admin-metric-card__label">URLs indexadas</div>
     </div>
-    <div class="admin-metric-card">
+
+    <div class="admin-metric-card admin-metric-card--purple">
+      <div class="admin-metric-card__icon">🧩</div>
       <div class="admin-metric-card__value">{{ total_chunks }}</div>
       <div class="admin-metric-card__label">Fragmentos totales</div>
     </div>
-    <div class="admin-metric-card">
-      <div class="admin-metric-card__value">
-        {{ disk_files | selectattr('indexed') | list | length }}
-        /
-        {{ disk_files | length }}
-      </div>
-      <div class="admin-metric-card__label">Archivos indexados</div>
+
+    <div class="admin-metric-card admin-metric-card--green">
+      <div class="admin-metric-card__icon">🤖</div>
+      <div class="admin-metric-card__value">{{ assistant_stats.queries_today }}</div>
+      <div class="admin-metric-card__label">Consultas hoy</div>
     </div>
+
+    <div class="admin-metric-card {% if assistant_stats.useful_pct is not none and assistant_stats.useful_pct >= 70 %}admin-metric-card--green{% elif assistant_stats.useful_pct is not none %}admin-metric-card--yellow{% else %}admin-metric-card--gray{% endif %}">
+      <div class="admin-metric-card__icon">👍</div>
+      <div class="admin-metric-card__value">
+        {% if assistant_stats.useful_pct is not none %}{{ assistant_stats.useful_pct }}%{% else %}—{% endif %}
+      </div>
+      <div class="admin-metric-card__label">Respuestas útiles
+        {% if assistant_stats.total_feedback > 0 %}
+        <small style="display:block; font-size:0.7rem; opacity:0.7;">({{ assistant_stats.total_feedback }} valoradas)</small>
+        {% endif %}
+      </div>
+    </div>
+
   </div>
 </section>
 
-<!-- ── Archivos en disco ── -->
+<!-- ── Subir documentos ── -->
 <section class="section">
-  <h2 class="section__title">Archivos en <code>{{ docs_dir }}</code></h2>
+  <div class="admin-upload-grid">
+
+    <!-- Drag & drop -->
+    <div class="admin-upload-panel">
+      <h2 class="section__title">Subir documento</h2>
+      <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
+           aria-label="Zona de arrastrar y soltar archivos">
+        <div class="drop-zone__icon">📂</div>
+        <div class="drop-zone__title">Arrastra un archivo aquí</div>
+        <div class="drop-zone__sub">o haz clic para seleccionar</div>
+        <div class="drop-zone__hint">PDF · DOCX · XLSX — máx. 50 MB</div>
+        <input type="file" id="file-input" accept=".pdf,.docx,.xlsx,.xls"
+               style="display:none;" aria-hidden="true">
+      </div>
+      <!-- Barra de progreso -->
+      <div id="upload-progress" style="display:none; margin-top:0.75rem;">
+        <div class="admin-progress-bar">
+          <div id="upload-progress-fill" class="admin-progress-fill" style="width:0%"></div>
+        </div>
+        <div id="upload-progress-label" class="admin-progress-label">Subiendo...</div>
+      </div>
+    </div>
+
+    <!-- URL -->
+    <div class="admin-upload-panel">
+      <h2 class="section__title">Indexar URL</h2>
+      <p style="font-size:0.85rem; color:var(--color-gray-400); margin-bottom:1rem;">
+        Introduce la URL de una página web. El sistema descargará su contenido y lo indexará como fuente de conocimiento.
+      </p>
+      <div class="admin-url-form">
+        <input type="url" id="url-input" class="form__input"
+               placeholder="https://ejemplo.com/sop-limpieza"
+               aria-label="URL a indexar">
+        <button id="btn-index-url" class="btn btn--primary" onclick="indexUrl()">
+          Indexar URL
+        </button>
+      </div>
+      {% if url_sources %}
+      <div style="margin-top:1.25rem;">
+        <p style="font-size:0.8rem; font-weight:600; color:var(--color-gray-300); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.04em;">URLs indexadas</p>
+        <ul class="admin-url-list">
+          {% for u in url_sources %}
+          <li class="admin-url-item" id="url-row-{{ loop.index }}">
+            <span class="admin-url-item__text" title="{{ u.source_file }}">{{ u.source_file }}</span>
+            <span class="badge badge--blue">{{ u.chunks }}</span>
+            <button class="btn btn--sm btn--danger-ghost"
+                    onclick="deleteDoc('{{ u.source_file | e }}', 'url-row-{{ loop.index }}')">
+              🗑
+            </button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Tabla de documentos ── -->
+<section class="section">
+  <h2 class="section__title">Documentos indexados</h2>
 
   {% if disk_files %}
   <div class="history-table-wrap">
@@ -107,13 +332,16 @@ async function clearAll() {
           <th>Archivo</th>
           <th>Tipo</th>
           <th>Tamaño</th>
+          <th>Fragmentos</th>
+          <th>Última indexación</th>
           <th>Estado</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {% for f in disk_files %}
-        <tr class="history-row">
+        {% set row_id = 'doc-row-' + loop.index | string %}
+        <tr class="history-row" id="{{ row_id }}">
           <td>
             <strong>{{ f.name }}</strong>
           </td>
@@ -125,17 +353,37 @@ async function clearAll() {
           <td>{{ f.size_kb }} KB</td>
           <td>
             {% if f.indexed %}
-            <span class="badge badge--green">Indexado</span>
+              <span class="badge badge--blue">{{ f.chunks }}</span>
             {% else %}
-            <span class="badge badge--orange">Sin indexar</span>
+              <span style="color:var(--color-gray-500);">—</span>
+            {% endif %}
+          </td>
+          <td class="history-date">
+            {% if f.last_indexed %}
+              {{ f.last_indexed[:10].replace('-', '/') }}
+              <div class="history-time">{{ f.last_indexed[11:16] }}</div>
+            {% else %}
+              <span style="color:var(--color-gray-500);">—</span>
             {% endif %}
           </td>
           <td>
-            <button id="btn-{{ f.name }}"
-                    class="btn btn--sm btn--secondary"
-                    onclick="reindexFile('{{ f.name }}')">
-              ↺ Indexar
-            </button>
+            {% if f.indexed %}
+              <span class="badge badge--green">Indexado</span>
+            {% else %}
+              <span class="badge badge--orange">Sin indexar</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn--sm btn--secondary"
+                      onclick="reindexFile('{{ f.name }}', '{{ row_id }}')">
+                ↺
+              </button>
+              <button class="btn btn--sm btn--danger-ghost"
+                      onclick="deleteDoc('{{ f.name }}', '{{ row_id }}')">
+                🗑
+              </button>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -146,8 +394,7 @@ async function clearAll() {
   <div class="empty-state">
     <p>No hay archivos en la carpeta <code>docs/</code>.</p>
     <p style="font-size:0.85rem; color:var(--color-gray-400); margin-top:0.5rem;">
-      Coloca archivos PDF, DOCX o XLSX en la carpeta <code>docs/</code>
-      y pulsa "Re-indexar todos".
+      Arrastra un archivo PDF, DOCX o XLSX a la zona de carga de arriba.
     </p>
     <p style="font-size:0.85rem; color:var(--color-gray-400); margin-top:0.25rem;">
       Para generar documentos de ejemplo ejecuta:
@@ -157,83 +404,29 @@ async function clearAll() {
   {% endif %}
 </section>
 
-<!-- ── Fragmentos indexados por fuente ── -->
-{% if indexed %}
-<section class="section">
-  <h2 class="section__title">Detalle de Indexación</h2>
-  <div class="history-table-wrap">
-    <table class="history-table">
-      <thead>
-        <tr>
-          <th>Fuente</th>
-          <th>Tipo</th>
-          <th>Fragmentos</th>
-          <th>Última indexación</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in indexed %}
-        <tr class="history-row">
-          <td style="max-width:320px; word-break:break-all;">
-            <strong>{{ row.source_file }}</strong>
-          </td>
-          <td>
-            <span class="admin-type-badge admin-type-badge--{{ row.source_type }}">
-              {{ row.source_type | upper }}
-            </span>
-          </td>
-          <td>
-            <span class="badge badge--blue">{{ row.chunks }}</span>
-          </td>
-          <td class="history-date">
-            {{ row.last_indexed[:10].replace('-', '/') }}
-            <div class="history-time">{{ row.last_indexed[11:16] }}</div>
-          </td>
-          <td>
-            <button class="btn btn--sm btn--secondary"
-                    onclick="reindexFile('{{ row.source_file }}')">
-              ↺ Re-indexar
-            </button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-{% endif %}
-
 <!-- ── Ayuda ── -->
 <section class="section">
   <div class="kpi-entry-panel" style="border-top-color: var(--color-primary);">
-    <h2 class="section__title" style="margin-bottom:0.75rem;">Cómo usar</h2>
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem;">
-
+    <h2 class="section__title" style="margin-bottom:0.75rem;">Cómo funciona el RAG</h2>
+    <div class="admin-help-grid">
       <div>
         <p style="font-weight:700; margin-bottom:0.4rem;">1. Añadir documentos</p>
         <p style="font-size:0.85rem; color:var(--color-gray-400);">
-          Copia tus archivos PDF, DOCX o XLSX a la carpeta <code>docs/</code>
-          del servidor. Formatos soportados: PDF, Word, Excel.
+          Arrastra archivos PDF, DOCX o XLSX a la zona de carga, o introduce una URL de una página web. Los archivos se guardan en <code>docs/</code>.
         </p>
       </div>
-
       <div>
-        <p style="font-weight:700; margin-bottom:0.4rem;">2. Indexar</p>
+        <p style="font-weight:700; margin-bottom:0.4rem;">2. Indexación automática</p>
         <p style="font-size:0.85rem; color:var(--color-gray-400);">
-          Pulsa "Re-indexar todos" o usa el botón individual por archivo.
-          También puedes ejecutar <code>python ingest.py</code> desde terminal.
+          Cada documento se fragmenta en trozos de ~500 palabras y se almacena en SQLite. Los fragmentos se buscan por palabras clave al consultar el asistente.
         </p>
       </div>
-
       <div>
         <p style="font-weight:700; margin-bottom:0.4rem;">3. Asistente RAG</p>
         <p style="font-size:0.85rem; color:var(--color-gray-400);">
-          Los fragmentos indexados se usan automáticamente como contexto
-          cuando el operario registra un comentario o pide ayuda al asistente.
+          Cuando el operario registra un comentario o hace una consulta, el sistema recupera los fragmentos más relevantes y los envía como contexto al LLM.
         </p>
       </div>
-
     </div>
   </div>
 </section>

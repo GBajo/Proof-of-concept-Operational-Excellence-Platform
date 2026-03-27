@@ -1729,4 +1729,197 @@ body {
   font-style: italic;
 }
 
+/* ============================================================
+   Admin — Base de Conocimiento
+   ============================================================ */
+
+/* Tarjetas métricas (5 columnas) */
+.admin-metric-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 1100px) { .admin-metric-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px)  { .admin-metric-row { grid-template-columns: repeat(2, 1fr); } }
+
+.admin-metric-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.1rem 1rem 0.9rem;
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--color-gray-200);
+  text-align: center;
+}
+.admin-metric-card--blue   { border-top-color: #2980b9; }
+.admin-metric-card--teal   { border-top-color: #16a085; }
+.admin-metric-card--purple { border-top-color: #8e44ad; }
+.admin-metric-card--green  { border-top-color: var(--color-success); }
+.admin-metric-card--yellow { border-top-color: var(--color-warning); }
+.admin-metric-card--gray   { border-top-color: var(--color-gray-400); }
+
+.admin-metric-card__icon  { font-size: 1.4rem; margin-bottom: 0.3rem; }
+.admin-metric-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-gray-900);
+}
+.admin-metric-card__label {
+  font-size: 0.78rem;
+  color: var(--color-gray-400);
+  margin-top: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Banner de estado */
+.admin-banner {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+.admin-banner--ok  { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.admin-banner--err { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* Grid upload / URL */
+.admin-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .admin-upload-grid { grid-template-columns: 1fr; } }
+
+.admin-upload-panel {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+/* Zona drag-and-drop */
+.drop-zone {
+  border: 2px dashed var(--color-gray-200);
+  border-radius: var(--radius);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.drop-zone:hover,
+.drop-zone--over {
+  border-color: var(--color-primary);
+  background: #f0f6ff;
+}
+.drop-zone__icon  { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.drop-zone__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+  margin-bottom: 0.25rem;
+}
+.drop-zone__sub  { font-size: 0.85rem; color: var(--color-gray-400); }
+.drop-zone__hint {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Barra de progreso upload */
+.admin-progress-bar {
+  height: 6px;
+  background: var(--color-gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.admin-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+.admin-progress-label {
+  font-size: 0.8rem;
+  color: var(--color-gray-400);
+  margin-top: 0.4rem;
+  text-align: center;
+}
+
+/* URL form */
+.admin-url-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.admin-url-form .form__input { flex: 1; }
+
+/* Lista de URLs indexadas */
+.admin-url-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.admin-url-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-gray-100);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.82rem;
+}
+.admin-url-item__text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-gray-700);
+}
+
+/* Filas de tabla con estado */
+.admin-row--loading { opacity: 0.5; pointer-events: none; }
+.admin-row--deleted {
+  background: #fde8e8 !important;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Botón ghost danger */
+.btn--danger-ghost {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid transparent;
+}
+.btn--danger-ghost:hover {
+  background: #fde8e8;
+  border-color: var(--color-danger);
+}
+
+/* Tipo de documento — badges */
+.admin-type-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.admin-type-badge--pdf   { background: #fde8e8; color: #c0392b; }
+.admin-type-badge--docx  { background: #dbeafe; color: #1d4ed8; }
+.admin-type-badge--xlsx,
+.admin-type-badge--xls   { background: #d1fae5; color: #065f46; }
+.admin-type-badge--url   { background: #ede9fe; color: #5b21b6; }
+
+/* Grid de ayuda */
+.admin-help-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .admin-help-grid { grid-template-columns: 1fr; } }
+
 
