@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Historial de Turnos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Historial de Turnos</h1>
+    <p class="page-header__sub">Consulta y busca turnos anteriores</p>
+  </div>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">+ Nuevo Turno</a>
+</div>
+
+<!-- ── Filtros ── -->
+<section class="section">
+  <form method="get" action="{{ url_for('views.shifts_history') }}" class="history-filters">
+    <div class="history-filters__grid">
+
+      <div class="form__group">
+        <label class="form__label" for="f-line">Línea</label>
+        <select name="line" id="f-line" class="form__select">
+          <option value="">Todas</option>
+          {% for n in range(1, 6) %}
+          <option value="{{ n }}" {% if filters.line == n %}selected{% endif %}>
+            Línea {{ n }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form__group">
+        <label class="form__label" for="f-operator">Operario</label>
+        <input type="text" name="operator" id="f-operator" class="form__input"
+               placeholder="Nombre…" value="{{ filters.operator or '' }}">
+      </div>
+
+      <div class="form__group">
+        <label class="form__label" for="f-from">Desde</label>
+        <input type="date" name="from" id="f-from" class="form__input"
+               value="{{ filters.from or '' }}">
+      </div>
+
+      <div class="form__group">
+        <label class="form__label" for="f-to">Hasta</label>
+        <input type="date" name="to" id="f-to" class="form__input"
+               value="{{ filters.to or '' }}">
+      </div>
+
+      <div class="form__group">
+        <label class="form__label" for="f-status">Estado</label>
+        <select name="status" id="f-status" class="form__select">
+          <option value="">Todos</option>
+          <option value="completed"   {% if filters.status == 'completed'   %}selected{% endif %}>Completado</option>
+          <option value="interrupted" {% if filters.status == 'interrupted' %}selected{% endif %}>Interrumpido</option>
+        </select>
+      </div>
+
+      <div class="history-filters__actions">
+        <button type="submit" class="btn btn--primary">Buscar</button>
+        <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">Limpiar</a>
+      </div>
+
+    </div>
+  </form>
+</section>
+
+<!-- ── Resultados ── -->
+<section class="section">
+  <div class="history-results-header">
+    <span class="history-results-count">
+      {{ shifts | length }} turno{{ 's' if shifts | length != 1 else '' }} encontrado{{ 's' if shifts | length != 1 else '' }}
+    </span>
+    {% if filters.line or filters.operator or filters.from or filters.to or filters.status %}
+    <span class="history-active-filters">
+      Filtros activos:
+      {% if filters.line %}<span class="history-filter-tag">Línea {{ filters.line }}</span>{% endif %}
+      {% if filters.operator %}<span class="history-filter-tag">{{ filters.operator }}</span>{% endif %}
+      {% if filters.from %}<span class="history-filter-tag">Desde {{ filters.from }}</span>{% endif %}
+      {% if filters.to %}<span class="history-filter-tag">Hasta {{ filters.to }}</span>{% endif %}
+      {% if filters.status %}<span class="history-filter-tag">{{ filters.status | capitalize }}</span>{% endif %}
+    </span>
+    {% endif %}
+  </div>
+
+  {% if shifts %}
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Operario</th>
+          <th>Línea</th>
+          <th>Tipo</th>
+          <th>Duración</th>
+          <th>Uds. producidas</th>
+          <th>Rechazo</th>
+          <th>Parada</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in shifts %}
+        {% set has_kpi = s.last_units_produced is not none %}
+
+        {# Calcular duración #}
+        {% if s.end_time and s.start_time %}
+          {# Mostrar solo HH:MM de inicio y fin para calcular visualmente #}
+        {% endif %}
+
+        <tr class="history-row {% if s.status == 'interrupted' %}history-row--interrupted{% endif %}">
+          <td class="history-id">{{ s.id }}</td>
+          <td class="history-date">
+            <div>{{ s.start_time[:10] | replace('-', '/') }}</div>
+            <div class="history-time">{{ s.start_time[11:16] }}
+              {% if s.end_time %}→ {{ s.end_time[11:16] }}{% endif %}
+            </div>
+          </td>
+          <td class="history-operator">{{ s.operator_name }}</td>
+          <td class="history-line">
+            <span class="history-line-badge">L{{ s.line_number }}</span>
+          </td>
+          <td class="history-type">
+            {% if s.shift_type == 'morning' %}☀ Mañana
+            {% elif s.shift_type == 'afternoon' %}🌤 Tarde
+            {% else %}🌙 Noche{% endif %}
+          </td>
+          <td class="history-duration">
+            {% if s.end_time and s.start_time %}
+              {# duración en minutos calculada en Python #}
+              {{ s.duration_h }}h {{ s.duration_m }}m
+            {% else %}—{% endif %}
+          </td>
+          <td class="history-units">
+            {% if has_kpi %}
+              <strong>{{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}</strong>
+              {% if s.last_target %}
+              <div class="history-units-bar">
+                {% set pct = (s.last_units_produced / s.last_target * 100) | round(0) %}
+                {% set pct_capped = pct if pct <= 100 else 100 %}
+                <div style="width:{{ pct_capped }}%;
+                  background:{% if pct >= 95 %}#27ae60{% elif pct >= 80 %}#f39c12{% else %}#e74c3c{% endif %}">
+                </div>
+              </div>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td class="history-reject">
+            {% if has_kpi and s.last_units_produced > 0 %}
+              {% set rate = (s.last_units_rejected / s.last_units_produced * 100) | round(1) %}
+              <span class="{% if rate <= 1 %}history-val--good{% elif rate <= 3 %}history-val--warn{% else %}history-val--bad{% endif %}">
+                {{ rate }}%
+              </span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="history-downtime">
+            {% if has_kpi %}
+              {{ s.last_downtime | int }} min
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="badge {% if s.status == 'completed' %}badge--green{% else %}badge--orange{% endif %}">
+              {% if s.status == 'completed' %}Completado{% else %}Interrumpido{% endif %}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
+               class="btn btn--sm">Ver resumen</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <p>No se encontraron turnos con los filtros aplicados.</p>
+    {% if filters.line or filters.operator or filters.from or filters.to or filters.status %}
+    <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">Ver todos los turnos</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

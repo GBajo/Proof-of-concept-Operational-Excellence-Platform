@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, abort, redirect, url_for
-from models.shift import get_shift_by_id, get_active_lines
+from flask import Blueprint, render_template, abort, redirect, url_for, request
+from models.shift import get_shift_by_id, get_active_lines, get_shifts_history, get_line_performance_summary
 from models.operator import get_all_operators
 from models.comment import get_comments_by_shift
 from models.kpi import calculate_oee
@@ -100,4 +100,54 @@ def shift_summary_view(shift_id: int):
 @bp.get("/dashboard")
 def dashboard():
     active_lines = get_active_lines()
-    return render_template("dashboard/kpi.html", active_lines=active_lines)
+    line_perf = get_line_performance_summary(days=7)
+    recent_shifts = get_shifts_history(limit=10)
+    return render_template(
+        "dashboard/kpi.html",
+        active_lines=active_lines,
+        line_perf=line_perf,
+        recent_shifts=recent_shifts,
+    )
+
+
+@bp.get("/shifts")
+def shifts_history():
+    from datetime import datetime
+    line      = request.args.get("line",     type=int)
+    operator  = request.args.get("operator", type=str, default="").strip()
+    date_from = request.args.get("from",     type=str, default="").strip()
+    date_to   = request.args.get("to",       type=str, default="").strip()
+    status    = request.args.get("status",   type=str, default="").strip()
+
+    shifts = get_shifts_history(
+        line      = line or None,
+        operator  = operator or None,
+        date_from = date_from or None,
+        date_to   = date_to or None,
+        status    = status or None,
+        limit     = 100,
+    )
+
+    # Calcular duración de cada turno
+    for s in shifts:
+        if s.get("end_time") and s.get("start_time"):
+            try:
+                mins = int((datetime.fromisoformat(s["end_time"]) -
+                            datetime.fromisoformat(s["start_time"])).total_seconds() / 60)
+                s["duration_h"] = mins // 60
+                s["duration_m"] = mins % 60
+            except Exception:
+                s["duration_h"] = s["duration_m"] = None
+        else:
+            s["duration_h"] = s["duration_m"] = None
+
+    operators = get_all_operators()
+    return render_template(
+        "shifts/history.html",
+        shifts    = shifts,
+        operators = operators,
+        filters   = {
+            "line": line, "operator": operator,
+            "from": date_from, "to": date_to, "status": status,
+        },
+    )

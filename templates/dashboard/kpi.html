@@ -11,40 +11,169 @@
 
 {% block content %}
 <div class="page-header">
-  <h1>Dashboard — Supervisor</h1>
-  <span class="badge badge--green" id="live-indicator">● EN VIVO</span>
+  <div>
+    <h1>Dashboard — Supervisor</h1>
+    <p class="page-header__sub">Visión global de todas las líneas</p>
+  </div>
+  <div style="display:flex; gap:0.75rem; align-items:center;">
+    <span class="badge badge--green" id="live-indicator">● EN VIVO</span>
+    <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary btn--sm">
+      Ver historial completo
+    </a>
+  </div>
 </div>
 
-{% if active_lines %}
-<div class="supervisor-grid" id="supervisor-grid">
-  {% for line in active_lines %}
-  <div class="supervisor-card" id="line-card-{{ line.line_number }}" data-shift="{{ line.shift_id }}" data-line="{{ line.line_number }}">
-    <div class="supervisor-card__header">
-      <strong>Línea {{ line.line_number }}</strong>
-      <span class="badge badge--green">ACTIVO</span>
+<!-- ── Líneas activas ── -->
+<section class="section">
+  <h2 class="section__title">Líneas Activas</h2>
+  {% if active_lines %}
+  <div class="supervisor-grid" id="supervisor-grid">
+    {% for line in active_lines %}
+    <div class="supervisor-card" id="line-card-{{ line.line_number }}"
+         data-shift="{{ line.shift_id }}" data-line="{{ line.line_number }}">
+      <div class="supervisor-card__header">
+        <strong>Línea {{ line.line_number }}</strong>
+        <span class="badge badge--green">ACTIVO</span>
+      </div>
+      <p class="supervisor-card__operator">{{ line.operator_name }}</p>
+      <p class="supervisor-card__operator" style="font-size:0.78rem;">
+        Desde: {{ line.start_time[11:16] }}
+      </p>
+      <div class="supervisor-card__kpis">
+        <div class="mini-kpi">
+          <span class="mini-kpi__label">OEE</span>
+          <span class="mini-kpi__value" id="sv-oee-{{ line.line_number }}">—</span>
+        </div>
+        <div class="mini-kpi">
+          <span class="mini-kpi__label">Uds.</span>
+          <span class="mini-kpi__value" id="sv-units-{{ line.line_number }}">—</span>
+        </div>
+        <div class="mini-kpi">
+          <span class="mini-kpi__label">Rechazo</span>
+          <span class="mini-kpi__value" id="sv-reject-{{ line.line_number }}">—</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+        <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}"
+           class="btn btn--sm" style="flex:1; text-align:center;">Ver turno</a>
+        <a href="{{ url_for('views.shift_end', shift_id=line.shift_id) }}"
+           class="btn btn--sm btn--danger" style="flex:1; text-align:center;">Finalizar</a>
+      </div>
     </div>
-    <p class="supervisor-card__operator">{{ line.operator_name }}</p>
-    <div class="supervisor-card__kpis">
-      <div class="mini-kpi">
-        <span class="mini-kpi__label">OEE</span>
-        <span class="mini-kpi__value" id="sv-oee-{{ line.line_number }}">—</span>
-      </div>
-      <div class="mini-kpi">
-        <span class="mini-kpi__label">Uds.</span>
-        <span class="mini-kpi__value" id="sv-units-{{ line.line_number }}">—</span>
-      </div>
-      <div class="mini-kpi">
-        <span class="mini-kpi__label">Rechazo</span>
-        <span class="mini-kpi__value" id="sv-reject-{{ line.line_number }}">—</span>
-      </div>
-    </div>
-    <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}" class="btn btn--sm">Ver detalle</a>
+    {% endfor %}
   </div>
-  {% endfor %}
-</div>
-{% else %}
-<div class="empty-state">
-  <p>No hay líneas activas en este momento.</p>
-</div>
+  {% else %}
+  <div class="empty-state">
+    <p>No hay líneas activas en este momento.</p>
+    <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">Iniciar turno</a>
+  </div>
+  {% endif %}
+</section>
+
+<!-- ── Rendimiento últimos 7 días por línea ── -->
+{% if line_perf %}
+<section class="section">
+  <h2 class="section__title">Rendimiento por Línea — Últimos 7 días</h2>
+  <div class="perf-grid">
+    {% for lp in line_perf %}
+    {% set pct = ((lp.total_units / lp.target_units * 100) | round(1)) if lp.target_units else 0 %}
+    <div class="perf-card">
+      <div class="perf-card__header">
+        <span class="perf-card__line">L{{ lp.line_number }}</span>
+        <span class="perf-card__shifts">{{ lp.shift_count }} turno{{ 's' if lp.shift_count != 1 }}</span>
+      </div>
+      <div class="perf-card__stat">
+        <span class="perf-card__label">Uds. producidas</span>
+        <strong>{{ "{:,}".format(lp.total_units | int).replace(",", ".") if lp.total_units else '—' }}</strong>
+      </div>
+      <div class="perf-card__stat">
+        <span class="perf-card__label">Tiempo parada</span>
+        <strong>{{ lp.total_downtime | int if lp.total_downtime else '—' }} min</strong>
+      </div>
+      {% if lp.target_units and lp.total_units %}
+      <div class="perf-card__progress">
+        <div class="dash-progress-bar" style="margin-top:0.4rem;">
+          <div class="dash-progress-fill"
+               style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%;
+                      background:{% if pct >= 95 %}#27ae60{% elif pct >= 80 %}#f39c12{% else %}#e74c3c{% endif %}">
+          </div>
+        </div>
+        <div class="dash-progress-meta">
+          <span>{{ pct }}% del objetivo</span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
 {% endif %}
+
+<!-- ── Últimos turnos completados ── -->
+<section class="section">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+    <h2 class="section__title" style="margin:0;">Últimos Turnos</h2>
+    <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary btn--sm">
+      Ver todos →
+    </a>
+  </div>
+
+  {% if recent_shifts %}
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Operario</th>
+          <th>Línea</th>
+          <th>Tipo</th>
+          <th>Uds. producidas</th>
+          <th>Parada</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in recent_shifts %}
+        <tr class="history-row">
+          <td class="history-date">
+            {{ s.start_time[:10] | replace('-', '/') }}
+            <div class="history-time">{{ s.start_time[11:16] }}</div>
+          </td>
+          <td>{{ s.operator_name }}</td>
+          <td><span class="history-line-badge">L{{ s.line_number }}</span></td>
+          <td>
+            {% if s.shift_type == 'morning' %}☀ M
+            {% elif s.shift_type == 'afternoon' %}🌤 T
+            {% else %}🌙 N{% endif %}
+          </td>
+          <td>
+            {% if s.last_units_produced is not none %}
+              {{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if s.last_downtime is not none %}
+              {{ s.last_downtime | int }} min
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="badge {% if s.status == 'completed' %}badge--green{% else %}badge--orange{% endif %}">
+              {% if s.status == 'completed' %}OK{% else %}Int.{% endif %}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
+               class="btn btn--sm">Resumen</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="report-empty">No hay turnos completados aún.</p>
+  {% endif %}
+</section>
+
 {% endblock %}

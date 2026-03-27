@@ -153,6 +153,181 @@ body {
 .section__title { font-size: 1rem; font-weight: 600; color: var(--color-gray-700); margin-bottom: 1rem; }
 
 /* ============================================================
+   Historial de turnos
+   ============================================================ */
+.history-filters {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.history-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.history-filters__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  padding-bottom: 0.05rem;
+}
+
+.history-results-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.history-results-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.history-active-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--color-gray-400);
+  flex-wrap: wrap;
+}
+
+.history-filter-tag {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.1rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.history-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.history-table th {
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  background: var(--color-gray-100);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-400);
+  border-bottom: 1px solid var(--color-gray-200);
+  white-space: nowrap;
+}
+
+.history-row td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  vertical-align: middle;
+}
+
+.history-row:last-child td { border-bottom: none; }
+.history-row:hover td { background: var(--color-gray-100); }
+.history-row--interrupted td { opacity: 0.75; }
+
+.history-id    { color: var(--color-gray-400); font-size: 0.78rem; }
+.history-date  { font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+.history-time  { font-size: 0.75rem; color: var(--color-gray-400); margin-top: 0.1rem; font-variant-numeric: tabular-nums; }
+.history-operator { font-weight: 500; }
+.history-line  { }
+.history-line-badge {
+  display: inline-block;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 5px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.history-type  { white-space: nowrap; font-size: 0.82rem; }
+.history-duration { white-space: nowrap; font-size: 0.85rem; color: var(--color-gray-700); }
+.history-units { white-space: nowrap; }
+.history-reject { white-space: nowrap; font-weight: 600; }
+.history-downtime { white-space: nowrap; font-size: 0.85rem; }
+
+.history-units-bar {
+  height: 4px;
+  background: var(--color-gray-200);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+  width: 80px;
+}
+.history-units-bar div { height: 100%; border-radius: 99px; }
+
+.history-val--good { color: var(--color-success); }
+.history-val--warn { color: var(--color-warning); }
+.history-val--bad  { color: var(--color-danger); }
+
+/* ============================================================
+   Performance grid (dashboard)
+   ============================================================ */
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.perf-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--color-primary);
+}
+
+.perf-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.perf-card__line {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.perf-card__shifts {
+  font-size: 0.72rem;
+  color: var(--color-gray-400);
+  background: var(--color-gray-100);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.perf-card__stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.82rem;
+  margin-bottom: 0.3rem;
+}
+
+.perf-card__label { color: var(--color-gray-400); }
+.perf-card__stat strong { color: var(--color-gray-900); }
+
+/* ============================================================
    Buttons
    ============================================================ */
 .btn {
