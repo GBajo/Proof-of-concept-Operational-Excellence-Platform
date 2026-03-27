@@ -334,7 +334,9 @@
   gap: 0.75rem 1.25rem;
 }
 
-.form__input {
+.kpi-entry-panel .form__input,
+.kpi-entry-panel .form__select,
+.kpi-entry-panel .form__textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1.5px solid var(--dash-border);
@@ -346,7 +348,9 @@
   transition: border-color 0.15s;
 }
 
-.form__input:focus {
+.kpi-entry-panel .form__input:focus,
+.kpi-entry-panel .form__select:focus,
+.kpi-entry-panel .form__textarea:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(0,87,168,0.18);
