@@ -42,21 +42,95 @@ body {
   box-shadow: var(--shadow);
 }
 
-.topbar__brand { display: flex; align-items: center; gap: 0.5rem; }
+.topbar__brand { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 .topbar__logo { font-size: 1.5rem; }
 .topbar__title { font-size: 1.1rem; font-weight: 700; }
 .topbar__subtitle { font-size: 0.8rem; opacity: 0.75; }
 
-.topbar__nav { display: flex; gap: 1rem; }
+.topbar__nav { display: flex; gap: 0.25rem; }
 .nav-link {
   color: rgba(255,255,255,0.85);
   text-decoration: none;
-  font-size: 0.9rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background 0.15s;
+  font-size: 0.875rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 5px;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 .nav-link:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.nav-link--active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 600; }
+
+/* Indicador de turnos activos en la topbar */
+.topbar__shifts {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.topbar__shift-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 99px;
+  padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.15s;
+  position: relative;
+}
+.topbar__shift-pill:hover { background: rgba(255,255,255,0.22); }
+.topbar__shift-pill--current {
+  background: rgba(46,204,113,0.25);
+  border-color: rgba(46,204,113,0.5);
+}
+
+.topbar__shift-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  flex-shrink: 0;
+  animation: pulse-nav-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-nav-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(46,204,113,0.6); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(46,204,113,0); }
+}
+
+.topbar__shift-text { display: flex; align-items: center; gap: 0.3rem; }
+.topbar__shift-name { opacity: 0.85; font-weight: 400; }
+
+.topbar__shift-actions { display: flex; align-items: center; margin-left: 0.2rem; }
+.topbar__shift-end-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 0.65rem;
+  text-decoration: none;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.topbar__shift-end-link:hover { background: var(--color-danger); }
+
+.topbar__no-shift {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  padding: 0.25rem 0.65rem;
+  border: 1px dashed rgba(255,255,255,0.35);
+  border-radius: 99px;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.topbar__no-shift:hover { background: rgba(255,255,255,0.12); color: #fff; }
 
 /* ============================================================
    Layout

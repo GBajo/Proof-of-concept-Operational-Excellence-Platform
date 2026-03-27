@@ -11,16 +11,62 @@
 </head>
 <body>
   <header class="topbar">
+
+    <!-- Marca -->
     <div class="topbar__brand">
       <span class="topbar__logo">⬡</span>
-      <span class="topbar__title">PackLine</span>
-      <span class="topbar__subtitle">Asistente de Línea</span>
+      <div>
+        <span class="topbar__title">PackLine</span>
+        <span class="topbar__subtitle">Asistente de Línea</span>
+      </div>
     </div>
-    <nav class="topbar__nav">
-      <a href="{{ url_for('views.index') }}" class="nav-link">Inicio</a>
-      <a href="{{ url_for('views.shift_start') }}" class="nav-link">Nuevo Turno</a>
-      <a href="{{ url_for('views.dashboard') }}" class="nav-link">Dashboard</a>
+
+    <!-- Navegación principal -->
+    <nav class="topbar__nav" aria-label="Navegación principal">
+      <a href="{{ url_for('views.index') }}"
+         class="nav-link {% if request.path == '/' %}nav-link--active{% endif %}">
+        Inicio
+      </a>
+      <a href="{{ url_for('views.shift_start') }}"
+         class="nav-link {% if request.path == '/shift/start' %}nav-link--active{% endif %}">
+        Nuevo Turno
+      </a>
+      <a href="{{ url_for('views.dashboard') }}"
+         class="nav-link {% if request.path == '/dashboard' %}nav-link--active{% endif %}">
+        Dashboard
+      </a>
     </nav>
+
+    <!-- Indicador de turno(s) activo(s) -->
+    <div class="topbar__shifts">
+      {% if navbar_active_shifts %}
+        {% for s in navbar_active_shifts %}
+        <a href="{{ url_for('views.shift_active', shift_id=s.shift_id) }}"
+           class="topbar__shift-pill
+             {% if '/shift/' ~ s.shift_id ~ '/' in request.path %}topbar__shift-pill--current{% endif %}"
+           title="Ver turno activo — Línea {{ s.line_number }}">
+          <span class="topbar__shift-dot"></span>
+          <span class="topbar__shift-text">
+            L{{ s.line_number }}
+            <span class="topbar__shift-name">{{ s.operator_name.split()[0] }}</span>
+          </span>
+          {% if '/shift/' ~ s.shift_id ~ '/' in request.path %}
+          <span class="topbar__shift-actions">
+            <a href="{{ url_for('views.shift_end', shift_id=s.shift_id) }}"
+               class="topbar__shift-end-link"
+               onclick="event.stopPropagation()"
+               title="Finalizar turno">✕</a>
+          </span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      {% else %}
+        <a href="{{ url_for('views.shift_start') }}" class="topbar__no-shift">
+          + Iniciar turno
+        </a>
+      {% endif %}
+    </div>
+
   </header>
 
   <main class="main-content">

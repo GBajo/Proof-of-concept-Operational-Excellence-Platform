@@ -28,6 +28,16 @@ def create_app() -> Flask:
     app.register_blueprint(kpis_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
+    # Inyectar turnos activos en todos los templates para la barra de nav
+    @app.context_processor
+    def inject_navbar_context():
+        from models.shift import get_active_lines
+        try:
+            active = get_active_lines()
+        except Exception:
+            active = []
+        return {'navbar_active_shifts': active}
+
     return app
 
 
