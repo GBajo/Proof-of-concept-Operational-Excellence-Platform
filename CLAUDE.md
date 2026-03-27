@@ -10,7 +10,7 @@ Displays real-time production KPIs and line performance dashboards.
 - **Database:** SQLite (prototype phase)
 - **Frontend:** HTML/CSS/JS (no frontend framework, keep it simple)
 - **Voice:** Web Speech API (browser-native, no external services)
-- **Charts:** Chart.js via CDN
+- **Charts:** Apache ECharts 5 via CDN
 
 ## Architecture
 - Single Flask application with Jinja2 templates
