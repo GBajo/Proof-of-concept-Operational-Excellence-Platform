@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Iniciar Turno{% endblock %}
+{% block title %}{{ t('page_title_start') }}{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
 
 {% block content %}
@@ -9,8 +9,8 @@
   <div class="start-main">
     <div class="start-header">
       <div>
-        <h1 class="start-title">Inicio de Turno</h1>
-        <p class="start-subtitle">Complete los datos para registrar su turno de trabajo</p>
+        <h1 class="start-title">{{ t('shift_start_title') }}</h1>
+        <p class="start-subtitle">{{ t('shift_start_subtitle') }}</p>
       </div>
       <div class="start-clock" id="live-clock">--:--:--</div>
     </div>
@@ -21,17 +21,17 @@
       <div class="sf-section">
         <div class="sf-section__label">
           <span class="sf-section__icon">👤</span>
-          <span>Operario</span>
+          <span>{{ t('operator_label') }}</span>
         </div>
         {% if operators %}
         <select name="operator_id" id="operator_id" class="form__select" required>
-          <option value="">-- Seleccione un operario --</option>
+          <option value="">{{ t('select_operator') }}</option>
           {% for op in operators %}
           <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
           {% endfor %}
         </select>
         {% else %}
-        <p class="alert alert--danger">No hay operarios en la base de datos. Ejecuta <code>python seed_data.py</code> para cargar los datos de ejemplo.</p>
+        <p class="alert alert--danger">{{ t('no_operators_msg') | safe }}</p>
         {% endif %}
       </div>
 
@@ -39,7 +39,7 @@
       <div class="sf-section">
         <div class="sf-section__label">
           <span class="sf-section__icon">🏭</span>
-          <span>Línea de Packaging</span>
+          <span>{{ t('packaging_line_label') }}</span>
         </div>
         <div class="line-grid" id="line-grid">
           {% for n in range(1, 6) %}
@@ -47,10 +47,10 @@
             <input type="radio" name="line_number" value="{{ n }}" required>
             <div class="line-card__inner">
               <div class="line-card__number">L{{ n }}</div>
-              <div class="line-card__label">Línea {{ n }}</div>
+              <div class="line-card__label">{{ t('line_label') }} {{ n }}</div>
               <div class="line-card__status" id="line-status-{{ n }}">
                 <span class="line-dot line-dot--loading"></span>
-                <span class="line-status-text">Verificando…</span>
+                <span class="line-status-text">{{ t('verifying') }}</span>
               </div>
             </div>
           </label>
@@ -62,14 +62,14 @@
       <div class="sf-section">
         <div class="sf-section__label">
           <span class="sf-section__icon">🕐</span>
-          <span>Tipo de Turno</span>
+          <span>{{ t('shift_type_label') }}</span>
         </div>
         <div class="shift-type-grid">
           <label class="shift-type-card">
             <input type="radio" name="shift_type" value="morning" checked>
             <div class="shift-type-card__inner">
               <span class="shift-type-card__icon">🌅</span>
-              <span class="shift-type-card__name">Mañana</span>
+              <span class="shift-type-card__name">{{ t('shift_morning') }}</span>
               <span class="shift-type-card__hours">06:00 – 14:00</span>
             </div>
           </label>
@@ -77,7 +77,7 @@
             <input type="radio" name="shift_type" value="afternoon">
             <div class="shift-type-card__inner">
               <span class="shift-type-card__icon">☀️</span>
-              <span class="shift-type-card__name">Tarde</span>
+              <span class="shift-type-card__name">{{ t('shift_afternoon') }}</span>
               <span class="shift-type-card__hours">14:00 – 22:00</span>
             </div>
           </label>
@@ -85,7 +85,7 @@
             <input type="radio" name="shift_type" value="night">
             <div class="shift-type-card__inner">
               <span class="shift-type-card__icon">🌙</span>
-              <span class="shift-type-card__name">Noche</span>
+              <span class="shift-type-card__name">{{ t('shift_night') }}</span>
               <span class="shift-type-card__hours">22:00 – 06:00</span>
             </div>
           </label>
@@ -95,10 +95,10 @@
       <div id="form-error" class="alert alert--danger" style="display:none" role="alert"></div>
 
       <div class="sf-actions">
-        <a href="{{ url_for('views.index') }}" class="btn btn--secondary btn--lg">Cancelar</a>
+        <a href="{{ url_for('views.index') }}" class="btn btn--secondary btn--lg">{{ t('btn_cancel') }}</a>
         <button type="submit" class="btn btn--primary btn--lg btn--start">
           <span class="btn-icon">▶</span>
-          Iniciar Turno
+          {{ t('btn_start_shift_action') }}
         </button>
       </div>
 
@@ -108,31 +108,31 @@
   <!-- Columna derecha: info contextual -->
   <aside class="start-aside">
     <div class="aside-card">
-      <h3 class="aside-card__title">Estado de la Planta</h3>
+      <h3 class="aside-card__title">{{ t('plant_status') }}</h3>
       <div class="plant-stats" id="plant-stats">
         <div class="plant-stat">
           <span class="plant-stat__value" id="stat-active">—</span>
-          <span class="plant-stat__label">Líneas activas</span>
+          <span class="plant-stat__label">{{ t('active_lines_stat') }}</span>
         </div>
         <div class="plant-stat">
           <span class="plant-stat__value" id="stat-free">—</span>
-          <span class="plant-stat__label">Líneas libres</span>
+          <span class="plant-stat__label">{{ t('free_lines_stat') }}</span>
         </div>
       </div>
     </div>
 
     <div class="aside-card aside-card--info">
-      <h3 class="aside-card__title">Instrucciones</h3>
+      <h3 class="aside-card__title">{{ t('instructions_title') }}</h3>
       <ol class="instructions-list">
-        <li>Seleccione su nombre de operario</li>
-        <li>Elija una línea disponible <span class="badge badge--green" style="font-size:0.7rem">LIBRE</span></li>
-        <li>Confirme el tipo de turno</li>
-        <li>Pulse <strong>Iniciar Turno</strong></li>
+        <li>{{ t('instructions_1') }}</li>
+        <li>{{ t('instructions_2') }} <span class="badge badge--green" style="font-size:0.7rem">{{ t('badge_free') }}</span></li>
+        <li>{{ t('instructions_3') }}</li>
+        <li>{{ t('instructions_4') }} <strong>{{ t('btn_start_shift_action') }}</strong></li>
       </ol>
     </div>
 
     <div class="aside-card aside-card--warning" id="active-lines-info" style="display:none">
-      <h3 class="aside-card__title">⚠ Líneas Ocupadas</h3>
+      <h3 class="aside-card__title">{{ t('occupied_lines_title') }}</h3>
       <ul class="occupied-list" id="occupied-list"></ul>
     </div>
   </aside>

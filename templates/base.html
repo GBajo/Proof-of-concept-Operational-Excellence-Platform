@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,21 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/voice.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    .lang-switcher { display:flex; align-items:center; gap:0.25rem; }
+    .lang-switcher form { margin:0; }
+    .lang-btn {
+      background: none; border: 1.5px solid transparent; border-radius: 6px;
+      padding: 0.2rem 0.5rem; font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; color: var(--color-gray-400); transition: all .15s;
+      line-height: 1.4;
+    }
+    .lang-btn:hover { border-color: var(--color-gray-300); color: var(--color-gray-700); }
+    .lang-btn--active {
+      background: var(--color-primary); color: #fff;
+      border-color: var(--color-primary);
+    }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -22,30 +37,30 @@
     </div>
 
     <!-- Navegación principal -->
-    <nav class="topbar__nav" aria-label="Navegación principal">
+    <nav class="topbar__nav" aria-label="{{ t('nav_home') }}">
       <a href="{{ url_for('views.index') }}"
          class="nav-link {% if request.path == '/' %}nav-link--active{% endif %}">
-        Inicio
+        {{ t('nav_home') }}
       </a>
       <a href="{{ url_for('views.shift_start') }}"
          class="nav-link {% if request.path == '/shift/start' %}nav-link--active{% endif %}">
-        Nuevo Turno
+        {{ t('nav_new_shift') }}
       </a>
       <a href="{{ url_for('views.dashboard') }}"
          class="nav-link {% if request.path == '/dashboard' %}nav-link--active{% endif %}">
-        Dashboard
+        {{ t('nav_dashboard') }}
       </a>
       <a href="{{ url_for('views.shifts_history') }}"
          class="nav-link {% if request.path == '/shifts' %}nav-link--active{% endif %}">
-        Historial
+        {{ t('nav_history') }}
       </a>
       <a href="{{ url_for('admin.admin_docs') }}"
          class="nav-link {% if request.path.startswith('/admin') %}nav-link--active{% endif %}">
-        📚 Docs
+        📚 {{ t('nav_docs') }}
       </a>
       <a href="{{ url_for('chart_builder.chart_builder') }}"
          class="nav-link {% if request.path.startswith('/dashboard/builder') %}nav-link--active{% endif %}">
-        ✦ Gráficos IA
+        ✦ {{ t('nav_ai_charts') }}
       </a>
     </nav>
 
@@ -56,7 +71,7 @@
         <a href="{{ url_for('views.shift_active', shift_id=s.shift_id) }}"
            class="topbar__shift-pill
              {% if '/shift/' ~ s.shift_id ~ '/' in request.path %}topbar__shift-pill--current{% endif %}"
-           title="Ver turno activo — Línea {{ s.line_number }}">
+           title="{{ t('nav_active_shift_title') }} — {{ t('line_label') }} {{ s.line_number }}">
           <span class="topbar__shift-dot"></span>
           <span class="topbar__shift-text">
             L{{ s.line_number }}
@@ -67,16 +82,30 @@
             <a href="{{ url_for('views.shift_end', shift_id=s.shift_id) }}"
                class="topbar__shift-end-link"
                onclick="event.stopPropagation()"
-               title="Finalizar turno">✕</a>
+               title="{{ t('nav_end_shift') }}">✕</a>
           </span>
           {% endif %}
         </a>
         {% endfor %}
       {% else %}
         <a href="{{ url_for('views.shift_start') }}" class="topbar__no-shift">
-          + Iniciar turno
+          {{ t('nav_start_shift') }}
         </a>
       {% endif %}
+    </div>
+
+    <!-- Selector de idioma -->
+    <div class="lang-switcher">
+      <form method="post" action="{{ url_for('views.set_lang') }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="hidden" name="lang" value="es">
+        <button type="submit" class="lang-btn {% if lang == 'es' %}lang-btn--active{% endif %}">ES</button>
+      </form>
+      <form method="post" action="{{ url_for('views.set_lang') }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="hidden" name="lang" value="en">
+        <button type="submit" class="lang-btn {% if lang == 'en' %}lang-btn--active{% endif %}">EN</button>
+      </form>
     </div>
 
   </header>
@@ -91,7 +120,7 @@
   </main>
 
   <footer class="footer">
-    <span>Proof of Concept - OpEx Platform © 2026</span>
+    <span>{{ t('footer_copyright') }}</span>
   </footer>
 
   <script src="{{ url_for('static', filename='js/utils.js') }}"></script>

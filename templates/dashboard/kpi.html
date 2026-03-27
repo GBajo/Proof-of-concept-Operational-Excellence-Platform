@@ -1,43 +1,43 @@
 {% extends "base.html" %}
-{% block title %}Dashboard KPI — Supervisor{% endblock %}
+{% block title %}{{ t('page_title_dashboard') }}{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
   const SHIFT_ID = null;
   const LINE_NUMBER = null;
   const DASHBOARD_MODE = 'supervisor';
+  const APP_LANG = "{{ lang }}";
 </script>
 {% endblock %}
 
 {% block content %}
 
-<!-- ── Cabecera ─────────────────────────────────────────────── -->
+<!-- ── Cabecera ── -->
 <div class="page-header">
   <div>
-    <h1>Dashboard — Supervisor</h1>
-    <p class="page-header__sub">Visión global · Actualización automática cada 30 s</p>
+    <h1>{{ t('dashboard_title') }}</h1>
+    <p class="page-header__sub">{{ t('dashboard_subtitle') }}</p>
   </div>
   <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-    <span class="badge badge--green" id="live-indicator">● EN VIVO</span>
+    <span class="badge badge--green" id="live-indicator">{{ t('badge_live') }}</span>
 
-    <!-- Filtro de línea -->
     <select id="filter-line-select" class="form__select form__select--sm"
-            title="Filtrar por línea">
-      <option value="">Todas las líneas</option>
+            title="{{ t('filter_line') }}">
+      <option value="">{{ t('all_lines') }}</option>
       {% for n in range(1,6) %}
       <option value="{{ n }}" {% if request.args.get('line')|int == n %}selected{% endif %}>
-        Línea {{ n }}
+        {{ t('line_label') }} {{ n }}
       </option>
       {% endfor %}
     </select>
 
     <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary btn--sm">
-      Ver historial
+      {{ t('btn_view_history') }}
     </a>
   </div>
 </div>
 
-<!-- ── Tarjetas métricas superiores ─────────────────────────── -->
+<!-- ── Tarjetas métricas superiores ── -->
 <section class="section">
   <div class="sv-metric-row">
 
@@ -51,7 +51,7 @@
       <div class="sv-metric-card__icon">⚡</div>
       <div class="sv-metric-card__body">
         <div class="sv-metric-card__value">{{ total_lines }}</div>
-        <div class="sv-metric-card__label">Líneas Activas</div>
+        <div class="sv-metric-card__label">{{ t('active_lines_metric') }}</div>
       </div>
     </div>
 
@@ -59,7 +59,7 @@
       <div class="sv-metric-card__icon">📦</div>
       <div class="sv-metric-card__body">
         <div class="sv-metric-card__value" id="sv-total-units">—</div>
-        <div class="sv-metric-card__label">Uds. Producidas (turno)</div>
+        <div class="sv-metric-card__label">{{ t('units_produced_metric') }}</div>
       </div>
     </div>
 
@@ -67,7 +67,7 @@
       <div class="sv-metric-card__icon">🎯</div>
       <div class="sv-metric-card__body">
         <div class="sv-metric-card__value" id="sv-avg-oee">—</div>
-        <div class="sv-metric-card__label">OEE Promedio</div>
+        <div class="sv-metric-card__label">{{ t('avg_oee_metric') }}</div>
       </div>
     </div>
 
@@ -75,7 +75,7 @@
       <div class="sv-metric-card__icon">⚠</div>
       <div class="sv-metric-card__body">
         <div class="sv-metric-card__value" id="sv-avg-reject">—</div>
-        <div class="sv-metric-card__label">Tasa Rechazo Prom.</div>
+        <div class="sv-metric-card__label">{{ t('avg_reject_metric') }}</div>
       </div>
     </div>
 
@@ -83,7 +83,7 @@
       <div class="sv-metric-card__icon">⏱</div>
       <div class="sv-metric-card__body">
         <div class="sv-metric-card__value" id="sv-total-downtime">—</div>
-        <div class="sv-metric-card__label">Parada Total (min)</div>
+        <div class="sv-metric-card__label">{{ t('total_downtime_metric') }}</div>
       </div>
     </div>
 
@@ -91,61 +91,56 @@
       <div class="sv-metric-card__icon">✅</div>
       <div class="sv-metric-card__body">
         <div class="sv-metric-card__value" id="sv-avg-rft">—</div>
-        <div class="sv-metric-card__label">Right First Time</div>
+        <div class="sv-metric-card__label">{{ t('rft_metric') }}</div>
       </div>
     </div>
 
   </div>
   <div style="text-align:right; font-size:0.72rem; color:var(--color-gray-400); margin-top:0.4rem;">
-    Última actualización: <span id="sv-last-update">—</span>
+    {{ t('last_update') }} <span id="sv-last-update">—</span>
   </div>
 </section>
 
-<!-- ── Grid principal de gráficos ───────────────────────────── -->
+<!-- ── Grid principal de gráficos ── -->
 <section class="section">
   <div class="sv-charts-grid">
 
-    <!-- Fila 1 izquierda: Producción real vs objetivo -->
     <div class="sv-chart-card sv-chart-card--wide">
       <div class="sv-chart-card__header">
-        <h3 class="sv-chart-card__title">Producción Real vs Objetivo por Línea</h3>
-        <span class="badge badge--blue">Turno actual</span>
+        <h3 class="sv-chart-card__title">{{ t('chart_prod_vs_target') }}</h3>
+        <span class="badge badge--blue">{{ t('badge_current_shift') }}</span>
       </div>
       <div id="chart-bars" style="width:100%; height:240px;"></div>
     </div>
 
-    <!-- Fila 1 derecha: Donut tipos de parada -->
     <div class="sv-chart-card">
       <div class="sv-chart-card__header">
-        <h3 class="sv-chart-card__title">Distribución de Paradas</h3>
-        <span class="badge badge--orange">Por tipo</span>
+        <h3 class="sv-chart-card__title">{{ t('chart_stops_dist') }}</h3>
+        <span class="badge badge--orange">{{ t('badge_by_type') }}</span>
       </div>
       <div id="chart-donut" style="width:100%; height:240px;"></div>
     </div>
 
-    <!-- Fila 2 izquierda: Área apilada D×R×C -->
     <div class="sv-chart-card">
       <div class="sv-chart-card__header">
-        <h3 class="sv-chart-card__title">Componentes OEE en el Turno</h3>
-        <span class="badge badge--green">Disponib. · Rend. · Calidad</span>
+        <h3 class="sv-chart-card__title">{{ t('chart_oee_components') }}</h3>
+        <span class="badge badge--green">{{ t('badge_oee_components') }}</span>
       </div>
       <div id="chart-area" style="width:100%; height:240px;"></div>
     </div>
 
-    <!-- Fila 2 derecha: Línea OEE histórico -->
     <div class="sv-chart-card">
       <div class="sv-chart-card__header">
-        <h3 class="sv-chart-card__title">Tendencia OEE — Últimos Turnos</h3>
-        <span class="badge badge--blue">14 turnos</span>
+        <h3 class="sv-chart-card__title">{{ t('chart_oee_trend') }}</h3>
+        <span class="badge badge--blue">{{ t('badge_14_shifts') }}</span>
       </div>
       <div id="chart-oee-line" style="width:100%; height:240px;"></div>
     </div>
 
-    <!-- Fila 3: Heatmap ancho completo -->
     <div class="sv-chart-card sv-chart-card--full">
       <div class="sv-chart-card__header">
-        <h3 class="sv-chart-card__title">Mapa de Calor — Paradas por Hora y Día</h3>
-        <span class="badge badge--red">minutos de parada</span>
+        <h3 class="sv-chart-card__title">{{ t('chart_heatmap') }}</h3>
+        <span class="badge badge--red">{{ t('badge_downtime_min') }}</span>
       </div>
       <div id="chart-heatmap" style="width:100%; height:220px;"></div>
     </div>
@@ -153,21 +148,21 @@
   </div>
 </section>
 
-<!-- ── Líneas activas ────────────────────────────────────────── -->
+<!-- ── Líneas activas ── -->
 {% if active_lines %}
 <section class="section">
-  <h2 class="section__title">Líneas en Producción</h2>
+  <h2 class="section__title">{{ t('lines_in_production') }}</h2>
   <div class="supervisor-grid" id="supervisor-grid">
     {% for line in active_lines %}
     <div class="supervisor-card" id="line-card-{{ line.line_number }}"
          data-shift="{{ line.shift_id }}" data-line="{{ line.line_number }}">
       <div class="supervisor-card__header">
-        <strong>Línea {{ line.line_number }}</strong>
-        <span class="badge badge--green">ACTIVO</span>
+        <strong>{{ t('line_label') }} {{ line.line_number }}</strong>
+        <span class="badge badge--green">{{ t('badge_active') }}</span>
       </div>
       <p class="supervisor-card__operator">{{ line.operator_name }}</p>
       <p class="supervisor-card__operator" style="font-size:0.78rem; margin-bottom:0.75rem;">
-        Desde: {{ line.start_time[11:16] }}
+        {{ t('since_label') }} {{ line.start_time[11:16] }}
       </p>
       <div class="supervisor-card__kpis">
         <div class="mini-kpi">
@@ -179,15 +174,15 @@
           <span class="mini-kpi__value" id="sv-units-{{ line.line_number }}">—</span>
         </div>
         <div class="mini-kpi">
-          <span class="mini-kpi__label">Rechazo</span>
+          <span class="mini-kpi__label">{{ t('col_reject') }}</span>
           <span class="mini-kpi__value" id="sv-reject-{{ line.line_number }}">—</span>
         </div>
       </div>
       <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
         <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}"
-           class="btn btn--sm" style="flex:1; text-align:center;">Ver turno</a>
+           class="btn btn--sm" style="flex:1; text-align:center;">{{ t('btn_view_shift') }}</a>
         <a href="{{ url_for('views.shift_end', shift_id=line.shift_id) }}"
-           class="btn btn--sm btn--danger" style="flex:1; text-align:center;">Finalizar</a>
+           class="btn btn--sm btn--danger" style="flex:1; text-align:center;">{{ t('btn_end_shift_action') }}</a>
       </div>
     </div>
     {% endfor %}
@@ -196,30 +191,32 @@
 {% else %}
 <section class="section">
   <div class="empty-state">
-    <p>No hay líneas activas en este momento.</p>
-    <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">Iniciar turno</a>
+    <p>{{ t('no_active_lines') }}</p>
+    <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">{{ t('btn_start_shift_dash') }}</a>
   </div>
 </section>
 {% endif %}
 
-<!-- ── Rendimiento últimos 7 días ────────────────────────────── -->
+<!-- ── Rendimiento últimos 7 días ── -->
 {% if line_perf %}
 <section class="section">
-  <h2 class="section__title">Rendimiento por Línea — Últimos 7 días</h2>
+  <h2 class="section__title">{{ t('line_perf_title') }}</h2>
   <div class="perf-grid">
     {% for lp in line_perf %}
     {% set pct = ((lp.total_units / lp.target_units * 100) | round(1)) if lp.target_units else 0 %}
     <div class="perf-card">
       <div class="perf-card__header">
         <span class="perf-card__line">L{{ lp.line_number }}</span>
-        <span class="perf-card__shifts">{{ lp.shift_count }} turno{{ 's' if lp.shift_count != 1 }}</span>
+        <span class="perf-card__shifts">
+          {{ lp.shift_count }} {{ t('shifts_label_pl') if lp.shift_count != 1 else t('shifts_label') }}
+        </span>
       </div>
       <div class="perf-card__stat">
-        <span class="perf-card__label">Uds. producidas</span>
+        <span class="perf-card__label">{{ t('uds_producidas_card') }}</span>
         <strong>{{ "{:,}".format(lp.total_units | int).replace(",", ".") if lp.total_units else '—' }}</strong>
       </div>
       <div class="perf-card__stat">
-        <span class="perf-card__label">Tiempo parada</span>
+        <span class="perf-card__label">{{ t('downtime_card') }}</span>
         <strong>{{ lp.total_downtime | int if lp.total_downtime else '—' }} min</strong>
       </div>
       {% if lp.target_units and lp.total_units %}
@@ -231,7 +228,7 @@
           </div>
         </div>
         <div class="dash-progress-meta">
-          <span>{{ pct }}% del objetivo</span>
+          <span>{{ pct }}% {{ t('pct_target') }}</span>
         </div>
       </div>
       {% endif %}
@@ -241,12 +238,12 @@
 </section>
 {% endif %}
 
-<!-- ── Últimos turnos ────────────────────────────────────────── -->
+<!-- ── Últimos turnos ── -->
 <section class="section">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-    <h2 class="section__title" style="margin:0;">Últimos Turnos</h2>
+    <h2 class="section__title" style="margin:0;">{{ t('recent_shifts_title') }}</h2>
     <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary btn--sm">
-      Ver todos →
+      {{ t('btn_view_all_arrow') }}
     </a>
   </div>
 
@@ -255,13 +252,13 @@
     <table class="history-table">
       <thead>
         <tr>
-          <th>Fecha</th>
-          <th>Operario</th>
-          <th>Línea</th>
-          <th>Tipo</th>
-          <th>Uds. producidas</th>
-          <th>Parada</th>
-          <th>Estado</th>
+          <th>{{ t('col_date') }}</th>
+          <th>{{ t('col_operator') }}</th>
+          <th>{{ t('col_line') }}</th>
+          <th>{{ t('col_type') }}</th>
+          <th>{{ t('col_units') }}</th>
+          <th>{{ t('col_downtime') }}</th>
+          <th>{{ t('col_status') }}</th>
           <th></th>
         </tr>
       </thead>
@@ -275,9 +272,9 @@
           <td>{{ s.operator_name }}</td>
           <td><span class="history-line-badge">L{{ s.line_number }}</span></td>
           <td>
-            {% if s.shift_type == 'morning' %}☀ M
-            {% elif s.shift_type == 'afternoon' %}🌤 T
-            {% else %}🌙 N{% endif %}
+            {% if s.shift_type == 'morning' %}☀ {{ t('shift_morning_short') }}
+            {% elif s.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon_short') }}
+            {% else %}🌙 {{ t('shift_night_short') }}{% endif %}
           </td>
           <td>
             {% if s.last_units_produced is not none %}
@@ -296,7 +293,7 @@
           </td>
           <td>
             <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
-               class="btn btn--sm">Resumen</a>
+               class="btn btn--sm">{{ t('btn_summary') }}</a>
           </td>
         </tr>
         {% endfor %}
@@ -304,7 +301,7 @@
     </table>
   </div>
   {% else %}
-  <p class="report-empty">No hay turnos completados aún.</p>
+  <p class="report-empty">{{ t('no_shifts_completed') }}</p>
   {% endif %}
 </section>
 

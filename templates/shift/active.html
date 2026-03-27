@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Turno Activo — Línea {{ shift.line_number }}{% endblock %}
+{% block title %}{{ t('page_title_active') }} — {{ t('line_label') }} {{ shift.line_number }}{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
@@ -9,20 +9,21 @@
   const SHIFT_ID = {{ shift.id }};
   const OPERATOR_ID = {{ shift.operator_id }};
   const LINE_NUMBER = {{ shift.line_number }};
+  const APP_LANG = "{{ lang }}";
 </script>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Línea {{ shift.line_number }} — Turno Activo</h1>
-    <p class="page-header__sub">{{ shift.operator_name }} · Inicio: {{ shift.start_time[11:16] }}</p>
+    <h1>{{ t('line_label') }} {{ shift.line_number }} — {{ t('active_shift_title') }}</h1>
+    <p class="page-header__sub">{{ shift.operator_name }} · {{ t('shift_start_at') }} {{ shift.start_time[11:16] }}</p>
   </div>
   <div class="page-header__actions">
     <button class="btn btn--secondary" onclick="toggleKpiForm()">
-      <span aria-hidden="true">📊</span> Registrar KPI
+      <span aria-hidden="true">📊</span> {{ t('btn_register_kpi') }}
     </button>
-    <button class="btn btn--danger" onclick="endShift()">Finalizar Turno</button>
+    <button class="btn btn--danger" onclick="endShift()">{{ t('btn_end_shift') }}</button>
   </div>
 </div>
 
@@ -34,16 +35,16 @@
     <div class="dash-card dash-gauge-card">
       <div id="oee-gauge" style="width:100%; height:200px;"></div>
       <div class="dash-gauge-breakdown">
-        <span title="Disponibilidad">D <strong id="kpi-availability">—</strong>%</span>
-        <span title="Rendimiento">R <strong id="kpi-performance">—</strong>%</span>
-        <span title="Calidad">C <strong id="kpi-quality-val">—</strong>%</span>
+        <span title="{{ t('availability') }}">D <strong id="kpi-availability">—</strong>%</span>
+        <span title="{{ t('performance') }}">R <strong id="kpi-performance">—</strong>%</span>
+        <span title="{{ t('quality_kpi') }}">C <strong id="kpi-quality-val">—</strong>%</span>
       </div>
       <div class="dash-updated">↻ 30 s · <span id="kpi-last-update">—</span></div>
     </div>
 
     <!-- Unidades producidas -->
     <div class="dash-card dash-units-card">
-      <div class="dash-card__label">Unidades Producidas</div>
+      <div class="dash-card__label">{{ t('units_produced') }}</div>
       <div class="dash-card__value" id="kpi-units">—</div>
       <div class="dash-progress-wrap">
         <div class="dash-progress-bar">
@@ -51,27 +52,27 @@
         </div>
         <div class="dash-progress-meta">
           <span id="units-pct-label">0%</span>
-          <span>Obj: <strong id="kpi-units-target">—</strong></span>
+          <span>{{ t('target_label') }} <strong id="kpi-units-target">—</strong></span>
         </div>
       </div>
       <div class="dash-units-sub">
-        <span class="dash-mini-stat">Rechazadas <strong id="kpi-rejected-count">—</strong></span>
-        <span class="dash-mini-stat">RFT <strong id="kpi-rft">—</strong>%</span>
+        <span class="dash-mini-stat">{{ t('rejected_units') }} <strong id="kpi-rejected-count">—</strong></span>
+        <span class="dash-mini-stat">{{ t('rft_label') }} <strong id="kpi-rft">—</strong>%</span>
       </div>
     </div>
 
     <!-- Velocidad de línea -->
     <div class="dash-card dash-speed-card">
-      <div class="dash-card__label">Velocidad de Línea</div>
+      <div class="dash-card__label">{{ t('line_speed') }}</div>
       <div class="dash-card__value" id="kpi-speed">—</div>
-      <div class="dash-card__unit">uds / hora</div>
+      <div class="dash-card__unit">{{ t('units_per_hour') }}</div>
       <div class="dash-progress-wrap" style="margin-top:0.75rem">
         <div class="dash-progress-bar">
           <div class="dash-progress-fill dash-progress-fill--speed" id="speed-bar-fill" style="width:0%"></div>
         </div>
         <div class="dash-progress-meta">
           <span>0</span>
-          <span>Nominal: <strong id="kpi-nominal">—</strong></span>
+          <span>{{ t('nominal_label') }} <strong id="kpi-nominal">—</strong></span>
         </div>
       </div>
       <div class="dash-speed-badge" id="speed-indicator"></div>
@@ -84,22 +85,22 @@
 <section class="section">
   <div class="kpi-grid">
     <div class="kpi-card kpi-card--alert" id="card-reject">
-      <div class="kpi-card__label">Tasa de Rechazo</div>
+      <div class="kpi-card__label">{{ t('reject_rate') }}</div>
       <div class="kpi-card__value" id="kpi-reject">—</div>
       <div class="kpi-card__unit">%</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-card__label">Tiempo de Parada</div>
+      <div class="kpi-card__label">{{ t('downtime') }}</div>
       <div class="kpi-card__value" id="kpi-downtime">—</div>
       <div class="kpi-card__unit">min</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-card__label">Disponibilidad</div>
+      <div class="kpi-card__label">{{ t('availability') }}</div>
       <div class="kpi-card__value" id="kpi-avail-card">—</div>
       <div class="kpi-card__unit">%</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-card__label">Rendimiento</div>
+      <div class="kpi-card__label">{{ t('performance') }}</div>
       <div class="kpi-card__value" id="kpi-perf-card">—</div>
       <div class="kpi-card__unit">%</div>
     </div>
@@ -110,7 +111,7 @@
 <section class="section section--row">
 
   <div class="chart-container">
-    <h2 class="section__title">Evolución OEE</h2>
+    <h2 class="section__title">{{ t('oee_evolution') }}</h2>
     <div id="oee-chart" style="width:100%; height:260px;"></div>
   </div>
 
@@ -119,21 +120,21 @@
 
     <div class="voice-panel__header">
       <h2 class="voice-panel__title">
-        Comentarios
+        {{ t('comments_title') }}
         <span class="badge badge--blue" id="comments-count">0</span>
       </h2>
       <div style="display:flex; gap:0.5rem; align-items:center;">
         <button class="btn btn--sm ai-ask-btn" onclick="openAssistantModal()"
-                title="Pedir ayuda al asistente">
-          🤖 Pedir ayuda
+                title="{{ t('btn_ask_assistant') }}">
+          🤖 {{ t('btn_ask_assistant') }}
         </button>
         <select id="filter-category" class="form__select form__select--sm"
-                onchange="filterComments(this.value)" title="Filtrar por categoría">
-          <option value="">Todas</option>
-          <option value="production">Producción</option>
-          <option value="quality">Calidad</option>
-          <option value="safety">Seguridad</option>
-          <option value="maintenance">Mantenimiento</option>
+                onchange="filterComments(this.value)" title="{{ t('cat_production') }}">
+          <option value="">{{ t('filter_all_cats') }}</option>
+          <option value="production">{{ t('cat_production') }}</option>
+          <option value="quality">{{ t('cat_quality') }}</option>
+          <option value="safety">{{ t('cat_safety') }}</option>
+          <option value="maintenance">{{ t('cat_maintenance') }}</option>
         </select>
       </div>
     </div>
@@ -143,50 +144,50 @@
       <div id="recorder-idle">
         <button class="voice-btn" onclick="startRecording()">
           <span class="voice-btn__mic" aria-hidden="true">🎤</span>
-          <span class="voice-btn__label">Grabar comentario de voz</span>
+          <span class="voice-btn__label">{{ t('btn_record_voice') }}</span>
         </button>
         <button class="voice-btn voice-btn--secondary" onclick="openManualEntry()">
           <span class="voice-btn__mic" aria-hidden="true">✏️</span>
-          <span class="voice-btn__label">Escribir comentario</span>
+          <span class="voice-btn__label">{{ t('btn_write_comment') }}</span>
         </button>
       </div>
 
       <div id="recorder-active" style="display:none">
         <div class="rec-status">
           <span class="rec-dot"></span>
-          <span id="rec-label">Escuchando...</span>
+          <span id="rec-label">{{ t('listening_label') }}</span>
         </div>
         <div class="rec-interim" id="transcript-interim">
-          <em>Di tu comentario en voz alta...</em>
+          <em>{{ t('say_comment') }}</em>
         </div>
         <button class="voice-btn voice-btn--stop" onclick="stopRecording()">
           <span class="voice-btn__mic" aria-hidden="true">⏹</span>
-          <span class="voice-btn__label">Detener grabación</span>
+          <span class="voice-btn__label">{{ t('btn_stop_recording') }}</span>
         </button>
       </div>
 
       <div id="recorder-confirm" style="display:none">
         <div class="rec-done-header">
           <span class="rec-dot rec-dot--done"></span>
-          <span>Transcripción lista — revisa y confirma</span>
-          <button class="btn-rerecord" onclick="startRecording()">🔄 Repetir</button>
+          <span>{{ t('transcript_ready') }}</span>
+          <button class="btn-rerecord" onclick="startRecording()">{{ t('btn_retry_recording') }}</button>
         </div>
         <textarea id="transcript-text" class="form__textarea voice-transcript-area" rows="3"
-          placeholder="Texto del comentario..."></textarea>
+          placeholder="{{ t('comment_placeholder') }}"></textarea>
         <div class="cat-picker" id="cat-picker">
           <button type="button" class="cat-btn cat-btn--production cat-btn--active"
-                  data-cat="production" onclick="selectCategory(this)">Producción</button>
+                  data-cat="production" onclick="selectCategory(this)">{{ t('cat_production') }}</button>
           <button type="button" class="cat-btn cat-btn--quality"
-                  data-cat="quality" onclick="selectCategory(this)">Calidad</button>
+                  data-cat="quality" onclick="selectCategory(this)">{{ t('cat_quality') }}</button>
           <button type="button" class="cat-btn cat-btn--safety"
-                  data-cat="safety" onclick="selectCategory(this)">Seguridad</button>
+                  data-cat="safety" onclick="selectCategory(this)">{{ t('cat_safety') }}</button>
           <button type="button" class="cat-btn cat-btn--maintenance"
-                  data-cat="maintenance" onclick="selectCategory(this)">Mantenimiento</button>
+                  data-cat="maintenance" onclick="selectCategory(this)">{{ t('cat_maintenance') }}</button>
         </div>
         <div class="recorder-confirm__actions">
-          <button class="btn btn--secondary btn--sm" onclick="cancelComment()">Cancelar</button>
+          <button class="btn btn--secondary btn--sm" onclick="cancelComment()">{{ t('btn_cancel_comment') }}</button>
           <button class="btn btn--primary btn--sm" id="btn-save" onclick="submitComment()">
-            Guardar comentario
+            {{ t('btn_save_comment') }}
           </button>
         </div>
       </div>
@@ -194,8 +195,8 @@
       <div id="recorder-error" style="display:none">
         <div class="rec-error">
           <span class="rec-error__icon">⚠️</span>
-          <span id="recorder-error-msg">No se pudo acceder al micrófono.</span>
-          <button class="btn btn--secondary btn--sm" onclick="dismissError()">Cerrar</button>
+          <span id="recorder-error-msg">{{ t('mic_error') }}</span>
+          <button class="btn btn--secondary btn--sm" onclick="dismissError()">{{ t('btn_close') }}</button>
         </div>
       </div>
 
@@ -203,8 +204,8 @@
 
     <div class="comments-scroll" id="comments-list">
       <div class="comments-empty" id="comments-empty">
-        <span>Sin comentarios en este turno</span>
-        <small>Graba o escribe el primero</small>
+        <span>{{ t('no_comments') }}</span>
+        <small>{{ t('no_comments_hint') }}</small>
       </div>
     </div>
 
@@ -216,39 +217,39 @@
 <section class="section" id="kpi-entry-section" style="display:none">
   <div class="kpi-entry-panel">
     <div class="kpi-entry-header">
-      <h2 class="section__title" style="margin:0">Registrar Lectura KPI Manual</h2>
-      <button class="btn btn--secondary btn--sm" onclick="toggleKpiForm()">✕ Cerrar</button>
+      <h2 class="section__title" style="margin:0">{{ t('kpi_manual_title') }}</h2>
+      <button class="btn btn--secondary btn--sm" onclick="toggleKpiForm()">✕ {{ t('btn_close') }}</button>
     </div>
-    <p class="kpi-entry-hint">Introduce los valores acumulados desde el inicio del turno.</p>
+    <p class="kpi-entry-hint">{{ t('kpi_hint') }}</p>
     <form id="kpi-manual-form" class="kpi-manual-form" onsubmit="submitManualKpi(event)">
       <div class="kpi-form-grid">
         <div class="form__group">
-          <label class="form__label" for="f-units-produced">Unidades producidas (acum.)</label>
+          <label class="form__label" for="f-units-produced">{{ t('f_units_produced') }}</label>
           <input type="number" id="f-units-produced" name="units_produced" class="form__input"
                  min="0" required placeholder="Ej: 4800">
         </div>
         <div class="form__group">
-          <label class="form__label" for="f-units-rejected">Unidades rechazadas (acum.)</label>
+          <label class="form__label" for="f-units-rejected">{{ t('f_units_rejected') }}</label>
           <input type="number" id="f-units-rejected" name="units_rejected" class="form__input"
                  min="0" required placeholder="Ej: 120">
         </div>
         <div class="form__group">
-          <label class="form__label" for="f-downtime">Tiempo de parada acumulado (min)</label>
+          <label class="form__label" for="f-downtime">{{ t('f_downtime') }}</label>
           <input type="number" id="f-downtime" name="downtime_minutes" class="form__input"
                  min="0" step="0.5" required placeholder="Ej: 15">
         </div>
         <div class="form__group">
-          <label class="form__label" for="f-speed">Velocidad actual (uds/hora)</label>
+          <label class="form__label" for="f-speed">{{ t('f_speed') }}</label>
           <input type="number" id="f-speed" name="line_speed" class="form__input"
                  min="0" required placeholder="Ej: 1150">
         </div>
         <div class="form__group">
-          <label class="form__label" for="f-target">Objetivo de producción (uds/turno)</label>
+          <label class="form__label" for="f-target">{{ t('f_target') }}</label>
           <input type="number" id="f-target" name="target_units" class="form__input"
                  min="1" required value="9600">
         </div>
         <div class="form__group">
-          <label class="form__label" for="f-nominal">Velocidad nominal (uds/hora)</label>
+          <label class="form__label" for="f-nominal">{{ t('f_nominal') }}</label>
           <input type="number" id="f-nominal" name="nominal_speed" class="form__input"
                  min="1" required value="1200">
         </div>
@@ -256,7 +257,7 @@
       <div id="kpi-form-error" class="alert alert--danger" style="display:none"></div>
       <div class="kpi-entry-actions">
         <button type="submit" class="btn btn--primary" id="kpi-submit-btn">
-          Guardar lectura
+          {{ t('btn_save_kpi') }}
         </button>
       </div>
     </form>
@@ -264,7 +265,7 @@
 </section>
 
 <div id="connection-banner" class="alert alert--danger" style="display:none; margin-top:1rem">
-  ⚠ Conexión perdida — reintentando...
+  {{ t('connection_lost') }}
 </div>
 
 <!-- ── Modal asistente manual ── -->
@@ -272,27 +273,27 @@
   <div class="ai-modal">
     <div class="ai-modal__header">
       <span class="ai-modal__icon">🤖</span>
-      <h3 class="ai-modal__title">Asistente OpEx</h3>
-      <button class="ai-modal__close" onclick="closeAssistantModal()" title="Cerrar">✕</button>
+      <h3 class="ai-modal__title">{{ t('assistant_title') }}</h3>
+      <button class="ai-modal__close" onclick="closeAssistantModal()" title="{{ t('btn_close') }}">✕</button>
     </div>
     <div class="ai-modal__body">
       <div class="form__group" style="margin-bottom:0.75rem;">
-        <label class="form__label">Categoría</label>
+        <label class="form__label">{{ t('assistant_cat_label') }}</label>
         <select id="assistant-modal-category" class="form__select">
-          <option value="production">Producción</option>
-          <option value="quality">Calidad</option>
-          <option value="safety">Seguridad</option>
-          <option value="maintenance">Mantenimiento</option>
+          <option value="production">{{ t('cat_production') }}</option>
+          <option value="quality">{{ t('cat_quality') }}</option>
+          <option value="safety">{{ t('cat_safety') }}</option>
+          <option value="maintenance">{{ t('cat_maintenance') }}</option>
         </select>
       </div>
       <div class="form__group">
-        <label class="form__label">¿Cuál es tu pregunta o problema?</label>
+        <label class="form__label">{{ t('assistant_question_label') }}</label>
         <textarea id="assistant-modal-input" class="form__textarea"
-                  rows="3" placeholder="Describe el problema o escribe tu pregunta..."></textarea>
+                  rows="3" placeholder="{{ t('assistant_placeholder') }}"></textarea>
       </div>
       <button id="assistant-modal-btn" class="btn btn--primary"
               style="width:100%;" onclick="submitAssistantModal()">
-        Consultar asistente
+        {{ t('btn_ask_assistant_submit') }}
       </button>
       <div id="assistant-modal-response" style="margin-top:1rem; display:none;"></div>
     </div>

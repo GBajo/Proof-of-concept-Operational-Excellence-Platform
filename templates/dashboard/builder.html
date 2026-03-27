@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Generador de Gráficos{% endblock %}
+{% block title %}{{ t('page_title_builder') }}{% endblock %}
 
 {% block content %}
 <div class="builder-layout">
@@ -7,28 +7,28 @@
   <!-- ── Panel lateral: historial ──────────────────────────── -->
   <aside class="builder-sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h3 class="sidebar-title">Mis gráficos</h3>
-      <button class="btn btn--icon" id="refreshHistory" title="Actualizar">↻</button>
+      <h3 class="sidebar-title">{{ t('my_charts') }}</h3>
+      <button class="btn btn--icon" id="refreshHistory" title="{{ t('btn_view_history') }}">↻</button>
     </div>
 
     <!-- Sugerencias predefinidas -->
     <div class="sidebar-section">
-      <p class="sidebar-label">Sugerencias rápidas</p>
+      <p class="sidebar-label">{{ t('quick_suggestions') }}</p>
       <div class="suggestions-list">
-        <button class="suggestion-chip" data-prompt="OEE de las últimas 24 horas por turno">OEE últimas 24h</button>
-        <button class="suggestion-chip" data-prompt="Top causas de parada de las últimas 2 semanas">Top causas de parada</button>
-        <button class="suggestion-chip" data-prompt="Producción real vs objetivo semanal por línea">Producción vs objetivo</button>
-        <button class="suggestion-chip" data-prompt="Tendencia de rechazos y tasa de rechazo de los últimos 7 días">Tendencia de rechazos</button>
-        <button class="suggestion-chip" data-prompt="Comparativa de rendimiento entre todas las líneas">Comparativa líneas</button>
-        <button class="suggestion-chip" data-prompt="Distribución de comentarios por categoría esta semana">Comentarios por categoría</button>
+        <button class="suggestion-chip" data-prompt="{{ t('suggest_oee_24h') | replace('OEE últimas 24h', 'OEE de las últimas 24 horas por turno') if lang == 'es' else 'OEE for the last 24 hours by shift' }}">{{ t('suggest_oee_24h') }}</button>
+        <button class="suggestion-chip" data-prompt="{{ 'Top causas de parada de las últimas 2 semanas' if lang == 'es' else 'Top stop causes for the last 2 weeks' }}">{{ t('suggest_stop_causes') }}</button>
+        <button class="suggestion-chip" data-prompt="{{ 'Producción real vs objetivo semanal por línea' if lang == 'es' else 'Real vs target weekly production by line' }}">{{ t('suggest_prod_vs_target') }}</button>
+        <button class="suggestion-chip" data-prompt="{{ 'Tendencia de rechazos y tasa de rechazo de los últimos 7 días' if lang == 'es' else 'Reject trend and reject rate for the last 7 days' }}">{{ t('suggest_reject_trend') }}</button>
+        <button class="suggestion-chip" data-prompt="{{ 'Comparativa de rendimiento entre todas las líneas' if lang == 'es' else 'Performance comparison between all lines' }}">{{ t('suggest_line_compare') }}</button>
+        <button class="suggestion-chip" data-prompt="{{ 'Distribución de comentarios por categoría esta semana' if lang == 'es' else 'Comment distribution by category this week' }}">{{ t('suggest_comments_cat') }}</button>
       </div>
     </div>
 
     <!-- Historial de gráficos guardados -->
     <div class="sidebar-section sidebar-section--grow">
-      <p class="sidebar-label">Guardados <span class="badge" id="historyCount">0</span></p>
+      <p class="sidebar-label">{{ t('saved_charts_label') }} <span class="badge" id="historyCount">0</span></p>
       <div class="history-list" id="historyList">
-        <p class="history-empty">No hay gráficos guardados aún.</p>
+        <p class="history-empty">{{ t('no_saved_charts') }}</p>
       </div>
     </div>
   </aside>
@@ -39,8 +39,8 @@
     <!-- Cabecera -->
     <div class="builder-header">
       <div>
-        <h1 class="page-title">Generador de gráficos <span class="badge badge--blue">IA</span></h1>
-        <p class="page-subtitle">Describe en lenguaje natural el gráfico que necesitas y la IA lo creará automáticamente.</p>
+        <h1 class="page-title">{{ t('builder_title') }} <span class="badge badge--blue">IA</span></h1>
+        <p class="page-subtitle">{{ t('builder_subtitle') }}</p>
       </div>
     </div>
 
@@ -51,11 +51,11 @@
           id="promptInput"
           class="prompt-textarea"
           rows="3"
-          placeholder="Describe el gráfico que necesitas... p.ej. &quot;Muéstrame la tendencia de OEE de la última semana&quot;"
+          placeholder="{{ t('prompt_placeholder') }}"
           maxlength="500"
         ></textarea>
         <div class="prompt-actions">
-          <button class="btn btn--icon btn--voice" id="voiceBtn" title="Dictar prompt">
+          <button class="btn btn--icon btn--voice" id="voiceBtn" title="{{ t('btn_record_voice') }}">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
@@ -63,15 +63,15 @@
           </button>
           <span class="prompt-chars" id="promptChars">0 / 500</span>
           <button class="btn btn--primary btn--generate" id="generateBtn">
-            <span id="generateBtnText">✦ Generar gráfico</span>
+            <span id="generateBtnText">{{ t('btn_generate') }}</span>
             <span id="generateBtnSpinner" class="spinner" hidden></span>
           </button>
         </div>
       </div>
       <!-- Estado de voz -->
       <div id="voiceStatus" class="voice-status" hidden>
-        <span class="voice-dot"></span> Escuchando…
-        <button class="btn btn--sm btn--outline" id="stopVoiceBtn">Detener</button>
+        <span class="voice-dot"></span> {{ t('voice_listening') }}
+        <button class="btn btn--sm btn--outline" id="stopVoiceBtn">{{ t('btn_stop_voice') }}</button>
       </div>
     </div>
 
@@ -83,8 +83,8 @@
           <span class="chart-rows-info" id="chartRowsInfo"></span>
         </div>
         <div class="chart-area-actions">
-          <button class="btn btn--sm btn--outline" id="modifyBtn">✎ Modificar</button>
-          <button class="btn btn--sm btn--primary" id="saveBtn">⊕ Guardar en mi dashboard</button>
+          <button class="btn btn--sm btn--outline" id="modifyBtn">{{ t('btn_modify_chart') }}</button>
+          <button class="btn btn--sm btn--primary" id="saveBtn">{{ t('btn_save_dashboard') }}</button>
         </div>
       </div>
 
@@ -98,16 +98,16 @@
     <!-- Estado: error fatal -->
     <div class="card chart-error" id="chartError" hidden>
       <p class="chart-error__icon">⚠</p>
-      <p class="chart-error__msg" id="chartErrorMsg">Error al generar el gráfico.</p>
-      <button class="btn btn--outline" id="retryBtn">Reintentar</button>
+      <p class="chart-error__msg" id="chartErrorMsg">{{ t('chart_error_msg') }}</p>
+      <button class="btn btn--outline" id="retryBtn">{{ t('btn_retry') }}</button>
     </div>
 
     <!-- Estado vacío inicial -->
     <div class="builder-empty" id="builderEmpty">
       <div class="builder-empty__inner">
         <p class="builder-empty__icon">📊</p>
-        <p class="builder-empty__title">Tu gráfico aparecerá aquí</p>
-        <p class="builder-empty__sub">Escribe una petición arriba o elige una sugerencia del panel lateral.</p>
+        <p class="builder-empty__title">{{ t('chart_appears_here') }}</p>
+        <p class="builder-empty__sub">{{ t('chart_hint') }}</p>
       </div>
     </div>
 
@@ -117,13 +117,13 @@
 <!-- Modal: guardar gráfico -->
 <div class="modal-overlay" id="saveModal" hidden>
   <div class="modal">
-    <h3 class="modal__title">Guardar gráfico</h3>
-    <label class="form-label" for="chartTitleInput">Título</label>
+    <h3 class="modal__title">{{ t('save_chart_title') }}</h3>
+    <label class="form-label" for="chartTitleInput">{{ t('chart_title_label') }}</label>
     <input class="form-control" id="chartTitleInput" type="text" maxlength="100"
            placeholder="Ej: OEE semana 13">
     <div class="modal__actions">
-      <button class="btn btn--outline" id="cancelSaveBtn">Cancelar</button>
-      <button class="btn btn--primary" id="confirmSaveBtn">Guardar</button>
+      <button class="btn btn--outline" id="cancelSaveBtn">{{ t('btn_cancel') }}</button>
+      <button class="btn btn--primary" id="confirmSaveBtn">{{ t('btn_confirm_save') }}</button>
     </div>
   </div>
 </div>
@@ -269,6 +269,19 @@
 (function () {
   "use strict";
 
+  // ── Traducciones JS ──────────────────────────────────────
+  const I18N = {
+    noVoice:       {{ t('js_browser_no_voice') | tojson }},
+    noSavedCharts: {{ t('no_saved_charts') | tojson }},
+    errorHistory:  {{ t('error_history_load') | tojson }},
+    sourceGateway: {{ t('source_gateway') | tojson }},
+    sourceMock:    {{ t('source_mock') | tojson }},
+    recordsLabel:  {{ t('records_consulted') | tojson }},
+    savedOk:       {{ t('btn_saved_ok') | tojson }},
+    saveBtnLabel:  {{ t('btn_save_dashboard') | tojson }},
+    saveError:     {{ t('js_save_error') | tojson }},
+  };
+
   // ── Referencias DOM ──────────────────────────────────────
   const promptInput    = document.getElementById("promptInput");
   const promptChars    = document.getElementById("promptChars");
@@ -302,7 +315,7 @@
   let echartsInstance = null;
   let recognition = null;
 
-  // ── ECharts init ────────────────────────────────────────
+  // ── ECharts init ─────────────────────────────────────────
   function getChart() {
     const container = document.getElementById("echartsContainer");
     if (!echartsInstance) {
@@ -315,7 +328,6 @@
   function renderChart(option) {
     const chart = getChart();
     chart.clear();
-    // Inyectar colores corporativos como paleta por defecto si no se especifican
     const defaults = {
       color: ["#0057a8","#27ae60","#e67e22","#c0392b","#8e44ad","#2980b9","#16a085"],
       backgroundColor: "transparent",
@@ -341,11 +353,11 @@
   function startVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome.");
+      alert(I18N.noVoice);
       return;
     }
     recognition = new SpeechRecognition();
-    recognition.lang = "es-ES";
+    recognition.lang = document.documentElement.lang === "en" ? "en-US" : "es-ES";
     recognition.continuous = false;
     recognition.interimResults = true;
 
@@ -414,7 +426,6 @@
 
       currentOption = data.option;
 
-      // Mostrar advertencia si hubo error no fatal
       if (data.error) {
         chartWarning.textContent = "⚠ " + data.error;
         chartWarning.hidden = false;
@@ -422,10 +433,9 @@
         chartWarning.hidden = true;
       }
 
-      // Badge de fuente
-      chartSourceBadge.textContent = data.source === "gateway" ? "Gateway IA" : "Ejemplo (mock)";
+      chartSourceBadge.textContent = data.source === "gateway" ? I18N.sourceGateway : I18N.sourceMock;
       chartSourceBadge.className = "chart-source-badge " + (data.source === "gateway" ? "gateway" : "mock");
-      chartRowsInfo.textContent = data.data_rows ? `${data.data_rows} registros consultados` : "";
+      chartRowsInfo.textContent = data.data_rows ? `${data.data_rows} ${I18N.recordsLabel}` : "";
 
       chartArea.hidden = false;
       renderChart(currentOption);
@@ -473,14 +483,13 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: currentPrompt, title, option: currentOption }),
       });
-      if (!res.ok) throw new Error("Error al guardar");
+      if (!res.ok) throw new Error(I18N.saveError);
       saveModal.hidden = true;
       loadHistory();
-      // Feedback visual breve
-      saveBtn.textContent = "✓ Guardado";
-      setTimeout(() => { saveBtn.textContent = "⊕ Guardar en mi dashboard"; }, 2000);
+      saveBtn.textContent = I18N.savedOk;
+      setTimeout(() => { saveBtn.textContent = I18N.saveBtnLabel; }, 2000);
     } catch (err) {
-      alert("Error al guardar: " + err.message);
+      alert(I18N.saveError + " " + err.message);
     } finally {
       confirmSaveBtn.disabled = false;
     }
@@ -496,7 +505,7 @@
       historyCount.textContent = items.length;
 
       if (!items.length) {
-        historyList.innerHTML = '<p class="history-empty">No hay gráficos guardados aún.</p>';
+        historyList.innerHTML = `<p class="history-empty">${I18N.noSavedCharts}</p>`;
         return;
       }
 
@@ -506,11 +515,10 @@
             <div class="history-item__title" title="${escHtml(item.title)}">${escHtml(item.title)}</div>
             <div class="history-item__date">${formatDate(item.created_at)}</div>
           </div>
-          <button class="history-item__del" data-del="${item.id}" title="Eliminar">✕</button>
+          <button class="history-item__del" data-del="${item.id}" title="✕">✕</button>
         </div>
       `).join("");
 
-      // Click en ítem → cargar prompt y regenerar
       historyList.querySelectorAll(".history-item").forEach(el => {
         el.addEventListener("click", (e) => {
           if (e.target.dataset.del) return;
@@ -521,7 +529,6 @@
         });
       });
 
-      // Botones de eliminar
       historyList.querySelectorAll("[data-del]").forEach(btn => {
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
@@ -532,7 +539,7 @@
       });
 
     } catch (err) {
-      historyList.innerHTML = '<p class="history-empty">Error al cargar historial.</p>';
+      historyList.innerHTML = `<p class="history-empty">${I18N.errorHistory}</p>`;
     }
   }
 
@@ -542,10 +549,11 @@
 
   function formatDate(iso) {
     if (!iso) return "";
+    const appLang = document.documentElement.lang || "es";
     try {
       const d = new Date(iso.replace(" ", "T") + "Z");
-      return d.toLocaleDateString("es-ES", { day:"2-digit", month:"short" })
-           + " " + d.toLocaleTimeString("es-ES", { hour:"2-digit", minute:"2-digit" });
+      return d.toLocaleDateString(appLang === "en" ? "en-GB" : "es-ES", { day:"2-digit", month:"short" })
+           + " " + d.toLocaleTimeString(appLang === "en" ? "en-GB" : "es-ES", { hour:"2-digit", minute:"2-digit" });
     } catch { return iso.slice(0,16); }
   }
 

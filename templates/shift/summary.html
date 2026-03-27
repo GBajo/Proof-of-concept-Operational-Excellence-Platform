@@ -1,17 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Resumen Turno #{{ shift.id }} — Línea {{ shift.line_number }}{% endblock %}
+{% block title %}{{ t('page_title_summary') }} #{{ shift.id }} — {{ t('line_label') }} {{ shift.line_number }}{% endblock %}
 
 {% block content %}
 
 <!-- Acciones (ocultas al imprimir) -->
 <div class="no-print" style="display:flex; gap:0.75rem; justify-content:flex-end; margin-bottom:1.25rem; flex-wrap:wrap;">
-  <a href="{{ url_for('views.index') }}" class="btn btn--secondary">← Volver al inicio</a>
-  <button class="btn btn--secondary" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
+  <a href="{{ url_for('views.index') }}" class="btn btn--secondary">{{ t('btn_back_home') }}</a>
+  <button class="btn btn--secondary" onclick="window.print()">{{ t('btn_print') }}</button>
 </div>
 
-<!-- ══════════════════════════════════════════
-     INFORME IMPRIMIBLE
-     ══════════════════════════════════════════ -->
 <div class="report" id="shift-report">
 
   <!-- Cabecera del informe -->
@@ -20,55 +17,55 @@
       <span class="report-header__logo">⬡</span>
       <div>
         <div class="report-header__company">Proof of Concept - OpEx Platform</div>
-        <div class="report-header__subtitle">Informe de Turno</div>
+        <div class="report-header__subtitle">{{ t('report_subtitle') }}</div>
       </div>
     </div>
     <div class="report-header__meta">
-      <div class="report-header__id">Turno #{{ shift.id }}</div>
+      <div class="report-header__id">{{ t('shift_label') }} #{{ shift.id }}</div>
       <div class="report-header__date">{{ shift.start_time[:10] | replace('-', '/') }}</div>
       <div class="report-header__status
         {% if shift.status == 'completed' %}report-header__status--ok
         {% elif shift.status == 'interrupted' %}report-header__status--warn
         {% else %}report-header__status--active{% endif %}">
-        {% if shift.status == 'completed' %}Completado
-        {% elif shift.status == 'interrupted' %}Interrumpido
-        {% else %}Activo{% endif %}
+        {% if shift.status == 'completed' %}{{ t('status_completed') }}
+        {% elif shift.status == 'interrupted' %}{{ t('status_interrupted') }}
+        {% else %}{{ t('status_active') }}{% endif %}
       </div>
     </div>
   </div>
 
   <!-- Datos del turno -->
   <section class="report-section">
-    <h2 class="report-section__title">Datos del Turno</h2>
+    <h2 class="report-section__title">{{ t('shift_data_title') }}</h2>
     <div class="report-info-grid">
       <div class="report-info-item">
-        <span class="report-info-item__label">Operario</span>
+        <span class="report-info-item__label">{{ t('operator_info') }}</span>
         <span class="report-info-item__value">{{ shift.operator_name }}</span>
       </div>
       <div class="report-info-item">
-        <span class="report-info-item__label">Línea</span>
-        <span class="report-info-item__value">Línea {{ shift.line_number }}</span>
+        <span class="report-info-item__label">{{ t('line_info') }}</span>
+        <span class="report-info-item__value">{{ t('line_label') }} {{ shift.line_number }}</span>
       </div>
       <div class="report-info-item">
-        <span class="report-info-item__label">Tipo de turno</span>
+        <span class="report-info-item__label">{{ t('shift_type_info') }}</span>
         <span class="report-info-item__value">
-          {% if shift.shift_type == 'morning' %}☀ Mañana (06:00–14:00)
-          {% elif shift.shift_type == 'afternoon' %}🌤 Tarde (14:00–22:00)
-          {% else %}🌙 Noche (22:00–06:00){% endif %}
+          {% if shift.shift_type == 'morning' %}☀ {{ t('shift_morning') }} (06:00–14:00)
+          {% elif shift.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }} (14:00–22:00)
+          {% else %}🌙 {{ t('shift_night') }} (22:00–06:00){% endif %}
         </span>
       </div>
       <div class="report-info-item">
-        <span class="report-info-item__label">Inicio</span>
+        <span class="report-info-item__label">{{ t('start_info') }}</span>
         <span class="report-info-item__value">{{ shift.start_time | replace('T',' ') }}</span>
       </div>
       <div class="report-info-item">
-        <span class="report-info-item__label">Fin</span>
+        <span class="report-info-item__label">{{ t('end_info') }}</span>
         <span class="report-info-item__value">
           {{ shift.end_time | replace('T',' ') if shift.end_time else '—' }}
         </span>
       </div>
       <div class="report-info-item">
-        <span class="report-info-item__label">Duración</span>
+        <span class="report-info-item__label">{{ t('duration_info') }}</span>
         <span class="report-info-item__value report-info-item__value--highlight">
           {{ duration_h }}h {{ duration_m }}m
         </span>
@@ -78,7 +75,7 @@
 
   <!-- KPIs -->
   <section class="report-section">
-    <h2 class="report-section__title">Indicadores de Rendimiento (KPIs)</h2>
+    <h2 class="report-section__title">{{ t('kpi_section_title') }}</h2>
 
     <!-- OEE principal -->
     <div class="report-oee-banner
@@ -91,7 +88,7 @@
       </div>
       <div class="report-oee-banner__breakdown">
         <div class="report-oee-factor">
-          <span class="report-oee-factor__name">Disponibilidad</span>
+          <span class="report-oee-factor__name">{{ t('oee_availability') }}</span>
           <span class="report-oee-factor__value">{{ kpi.availability }}%</span>
           <div class="report-oee-factor__bar">
             {% set w = kpi.availability if kpi.availability <= 100 else 100 %}
@@ -99,7 +96,7 @@
           </div>
         </div>
         <div class="report-oee-factor">
-          <span class="report-oee-factor__name">Rendimiento</span>
+          <span class="report-oee-factor__name">{{ t('oee_performance') }}</span>
           <span class="report-oee-factor__value">{{ kpi.performance }}%</span>
           <div class="report-oee-factor__bar">
             {% set w = kpi.performance if kpi.performance <= 100 else 100 %}
@@ -107,7 +104,7 @@
           </div>
         </div>
         <div class="report-oee-factor">
-          <span class="report-oee-factor__name">Calidad</span>
+          <span class="report-oee-factor__name">{{ t('oee_quality') }}</span>
           <span class="report-oee-factor__value">{{ kpi.quality }}%</span>
           <div class="report-oee-factor__bar">
             {% set w = kpi.quality if kpi.quality <= 100 else 100 %}
@@ -121,17 +118,17 @@
     <table class="report-kpi-table">
       <thead>
         <tr>
-          <th>Indicador</th>
-          <th>Valor</th>
-          <th>Referencia</th>
-          <th>Estado</th>
+          <th>{{ t('kpi_table_indicator') }}</th>
+          <th>{{ t('kpi_table_value') }}</th>
+          <th>{{ t('kpi_table_reference') }}</th>
+          <th>{{ t('kpi_table_status') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Unidades producidas</td>
+          <td>{{ t('kpi_units_produced') }}</td>
           <td><strong>{{ kpi.total_units_produced | int }}</strong></td>
-          <td>Obj: {{ kpi.target_units | int }}</td>
+          <td>{{ t('obj_label') }} {{ kpi.target_units | int }}</td>
           <td>
             {% if kpi.target_units > 0 %}
               {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
@@ -145,9 +142,9 @@
           </td>
         </tr>
         <tr>
-          <td>Unidades buenas</td>
+          <td>{{ t('kpi_good_units') }}</td>
           <td><strong>{{ kpi.good_units | int }}</strong></td>
-          <td>de {{ kpi.total_units_produced | int }}</td>
+          <td>{{ t('of_label') }} {{ kpi.total_units_produced | int }}</td>
           <td>
             <span class="report-badge
               {% if kpi.right_first_time_pct >= 99 %}report-badge--good
@@ -158,32 +155,32 @@
           </td>
         </tr>
         <tr>
-          <td>Unidades rechazadas</td>
+          <td>{{ t('kpi_rejected_units') }}</td>
           <td><strong>{{ kpi.total_units_rejected | int }}</strong></td>
-          <td>Tasa: {{ kpi.reject_rate_pct }}%</td>
+          <td>{{ t('rate_label') }} {{ kpi.reject_rate_pct }}%</td>
           <td>
             <span class="report-badge
               {% if kpi.reject_rate_pct <= 1 %}report-badge--good
               {% elif kpi.reject_rate_pct <= 3 %}report-badge--warn
               {% else %}report-badge--bad{% endif %}">
-              {% if kpi.reject_rate_pct <= 1 %}Óptimo
-              {% elif kpi.reject_rate_pct <= 3 %}Aceptable
-              {% else %}Elevado{% endif %}
+              {% if kpi.reject_rate_pct <= 1 %}{{ t('status_optimal') }}
+              {% elif kpi.reject_rate_pct <= 3 %}{{ t('status_acceptable') }}
+              {% else %}{{ t('status_high') }}{% endif %}
             </span>
           </td>
         </tr>
         <tr>
-          <td>Tiempo de parada acumulado</td>
+          <td>{{ t('kpi_downtime_accum') }}</td>
           <td><strong>{{ kpi.total_downtime_minutes | int }} min</strong></td>
-          <td>Disp: {{ kpi.availability }}%</td>
+          <td>{{ t('disp_label') }} {{ kpi.availability }}%</td>
           <td>
             <span class="report-badge
               {% if kpi.total_downtime_minutes <= 30 %}report-badge--good
               {% elif kpi.total_downtime_minutes <= 60 %}report-badge--warn
               {% else %}report-badge--bad{% endif %}">
-              {% if kpi.total_downtime_minutes <= 30 %}Normal
-              {% elif kpi.total_downtime_minutes <= 60 %}Moderado
-              {% else %}Elevado{% endif %}
+              {% if kpi.total_downtime_minutes <= 30 %}{{ t('status_normal_val') }}
+              {% elif kpi.total_downtime_minutes <= 60 %}{{ t('status_moderate') }}
+              {% else %}{{ t('status_high') }}{% endif %}
             </span>
           </td>
         </tr>
@@ -194,19 +191,19 @@
   <!-- Comentarios -->
   <section class="report-section">
     <h2 class="report-section__title">
-      Comentarios del Turno
+      {{ t('comments_section_title') }}
       <span class="report-section__count">{{ comments | length }}</span>
     </h2>
 
     {% set cat_meta = {
-      'safety':      ('Seguridad',      'report-cat--red'),
-      'quality':     ('Calidad',        'report-cat--orange'),
-      'production':  ('Producción',     'report-cat--blue'),
-      'maintenance': ('Mantenimiento',  'report-cat--gray'),
+      'safety':      (t('cat_safety'),      'report-cat--red'),
+      'quality':     (t('cat_quality'),     'report-cat--orange'),
+      'production':  (t('cat_production'),  'report-cat--blue'),
+      'maintenance': (t('cat_maintenance'), 'report-cat--gray'),
     } %}
 
     {% if comments | length == 0 %}
-      <p class="report-empty">No se registraron comentarios en este turno.</p>
+      <p class="report-empty">{{ t('no_comments_report') }}</p>
     {% else %}
       {% for cat_key in ['safety', 'quality', 'production', 'maintenance'] %}
         {% if by_category.get(cat_key) %}
@@ -217,14 +214,18 @@
           </div>
           <table class="report-comments-table">
             <thead>
-              <tr><th style="width:70px">Hora</th><th>Comentario</th><th style="width:60px">Fuente</th></tr>
+              <tr>
+                <th style="width:70px">{{ t('hour_col') }}</th>
+                <th>{{ t('comment_col') }}</th>
+                <th style="width:70px">{{ t('source_col') }}</th>
+              </tr>
             </thead>
             <tbody>
               {% for c in by_category[cat_key] | sort(attribute='timestamp') %}
               <tr>
                 <td class="report-time">{{ c.timestamp[11:16] }}</td>
                 <td>{{ c.text }}</td>
-                <td class="report-source">{{ '🎤 Voz' if c.source == 'voice' else '✏ Texto' }}</td>
+                <td class="report-source">{{ t('source_voice') if c.source == 'voice' else t('source_text') }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -238,7 +239,7 @@
   <!-- Sugerencias del asistente IA -->
   <section class="report-section">
     <h2 class="report-section__title">
-      Sugerencias del Asistente IA
+      {{ t('ai_suggestions_title') }}
       <span class="report-section__count">{{ suggestions | length }}</span>
     </h2>
 
@@ -248,46 +249,46 @@
         <div class="report-ai-card__header">
           <span class="report-ai-card__icon">🤖</span>
           <span class="report-ai-card__label">
-            {{ 'Asistente (demo)' if s.source == 'mock' else 'Asistente IA' }}
+            {{ t('assistant_demo') if s.source == 'mock' else t('assistant_ai') }}
           </span>
           <span class="report-ai-card__time">{{ s.created_at[11:16] }}</span>
           {% if s.feedback == 'useful' %}
-            <span class="badge badge--green" style="margin-left:auto;">👍 Útil</span>
+            <span class="badge badge--green" style="margin-left:auto;">{{ t('feedback_useful') }}</span>
           {% elif s.feedback == 'not_useful' %}
-            <span class="badge badge--red" style="margin-left:auto;">👎 No útil</span>
+            <span class="badge badge--red" style="margin-left:auto;">{{ t('feedback_not_useful') }}</span>
           {% endif %}
         </div>
         <div class="report-ai-card__query">
-          <strong>Consulta:</strong> {{ s.query_text }}
+          <strong>{{ t('query_label') }}</strong> {{ s.query_text }}
         </div>
         <div class="report-ai-card__response">{{ s.response_text }}</div>
         {% if s.context_sources %}
         <div class="report-ai-card__sources">
-          📄 Fuentes: {{ s.context_sources | join(', ') }}
+          {{ t('sources_label') }} {{ s.context_sources | join(', ') }}
         </div>
         {% endif %}
       </div>
       {% endfor %}
     {% else %}
-      <p class="report-empty">No se generaron sugerencias del asistente en este turno.</p>
+      <p class="report-empty">{{ t('no_ai_suggestions') }}</p>
     {% endif %}
   </section>
 
   <!-- Notas de traspaso -->
   <section class="report-section">
-    <h2 class="report-section__title">Notas de Traspaso</h2>
+    <h2 class="report-section__title">{{ t('handover_section_title') }}</h2>
     {% if shift.handover_notes %}
     <div class="report-handover">{{ shift.handover_notes }}</div>
     {% else %}
-    <p class="report-empty">No se registraron notas de traspaso.</p>
+    <p class="report-empty">{{ t('no_handover') }}</p>
     {% endif %}
   </section>
 
   <!-- Pie del informe -->
   <div class="report-footer">
-    <span>Generado el {{ generation_date }}</span>
+    <span>{{ t('generated_on') }} {{ generation_date }}</span>
     <span>Proof of Concept - OpEx Platform</span>
-    <span>Turno #{{ shift.id }} · Línea {{ shift.line_number }}</span>
+    <span>{{ t('shift_label') }} #{{ shift.id }} · {{ t('line_label') }} {{ shift.line_number }}</span>
   </div>
 
 </div><!-- /report -->

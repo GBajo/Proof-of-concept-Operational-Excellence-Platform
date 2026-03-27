@@ -1,6 +1,7 @@
-from flask import Flask
+from flask import Flask, request as flask_request
 from config import config
 from database import close_db, init_db
+from translations import get_text
 
 
 def create_app() -> Flask:
@@ -34,15 +35,25 @@ def create_app() -> Flask:
     app.register_blueprint(chart_builder_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
-    # Inyectar turnos activos en todos los templates para la barra de nav
     @app.context_processor
-    def inject_navbar_context():
+    def inject_globals():
         from models.shift import get_active_lines
         try:
             active = get_active_lines()
         except Exception:
             active = []
-        return {'navbar_active_shifts': active}
+        # Idioma desde cookie (es por defecto)
+        lang = flask_request.cookies.get("lang", "es")
+        if lang not in ("es", "en"):
+            lang = "es"
+        # t() es el helper de traducción disponible en todos los templates
+        def t(key: str) -> str:
+            return get_text(key, lang)
+        return {
+            'navbar_active_shifts': active,
+            'lang': lang,
+            't': t,
+        }
 
     return app
 

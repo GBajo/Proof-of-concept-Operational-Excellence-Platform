@@ -1,8 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Admin — Base de Conocimiento{% endblock %}
+{% block title %}{{ t('page_title_admin') }}{% endblock %}
 
 {% block scripts %}
 <script>
+// Strings traducidos inyectados desde el servidor
+const I18N = {
+  unsupportedFormat: {{ t('js_unsupported_format') | tojson }},
+  invalidResponse:   {{ t('js_invalid_response') | tojson }},
+  uploadError:       {{ t('js_upload_error') | tojson }},
+  netError:          {{ t('js_net_error') | tojson }},
+  validUrl:          {{ t('js_valid_url') | tojson }},
+  indexing:          {{ t('js_indexing') | tojson }},
+  connError:         {{ t('js_conn_error') | tojson }},
+  deleteConfirm:     {{ t('js_delete_confirm') | tojson }},
+  clearConfirm:      {{ t('js_clear_confirm') | tojson }},
+  reindexAll:        {{ t('btn_reindex_all') | tojson }},
+  indexUrlBtn:       {{ t('btn_index_url') | tojson }},
+  uploading:         {{ t('uploading') | tojson }},
+  indexingFile:      {{ t('indexing') | tojson }},
+};
+
 // ── Helpers ────────────────────────────────────────────────────
 function showBanner(msg, isOk) {
   const el = document.getElementById('admin-banner');
@@ -21,8 +38,6 @@ function setRowLoading(rowId, loading) {
 }
 
 // ── Upload drag-and-drop ──────────────────────────────────────
-const dropZone = document.querySelector ? null : null; // inicializado en DOMContentLoaded
-
 function initDropZone() {
   const zone = document.getElementById('drop-zone');
   const input = document.getElementById('file-input');
@@ -49,13 +64,9 @@ function initDropZone() {
 }
 
 async function uploadFile(file) {
-  const allowed = ['application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel'];
   const ext = file.name.split('.').pop().toLowerCase();
   if (!['pdf','docx','xlsx','xls'].includes(ext)) {
-    showBanner('Formato no soportado. Usa PDF, DOCX o XLSX.', false);
+    showBanner(I18N.unsupportedFormat, false);
     return;
   }
 
@@ -65,7 +76,6 @@ async function uploadFile(file) {
   fd.append('file', file);
 
   try {
-    // XMLHttpRequest para obtener progreso real
     await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/admin/docs/upload');
@@ -74,16 +84,16 @@ async function uploadFile(file) {
       };
       xhr.onload = () => {
         let data;
-        try { data = JSON.parse(xhr.responseText); } catch { data = {ok:false, message:'Respuesta inválida'}; }
+        try { data = JSON.parse(xhr.responseText); } catch { data = {ok:false, message: I18N.invalidResponse}; }
         if (data.ok) {
           setUploadProgress(true, 100, file.name);
           setTimeout(() => { setUploadProgress(false); location.reload(); }, 800);
           resolve(data);
         } else {
-          reject(new Error(data.message || 'Error al subir'));
+          reject(new Error(data.message || I18N.uploadError));
         }
       };
-      xhr.onerror = () => reject(new Error('Error de red'));
+      xhr.onerror = () => reject(new Error(I18N.netError));
       xhr.send(fd);
     });
   } catch(err) {
@@ -93,16 +103,16 @@ async function uploadFile(file) {
 }
 
 function setUploadProgress(show, pct, filename) {
-  const bar  = document.getElementById('upload-progress');
-  const fill = document.getElementById('upload-progress-fill');
+  const bar   = document.getElementById('upload-progress');
+  const fill  = document.getElementById('upload-progress-fill');
   const label = document.getElementById('upload-progress-label');
   if (!bar) return;
   if (!show) { bar.style.display = 'none'; return; }
   bar.style.display = '';
   if (fill) fill.style.width = pct + '%';
   if (label) label.textContent = pct < 100
-    ? `Subiendo ${filename} — ${pct}%`
-    : `Indexando ${filename}...`;
+    ? `${I18N.uploading} ${filename} — ${pct}%`
+    : `${I18N.indexingFile} ${filename}...`;
 }
 
 // ── URL indexing ──────────────────────────────────────────────
@@ -110,10 +120,10 @@ async function indexUrl() {
   const input = document.getElementById('url-input');
   const btn   = document.getElementById('btn-index-url');
   const url   = (input ? input.value : '').trim();
-  if (!url) { showBanner('Introduce una URL válida.', false); return; }
+  if (!url) { showBanner(I18N.validUrl, false); return; }
 
   btn.disabled = true;
-  btn.textContent = 'Indexando...';
+  btn.textContent = I18N.indexing;
 
   try {
     const res = await fetch('/admin/docs/index-url', {
@@ -125,15 +135,15 @@ async function indexUrl() {
     showBanner(data.message, data.ok);
     if (data.ok) { input.value = ''; setTimeout(() => location.reload(), 1500); }
   } catch {
-    showBanner('Error de conexión.', false);
+    showBanner(I18N.connError, false);
   }
   btn.disabled = false;
-  btn.textContent = 'Indexar URL';
+  btn.textContent = I18N.indexUrlBtn;
 }
 
 // ── Delete document ───────────────────────────────────────────
 async function deleteDoc(filename, rowId) {
-  if (!confirm(`¿Eliminar "${filename}" y todos sus fragmentos?`)) return;
+  if (!confirm(I18N.deleteConfirm.replace('{name}', filename))) return;
   setRowLoading(rowId, true);
   try {
     const res = await fetch('/admin/docs/delete/' + encodeURIComponent(filename), { method: 'DELETE' });
@@ -150,7 +160,7 @@ async function deleteDoc(filename, rowId) {
     }
   } catch {
     setRowLoading(rowId, false);
-    showBanner('Error de conexión.', false);
+    showBanner(I18N.connError, false);
   }
 }
 
@@ -158,17 +168,17 @@ async function deleteDoc(filename, rowId) {
 async function reindexAll() {
   const btn = document.getElementById('btn-reindex-all');
   btn.disabled = true;
-  btn.textContent = 'Indexando...';
+  btn.textContent = I18N.indexing;
   try {
     const res = await fetch('/admin/docs/reindex', { method: 'POST' });
     const data = await res.json();
     showBanner(data.message, data.ok);
     if (data.ok) setTimeout(() => location.reload(), 1500);
   } catch {
-    showBanner('Error de conexión.', false);
+    showBanner(I18N.connError, false);
   }
   btn.disabled = false;
-  btn.textContent = '↺ Re-indexar todos';
+  btn.textContent = I18N.reindexAll;
 }
 
 async function reindexFile(filename, rowId) {
@@ -180,12 +190,12 @@ async function reindexFile(filename, rowId) {
     else { setRowLoading(rowId, false); showBanner('Error: ' + data.message, false); }
   } catch {
     setRowLoading(rowId, false);
-    showBanner('Error de conexión.', false);
+    showBanner(I18N.connError, false);
   }
 }
 
 async function clearAll() {
-  if (!confirm('¿Seguro que quieres vaciar toda la base de conocimiento? Esta acción no se puede deshacer.')) return;
+  if (!confirm(I18N.clearConfirm)) return;
   const res = await fetch('/admin/docs/clear', { method: 'POST' });
   const data = await res.json();
   if (data.ok) location.reload();
@@ -200,15 +210,20 @@ document.addEventListener('DOMContentLoaded', initDropZone);
 <!-- ── Cabecera ── -->
 <div class="page-header">
   <div>
-    <h1>Base de Conocimiento</h1>
-    <p class="page-header__sub">Documentos RAG para el asistente · <strong>{{ total_chunks }}</strong> fragmento{{ 's' if total_chunks != 1 }} indexado{{ 's' if total_chunks != 1 }}</p>
+    <h1>{{ t('admin_title') }}</h1>
+    <p class="page-header__sub">
+      {{ t('admin_subtitle_rag') }} ·
+      <strong>{{ total_chunks }}</strong>
+      {{ t('admin_subtitle_chunks_pl') if total_chunks != 1 else t('admin_subtitle_chunks') }}
+      {{ t('admin_subtitle_indexed_pl') if total_chunks != 1 else t('admin_subtitle_indexed') }}
+    </p>
   </div>
   <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
     <button id="btn-reindex-all" class="btn btn--primary" onclick="reindexAll()">
-      ↺ Re-indexar todos
+      {{ t('btn_reindex_all') }}
     </button>
     <button class="btn btn--danger" onclick="clearAll()">
-      🗑 Vaciar base
+      {{ t('btn_clear_kb') }}
     </button>
   </div>
 </div>
@@ -223,25 +238,25 @@ document.addEventListener('DOMContentLoaded', initDropZone);
     <div class="admin-metric-card admin-metric-card--blue">
       <div class="admin-metric-card__icon">📄</div>
       <div class="admin-metric-card__value">{{ disk_files | length }}</div>
-      <div class="admin-metric-card__label">Archivos en docs/</div>
+      <div class="admin-metric-card__label">{{ t('files_in_docs') }}</div>
     </div>
 
     <div class="admin-metric-card admin-metric-card--teal">
       <div class="admin-metric-card__icon">🔗</div>
       <div class="admin-metric-card__value">{{ url_sources | length }}</div>
-      <div class="admin-metric-card__label">URLs indexadas</div>
+      <div class="admin-metric-card__label">{{ t('indexed_urls') }}</div>
     </div>
 
     <div class="admin-metric-card admin-metric-card--purple">
       <div class="admin-metric-card__icon">🧩</div>
       <div class="admin-metric-card__value">{{ total_chunks }}</div>
-      <div class="admin-metric-card__label">Fragmentos totales</div>
+      <div class="admin-metric-card__label">{{ t('total_chunks') }}</div>
     </div>
 
     <div class="admin-metric-card admin-metric-card--green">
       <div class="admin-metric-card__icon">🤖</div>
       <div class="admin-metric-card__value">{{ assistant_stats.queries_today }}</div>
-      <div class="admin-metric-card__label">Consultas hoy</div>
+      <div class="admin-metric-card__label">{{ t('queries_today') }}</div>
     </div>
 
     <div class="admin-metric-card {% if assistant_stats.useful_pct is not none and assistant_stats.useful_pct >= 70 %}admin-metric-card--green{% elif assistant_stats.useful_pct is not none %}admin-metric-card--yellow{% else %}admin-metric-card--gray{% endif %}">
@@ -249,9 +264,9 @@ document.addEventListener('DOMContentLoaded', initDropZone);
       <div class="admin-metric-card__value">
         {% if assistant_stats.useful_pct is not none %}{{ assistant_stats.useful_pct }}%{% else %}—{% endif %}
       </div>
-      <div class="admin-metric-card__label">Respuestas útiles
+      <div class="admin-metric-card__label">{{ t('useful_responses') }}
         {% if assistant_stats.total_feedback > 0 %}
-        <small style="display:block; font-size:0.7rem; opacity:0.7;">({{ assistant_stats.total_feedback }} valoradas)</small>
+        <small style="display:block; font-size:0.7rem; opacity:0.7;">({{ assistant_stats.total_feedback }} {{ t('feedback_useful').replace('👍 ','') }})</small>
         {% endif %}
       </div>
     </div>
@@ -263,44 +278,41 @@ document.addEventListener('DOMContentLoaded', initDropZone);
 <section class="section">
   <div class="admin-upload-grid">
 
-    <!-- Drag & drop -->
     <div class="admin-upload-panel">
-      <h2 class="section__title">Subir documento</h2>
+      <h2 class="section__title">{{ t('upload_doc_title') }}</h2>
       <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
-           aria-label="Zona de arrastrar y soltar archivos">
+           aria-label="{{ t('drop_zone_title') }}">
         <div class="drop-zone__icon">📂</div>
-        <div class="drop-zone__title">Arrastra un archivo aquí</div>
-        <div class="drop-zone__sub">o haz clic para seleccionar</div>
-        <div class="drop-zone__hint">PDF · DOCX · XLSX — máx. 50 MB</div>
+        <div class="drop-zone__title">{{ t('drop_zone_title') }}</div>
+        <div class="drop-zone__sub">{{ t('drop_zone_sub') }}</div>
+        <div class="drop-zone__hint">{{ t('drop_zone_hint') }}</div>
         <input type="file" id="file-input" accept=".pdf,.docx,.xlsx,.xls"
                style="display:none;" aria-hidden="true">
       </div>
-      <!-- Barra de progreso -->
       <div id="upload-progress" style="display:none; margin-top:0.75rem;">
         <div class="admin-progress-bar">
           <div id="upload-progress-fill" class="admin-progress-fill" style="width:0%"></div>
         </div>
-        <div id="upload-progress-label" class="admin-progress-label">Subiendo...</div>
+        <div id="upload-progress-label" class="admin-progress-label">{{ t('uploading') }}...</div>
       </div>
     </div>
 
-    <!-- URL -->
     <div class="admin-upload-panel">
-      <h2 class="section__title">Indexar URL</h2>
+      <h2 class="section__title">{{ t('index_url_title') }}</h2>
       <p style="font-size:0.85rem; color:var(--color-gray-400); margin-bottom:1rem;">
-        Introduce la URL de una página web. El sistema descargará su contenido y lo indexará como fuente de conocimiento.
+        {{ t('index_url_desc') }}
       </p>
       <div class="admin-url-form">
         <input type="url" id="url-input" class="form__input"
                placeholder="https://ejemplo.com/sop-limpieza"
-               aria-label="URL a indexar">
+               aria-label="{{ t('index_url_title') }}">
         <button id="btn-index-url" class="btn btn--primary" onclick="indexUrl()">
-          Indexar URL
+          {{ t('btn_index_url') }}
         </button>
       </div>
       {% if url_sources %}
       <div style="margin-top:1.25rem;">
-        <p style="font-size:0.8rem; font-weight:600; color:var(--color-gray-300); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.04em;">URLs indexadas</p>
+        <p style="font-size:0.8rem; font-weight:600; color:var(--color-gray-300); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.04em;">{{ t('indexed_urls_list') }}</p>
         <ul class="admin-url-list">
           {% for u in url_sources %}
           <li class="admin-url-item" id="url-row-{{ loop.index }}">
@@ -322,19 +334,19 @@ document.addEventListener('DOMContentLoaded', initDropZone);
 
 <!-- ── Tabla de documentos ── -->
 <section class="section">
-  <h2 class="section__title">Documentos indexados</h2>
+  <h2 class="section__title">{{ t('docs_indexed_title') }}</h2>
 
   {% if disk_files %}
   <div class="history-table-wrap">
     <table class="history-table">
       <thead>
         <tr>
-          <th>Archivo</th>
-          <th>Tipo</th>
-          <th>Tamaño</th>
-          <th>Fragmentos</th>
-          <th>Última indexación</th>
-          <th>Estado</th>
+          <th>{{ t('col_file') }}</th>
+          <th>{{ t('col_type') }}</th>
+          <th>{{ t('col_size') }}</th>
+          <th>{{ t('col_chunks') }}</th>
+          <th>{{ t('col_last_indexed') }}</th>
+          <th>{{ t('col_status') }}</th>
           <th></th>
         </tr>
       </thead>
@@ -342,9 +354,7 @@ document.addEventListener('DOMContentLoaded', initDropZone);
         {% for f in disk_files %}
         {% set row_id = 'doc-row-' + loop.index | string %}
         <tr class="history-row" id="{{ row_id }}">
-          <td>
-            <strong>{{ f.name }}</strong>
-          </td>
+          <td><strong>{{ f.name }}</strong></td>
           <td>
             <span class="admin-type-badge admin-type-badge--{{ f.ext }}">
               {{ f.ext | upper }}
@@ -368,9 +378,9 @@ document.addEventListener('DOMContentLoaded', initDropZone);
           </td>
           <td>
             {% if f.indexed %}
-              <span class="badge badge--green">Indexado</span>
+              <span class="badge badge--green">{{ t('badge_indexed') }}</span>
             {% else %}
-              <span class="badge badge--orange">Sin indexar</span>
+              <span class="badge badge--orange">{{ t('badge_not_indexed') }}</span>
             {% endif %}
           </td>
           <td>
@@ -392,9 +402,9 @@ document.addEventListener('DOMContentLoaded', initDropZone);
   </div>
   {% else %}
   <div class="empty-state">
-    <p>No hay archivos en la carpeta <code>docs/</code>.</p>
+    <p>{{ t('no_docs_title') | safe }}</p>
     <p style="font-size:0.85rem; color:var(--color-gray-400); margin-top:0.5rem;">
-      Arrastra un archivo PDF, DOCX o XLSX a la zona de carga de arriba.
+      {{ t('no_docs_hint') }}
     </p>
     <p style="font-size:0.85rem; color:var(--color-gray-400); margin-top:0.25rem;">
       Para generar documentos de ejemplo ejecuta:
@@ -407,25 +417,19 @@ document.addEventListener('DOMContentLoaded', initDropZone);
 <!-- ── Ayuda ── -->
 <section class="section">
   <div class="kpi-entry-panel" style="border-top-color: var(--color-primary);">
-    <h2 class="section__title" style="margin-bottom:0.75rem;">Cómo funciona el RAG</h2>
+    <h2 class="section__title" style="margin-bottom:0.75rem;">{{ t('rag_how_title') }}</h2>
     <div class="admin-help-grid">
       <div>
-        <p style="font-weight:700; margin-bottom:0.4rem;">1. Añadir documentos</p>
-        <p style="font-size:0.85rem; color:var(--color-gray-400);">
-          Arrastra archivos PDF, DOCX o XLSX a la zona de carga, o introduce una URL de una página web. Los archivos se guardan en <code>docs/</code>.
-        </p>
+        <p style="font-weight:700; margin-bottom:0.4rem;">{{ t('rag_step1_title') }}</p>
+        <p style="font-size:0.85rem; color:var(--color-gray-400);">{{ t('rag_step1_desc') | safe }}</p>
       </div>
       <div>
-        <p style="font-weight:700; margin-bottom:0.4rem;">2. Indexación automática</p>
-        <p style="font-size:0.85rem; color:var(--color-gray-400);">
-          Cada documento se fragmenta en trozos de ~500 palabras y se almacena en SQLite. Los fragmentos se buscan por palabras clave al consultar el asistente.
-        </p>
+        <p style="font-weight:700; margin-bottom:0.4rem;">{{ t('rag_step2_title') }}</p>
+        <p style="font-size:0.85rem; color:var(--color-gray-400);">{{ t('rag_step2_desc') }}</p>
       </div>
       <div>
-        <p style="font-weight:700; margin-bottom:0.4rem;">3. Asistente RAG</p>
-        <p style="font-size:0.85rem; color:var(--color-gray-400);">
-          Cuando el operario registra un comentario o hace una consulta, el sistema recupera los fragmentos más relevantes y los envía como contexto al LLM.
-        </p>
+        <p style="font-weight:700; margin-bottom:0.4rem;">{{ t('rag_step3_title') }}</p>
+        <p style="font-size:0.85rem; color:var(--color-gray-400);">{{ t('rag_step3_desc') }}</p>
       </div>
     </div>
   </div>

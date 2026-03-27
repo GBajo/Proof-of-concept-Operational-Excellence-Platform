@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, render_template, request
 
 from database import get_db
-from llm_client import _call_gateway, _get_api_key, _mock_response
+from llm_client import _call_gateway, _get_api_key
 from ECHARTS_SYSTEM_PROMPT import ECHARTS_SYSTEM_PROMPT
 
 bp = Blueprint("chart_builder", __name__)

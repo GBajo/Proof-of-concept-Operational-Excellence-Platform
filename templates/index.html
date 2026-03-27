@@ -1,26 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Inicio{% endblock %}
+{% block title %}{{ t('page_title_home') }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
-  <h1>Líneas de Packaging</h1>
-  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">+ Iniciar Turno</a>
+  <h1>{{ t('packaging_lines') }}</h1>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">{{ t('btn_start_shift') }}</a>
 </div>
 
 {% if active_lines %}
 <section class="section">
-  <h2 class="section__title">Turnos Activos</h2>
+  <h2 class="section__title">{{ t('active_shifts') }}</h2>
   <div class="cards-grid">
     {% for line in active_lines %}
     <div class="card card--active">
       <div class="card__header">
-        <span class="badge badge--green">ACTIVO</span>
-        <span class="card__line">Línea {{ line.line_number }}</span>
+        <span class="badge badge--green">{{ t('badge_active') }}</span>
+        <span class="card__line">{{ t('line_label') }} {{ line.line_number }}</span>
       </div>
       <p class="card__operator">{{ line.operator_name }}</p>
-      <p class="card__time">Desde: {{ line.start_time | replace('T',' ') }}</p>
+      <p class="card__time">{{ t('since_label') }} {{ line.start_time | replace('T',' ') }}</p>
       <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}" class="btn btn--sm">
-        Ver Turno
+        {{ t('btn_view_shift') }}
       </a>
     </div>
     {% endfor %}
@@ -28,8 +28,8 @@
 </section>
 {% else %}
 <div class="empty-state">
-  <p>No hay turnos activos en este momento.</p>
-  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">Iniciar primer turno</a>
+  <p>{{ t('no_active_shifts') }}</p>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">{{ t('btn_start_first_shift') }}</a>
 </div>
 {% endif %}
 {% endblock %}

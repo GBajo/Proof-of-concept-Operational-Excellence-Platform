@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Historial de Turnos{% endblock %}
+{% block title %}{{ t('page_title_history') }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Historial de Turnos</h1>
-    <p class="page-header__sub">Consulta y busca turnos anteriores</p>
+    <h1>{{ t('history_title') }}</h1>
+    <p class="page-header__sub">{{ t('history_subtitle') }}</p>
   </div>
-  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">+ Nuevo Turno</a>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">{{ t('btn_new_shift') }}</a>
 </div>
 
 <!-- ── Filtros ── -->
@@ -16,47 +16,47 @@
     <div class="history-filters__grid">
 
       <div class="form__group">
-        <label class="form__label" for="f-line">Línea</label>
+        <label class="form__label" for="f-line">{{ t('filter_line') }}</label>
         <select name="line" id="f-line" class="form__select">
-          <option value="">Todas</option>
+          <option value="">{{ t('filter_all_lines') }}</option>
           {% for n in range(1, 6) %}
           <option value="{{ n }}" {% if filters.line == n %}selected{% endif %}>
-            Línea {{ n }}
+            {{ t('line_label') }} {{ n }}
           </option>
           {% endfor %}
         </select>
       </div>
 
       <div class="form__group">
-        <label class="form__label" for="f-operator">Operario</label>
+        <label class="form__label" for="f-operator">{{ t('filter_operator') }}</label>
         <input type="text" name="operator" id="f-operator" class="form__input"
-               placeholder="Nombre…" value="{{ filters.operator or '' }}">
+               placeholder="{{ t('operator_placeholder') }}" value="{{ filters.operator or '' }}">
       </div>
 
       <div class="form__group">
-        <label class="form__label" for="f-from">Desde</label>
+        <label class="form__label" for="f-from">{{ t('filter_from') }}</label>
         <input type="date" name="from" id="f-from" class="form__input"
                value="{{ filters.from or '' }}">
       </div>
 
       <div class="form__group">
-        <label class="form__label" for="f-to">Hasta</label>
+        <label class="form__label" for="f-to">{{ t('filter_to') }}</label>
         <input type="date" name="to" id="f-to" class="form__input"
                value="{{ filters.to or '' }}">
       </div>
 
       <div class="form__group">
-        <label class="form__label" for="f-status">Estado</label>
+        <label class="form__label" for="f-status">{{ t('filter_status') }}</label>
         <select name="status" id="f-status" class="form__select">
-          <option value="">Todos</option>
-          <option value="completed"   {% if filters.status == 'completed'   %}selected{% endif %}>Completado</option>
-          <option value="interrupted" {% if filters.status == 'interrupted' %}selected{% endif %}>Interrumpido</option>
+          <option value="">{{ t('filter_all_status') }}</option>
+          <option value="completed"   {% if filters.status == 'completed'   %}selected{% endif %}>{{ t('status_completed_filter') }}</option>
+          <option value="interrupted" {% if filters.status == 'interrupted' %}selected{% endif %}>{{ t('status_interrupted_filter') }}</option>
         </select>
       </div>
 
       <div class="history-filters__actions">
-        <button type="submit" class="btn btn--primary">Buscar</button>
-        <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">Limpiar</a>
+        <button type="submit" class="btn btn--primary">{{ t('btn_search') }}</button>
+        <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">{{ t('btn_clear') }}</a>
       </div>
 
     </div>
@@ -67,15 +67,16 @@
 <section class="section">
   <div class="history-results-header">
     <span class="history-results-count">
-      {{ shifts | length }} turno{{ 's' if shifts | length != 1 else '' }} encontrado{{ 's' if shifts | length != 1 else '' }}
+      {{ shifts | length }}
+      {% if shifts | length == 1 %}{{ t('shifts_found_singular') }}{% else %}{{ t('shifts_found_plural') }}{% endif %}
     </span>
     {% if filters.line or filters.operator or filters.from or filters.to or filters.status %}
     <span class="history-active-filters">
-      Filtros activos:
-      {% if filters.line %}<span class="history-filter-tag">Línea {{ filters.line }}</span>{% endif %}
+      {{ t('active_filters') }}
+      {% if filters.line %}<span class="history-filter-tag">{{ t('line_label') }} {{ filters.line }}</span>{% endif %}
       {% if filters.operator %}<span class="history-filter-tag">{{ filters.operator }}</span>{% endif %}
-      {% if filters.from %}<span class="history-filter-tag">Desde {{ filters.from }}</span>{% endif %}
-      {% if filters.to %}<span class="history-filter-tag">Hasta {{ filters.to }}</span>{% endif %}
+      {% if filters.from %}<span class="history-filter-tag">{{ t('filter_from_tag') }} {{ filters.from }}</span>{% endif %}
+      {% if filters.to %}<span class="history-filter-tag">{{ t('filter_to_tag') }} {{ filters.to }}</span>{% endif %}
       {% if filters.status %}<span class="history-filter-tag">{{ filters.status | capitalize }}</span>{% endif %}
     </span>
     {% endif %}
@@ -87,26 +88,21 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>Fecha</th>
-          <th>Operario</th>
-          <th>Línea</th>
-          <th>Tipo</th>
-          <th>Duración</th>
-          <th>Uds. producidas</th>
-          <th>Rechazo</th>
-          <th>Parada</th>
-          <th>Estado</th>
+          <th>{{ t('col_date') }}</th>
+          <th>{{ t('col_operator') }}</th>
+          <th>{{ t('col_line') }}</th>
+          <th>{{ t('col_type') }}</th>
+          <th>{{ t('col_duration') }}</th>
+          <th>{{ t('col_units') }}</th>
+          <th>{{ t('col_reject') }}</th>
+          <th>{{ t('col_downtime') }}</th>
+          <th>{{ t('col_status') }}</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {% for s in shifts %}
         {% set has_kpi = s.last_units_produced is not none %}
-
-        {# Calcular duración #}
-        {% if s.end_time and s.start_time %}
-          {# Mostrar solo HH:MM de inicio y fin para calcular visualmente #}
-        {% endif %}
 
         <tr class="history-row {% if s.status == 'interrupted' %}history-row--interrupted{% endif %}">
           <td class="history-id">{{ s.id }}</td>
@@ -121,13 +117,12 @@
             <span class="history-line-badge">L{{ s.line_number }}</span>
           </td>
           <td class="history-type">
-            {% if s.shift_type == 'morning' %}☀ Mañana
-            {% elif s.shift_type == 'afternoon' %}🌤 Tarde
-            {% else %}🌙 Noche{% endif %}
+            {% if s.shift_type == 'morning' %}☀ {{ t('shift_morning') }}
+            {% elif s.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }}
+            {% else %}🌙 {{ t('shift_night') }}{% endif %}
           </td>
           <td class="history-duration">
             {% if s.end_time and s.start_time %}
-              {# duración en minutos calculada en Python #}
               {{ s.duration_h }}h {{ s.duration_m }}m
             {% else %}—{% endif %}
           </td>
@@ -160,12 +155,12 @@
           </td>
           <td>
             <span class="badge {% if s.status == 'completed' %}badge--green{% else %}badge--orange{% endif %}">
-              {% if s.status == 'completed' %}Completado{% else %}Interrumpido{% endif %}
+              {% if s.status == 'completed' %}{{ t('badge_completed') }}{% else %}{{ t('badge_interrupted') }}{% endif %}
             </span>
           </td>
           <td>
             <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
-               class="btn btn--sm">Ver resumen</a>
+               class="btn btn--sm">{{ t('btn_view_summary') }}</a>
           </td>
         </tr>
         {% endfor %}
@@ -175,9 +170,9 @@
 
   {% else %}
   <div class="empty-state">
-    <p>No se encontraron turnos con los filtros aplicados.</p>
+    <p>{{ t('no_shifts_found') }}</p>
     {% if filters.line or filters.operator or filters.from or filters.to or filters.status %}
-    <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">Ver todos los turnos</a>
+    <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">{{ t('btn_view_all') }}</a>
     {% endif %}
   </div>
   {% endif %}

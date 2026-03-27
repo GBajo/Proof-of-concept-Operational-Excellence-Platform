@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, redirect, url_for, request
+from flask import Blueprint, render_template, abort, redirect, url_for, request, make_response
 from models.shift import get_shift_by_id, get_active_lines, get_shifts_history, get_line_performance_summary
 from models.operator import get_all_operators
 from models.comment import get_comments_by_shift
@@ -6,6 +6,18 @@ from models.kpi import calculate_oee
 import json
 
 bp = Blueprint("views", __name__)
+
+
+@bp.post("/set-lang")
+def set_lang():
+    """Guarda el idioma preferido en una cookie y redirige al referer."""
+    lang = request.form.get("lang", "es")
+    if lang not in ("es", "en"):
+        lang = "es"
+    redirect_to = request.form.get("next") or request.referrer or "/"
+    resp = make_response(redirect(redirect_to))
+    resp.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365, samesite="Lax")
+    return resp
 
 
 @bp.get("/")
