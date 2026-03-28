@@ -126,20 +126,18 @@
 
     <!-- Selector de planta -->
     <div class="site-switcher">
-      <form method="post" action="{{ url_for('views.set_site') }}">
-        <input type="hidden" name="next" value="{{ request.path }}">
-        <select name="site" class="site-select" onchange="this.form.submit()"
-                aria-label="{{ t('site_label') }}" title="{{ t('site_label') }}">
-          <option value="global" {% if current_site == 'global' %}selected{% endif %}>
-            🌍 Global
-          </option>
-          {% for site_id, site_info in sites.items() %}
-          <option value="{{ site_id }}" {% if current_site == site_id %}selected{% endif %}>
-            {{ site_info.flag }} {{ site_info.name }}
-          </option>
-          {% endfor %}
-        </select>
-      </form>
+      <select name="site" class="site-select"
+              onchange="window.location.href='/set-site?site='+encodeURIComponent(this.value)"
+              aria-label="{{ t('site_label') }}" title="{{ t('site_label') }}">
+        <option value="global" {% if current_site == 'global' %}selected{% endif %}>
+          🌍 Global
+        </option>
+        {% for site_id, site_info in sites.items() %}
+        <option value="{{ site_id }}" {% if current_site == site_id %}selected{% endif %}>
+          {{ site_info.flag }} {{ site_info.name }}
+        </option>
+        {% endfor %}
+      </select>
     </div>
 
     <!-- Selector de idioma -->

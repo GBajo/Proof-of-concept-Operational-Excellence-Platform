@@ -23,21 +23,19 @@ def set_lang():
 
 @bp.post("/set-site")
 def set_site():
-    """Guarda la planta activa en una cookie y redirige."""
+    """Guarda la planta activa en una cookie y redirige (legacy, mantener por compatibilidad)."""
+    return set_site_get()
+
+
+@bp.get("/set-site")
+def set_site_get():
+    """Guarda la planta activa en una cookie y redirige (GET, usado por el selector de navbar)."""
     from site_aggregator import SITES, DEFAULT_SITE
-    site = request.form.get("site", DEFAULT_SITE)
+    site = request.args.get("site") or request.form.get("site", DEFAULT_SITE)
     if site not in SITES and site != "global":
         site = DEFAULT_SITE
 
-    next_url = request.form.get("next", "").strip()
-
-    if site == "global":
-        redirect_to = "/global"
-    elif next_url and not next_url.endswith("/global"):
-        redirect_to = next_url
-    else:
-        # Venimos de la vista global u otro contexto global → ir al inicio del site
-        redirect_to = "/"
+    redirect_to = "/global" if site == "global" else "/"
 
     resp = make_response(redirect(redirect_to))
     resp.set_cookie("site", site, max_age=60 * 60 * 24 * 365, samesite="Lax")
