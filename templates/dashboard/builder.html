@@ -2,129 +2,135 @@
 {% block title %}{{ t('page_title_builder') }}{% endblock %}
 
 {% block content %}
-<div class="builder-layout">
+<div class="row g-4">
 
-  <!-- ── Panel lateral: historial ──────────────────────────── -->
-  <aside class="builder-sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <h3 class="sidebar-title">{{ t('my_charts') }}</h3>
-      <button class="btn btn--icon" id="refreshHistory" title="{{ t('btn_view_history') }}">↻</button>
-    </div>
+  <!-- Sidebar: history -->
+  <div class="col-lg-3">
+    <div class="card border-0 shadow-sm position-sticky" style="top:70px;" id="sidebar">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0">{{ t('my_charts') }}</h6>
+          <button class="btn btn-sm btn-outline-secondary" id="refreshHistory" title="{{ t('btn_view_history') }}">↻</button>
+        </div>
 
-    <!-- Sugerencias predefinidas -->
-    <div class="sidebar-section">
-      <p class="sidebar-label">{{ t('quick_suggestions') }}</p>
-      <div class="suggestions-list">
-        <button class="suggestion-chip" data-prompt="{{ t('suggest_oee_24h') | replace('OEE últimas 24h', 'OEE de las últimas 24 horas por turno') if lang == 'es' else 'OEE for the last 24 hours by shift' }}">{{ t('suggest_oee_24h') }}</button>
-        <button class="suggestion-chip" data-prompt="{{ 'Top causas de parada de las últimas 2 semanas' if lang == 'es' else 'Top stop causes for the last 2 weeks' }}">{{ t('suggest_stop_causes') }}</button>
-        <button class="suggestion-chip" data-prompt="{{ 'Producción real vs objetivo semanal por línea' if lang == 'es' else 'Real vs target weekly production by line' }}">{{ t('suggest_prod_vs_target') }}</button>
-        <button class="suggestion-chip" data-prompt="{{ 'Tendencia de rechazos y tasa de rechazo de los últimos 7 días' if lang == 'es' else 'Reject trend and reject rate for the last 7 days' }}">{{ t('suggest_reject_trend') }}</button>
-        <button class="suggestion-chip" data-prompt="{{ 'Comparativa de rendimiento entre todas las líneas' if lang == 'es' else 'Performance comparison between all lines' }}">{{ t('suggest_line_compare') }}</button>
-        <button class="suggestion-chip" data-prompt="{{ 'Distribución de comentarios por categoría esta semana' if lang == 'es' else 'Comment distribution by category this week' }}">{{ t('suggest_comments_cat') }}</button>
-      </div>
-    </div>
+        <!-- Predefined suggestions -->
+        <div class="mb-3">
+          <p class="text-uppercase small fw-bold text-muted mb-2" style="font-size:0.72rem;">{{ t('quick_suggestions') }}</p>
+          <div class="d-flex flex-column gap-1">
+            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ t('suggest_oee_24h') | replace('OEE ultimas 24h', 'OEE de las ultimas 24 horas por turno') if lang == 'es' else 'OEE for the last 24 hours by shift' }}">{{ t('suggest_oee_24h') }}</button>
+            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Top causas de parada de las ultimas 2 semanas' if lang == 'es' else 'Top stop causes for the last 2 weeks' }}">{{ t('suggest_stop_causes') }}</button>
+            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Produccion real vs objetivo semanal por linea' if lang == 'es' else 'Real vs target weekly production by line' }}">{{ t('suggest_prod_vs_target') }}</button>
+            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Tendencia de rechazos y tasa de rechazo de los ultimos 7 dias' if lang == 'es' else 'Reject trend and reject rate for the last 7 days' }}">{{ t('suggest_reject_trend') }}</button>
+            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Comparativa de rendimiento entre todas las lineas' if lang == 'es' else 'Performance comparison between all lines' }}">{{ t('suggest_line_compare') }}</button>
+            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Distribucion de comentarios por categoria esta semana' if lang == 'es' else 'Comment distribution by category this week' }}">{{ t('suggest_comments_cat') }}</button>
+          </div>
+        </div>
 
-    <!-- Historial de gráficos guardados -->
-    <div class="sidebar-section sidebar-section--grow">
-      <p class="sidebar-label">{{ t('saved_charts_label') }} <span class="badge" id="historyCount">0</span></p>
-      <div class="history-list" id="historyList">
-        <p class="history-empty">{{ t('no_saved_charts') }}</p>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── Área principal ─────────────────────────────────────── -->
-  <main class="builder-main">
-
-    <!-- Cabecera -->
-    <div class="builder-header">
-      <div>
-        <h1 class="page-title">{{ t('builder_title') }} <span class="badge badge--blue">IA</span></h1>
-        <p class="page-subtitle">{{ t('builder_subtitle') }}</p>
-      </div>
-    </div>
-
-    <!-- Formulario de prompt -->
-    <div class="card builder-prompt-card">
-      <div class="prompt-input-wrap">
-        <textarea
-          id="promptInput"
-          class="prompt-textarea"
-          rows="3"
-          placeholder="{{ t('prompt_placeholder') }}"
-          maxlength="500"
-        ></textarea>
-        <div class="prompt-actions">
-          <button class="btn btn--secondary btn--voice-labeled" id="voiceBtn">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="flex-shrink:0">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
-            </svg>
-            {{ t('btn_record_voice') }}
-          </button>
-          <span class="prompt-chars" id="promptChars">0 / 500</span>
-          <button class="btn btn--primary btn--generate" id="generateBtn">
-            <span id="generateBtnText">{{ t('btn_generate') }}</span>
-            <span id="generateBtnSpinner" class="spinner" hidden></span>
-          </button>
+        <!-- Saved charts history -->
+        <div>
+          <p class="text-uppercase small fw-bold text-muted mb-2" style="font-size:0.72rem;">{{ t('saved_charts_label') }} <span class="badge bg-secondary" id="historyCount">0</span></p>
+          <div class="history-list overflow-auto" id="historyList" style="max-height:300px;">
+            <p class="text-muted small text-center py-2">{{ t('no_saved_charts') }}</p>
+          </div>
         </div>
       </div>
-      <!-- Estado de voz (oculto hasta que se activa) -->
-      <div id="voiceStatus" class="voice-status" style="display:none">
-        <span class="voice-dot"></span> {{ t('voice_listening') }}
-        <button class="btn btn--sm btn--outline" id="stopVoiceBtn">{{ t('btn_stop_voice') }}</button>
-      </div>
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div class="col-lg-9">
+
+    <!-- Header -->
+    <div class="mb-3">
+      <h1 class="h3 fw-bold mb-1">{{ t('builder_title') }} <span class="badge bg-primary">IA</span></h1>
+      <p class="text-muted mb-0 small">{{ t('builder_subtitle') }}</p>
     </div>
 
-    <!-- Área del gráfico generado -->
-    <div class="card chart-area" id="chartArea" hidden>
-      <div class="chart-area-header">
-        <div class="chart-meta">
-          <span class="chart-source-badge" id="chartSourceBadge"></span>
-          <span class="chart-rows-info" id="chartRowsInfo"></span>
+    <!-- Prompt form -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex flex-column gap-2">
+          <textarea
+            id="promptInput"
+            class="form-control"
+            rows="3"
+            placeholder="{{ t('prompt_placeholder') }}"
+            maxlength="500"
+          ></textarea>
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" id="voiceBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="flex-shrink:0">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
+              </svg>
+              {{ t('btn_record_voice') }}
+            </button>
+            <span class="small text-muted flex-grow-1" id="promptChars">0 / 500</span>
+            <button class="btn btn-primary d-flex align-items-center gap-2" id="generateBtn">
+              <span id="generateBtnText">{{ t('btn_generate') }}</span>
+              <span id="generateBtnSpinner" class="spinner-border spinner-border-sm" hidden></span>
+            </button>
+          </div>
         </div>
-        <div class="chart-area-actions">
-          <button class="btn btn--sm btn--outline" id="modifyBtn">{{ t('btn_modify_chart') }}</button>
-          <button class="btn btn--sm btn--primary" id="saveBtn">{{ t('btn_save_dashboard') }}</button>
+        <!-- Voice status -->
+        <div id="voiceStatus" class="d-flex align-items-center gap-2 mt-2 small text-danger" style="display:none !important;">
+          <span class="voice-dot"></span> {{ t('voice_listening') }}
+          <button class="btn btn-sm btn-outline-secondary" id="stopVoiceBtn">{{ t('btn_stop_voice') }}</button>
         </div>
       </div>
-
-      <!-- Mensaje de error no fatal -->
-      <div class="alert alert--warning" id="chartWarning" hidden></div>
-
-      <!-- Contenedor del gráfico ECharts -->
-      <div id="echartsContainer" class="echarts-container"></div>
     </div>
 
-    <!-- Estado: error fatal -->
-    <div class="card chart-error" id="chartError" hidden>
-      <p class="chart-error__icon">⚠</p>
-      <p class="chart-error__msg" id="chartErrorMsg">{{ t('chart_error_msg') }}</p>
-      <button class="btn btn--outline" id="retryBtn">{{ t('btn_retry') }}</button>
-    </div>
-
-    <!-- Estado vacío inicial -->
-    <div class="builder-empty" id="builderEmpty">
-      <div class="builder-empty__inner">
-        <p class="builder-empty__icon">📊</p>
-        <p class="builder-empty__title">{{ t('chart_appears_here') }}</p>
-        <p class="builder-empty__sub">{{ t('chart_hint') }}</p>
+    <!-- Chart area -->
+    <div class="card border-0 shadow-sm mb-3" id="chartArea" hidden>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge" id="chartSourceBadge"></span>
+            <span class="small text-muted" id="chartRowsInfo"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" id="modifyBtn">{{ t('btn_modify_chart') }}</button>
+            <button class="btn btn-sm btn-primary" id="saveBtn">{{ t('btn_save_dashboard') }}</button>
+          </div>
+        </div>
+        <div class="alert alert-warning" id="chartWarning" hidden></div>
+        <div id="echartsContainer" style="width:100%; height:420px;"></div>
       </div>
     </div>
 
-  </main>
+    <!-- Error state -->
+    <div class="card border-0 shadow-sm mb-3 text-center py-5" id="chartError" hidden>
+      <div class="card-body">
+        <p class="fs-1 mb-2">⚠</p>
+        <p class="text-muted" id="chartErrorMsg">{{ t('chart_error_msg') }}</p>
+        <button class="btn btn-outline-primary" id="retryBtn">{{ t('btn_retry') }}</button>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="text-center py-5" id="builderEmpty">
+      <p class="display-4 mb-2">📊</p>
+      <p class="fs-5 fw-semibold text-muted">{{ t('chart_appears_here') }}</p>
+      <p class="small text-muted">{{ t('chart_hint') }}</p>
+    </div>
+
+  </div>
 </div>
 
-<!-- Modal: guardar gráfico -->
-<div class="modal-overlay" id="saveModal" hidden>
-  <div class="modal">
-    <h3 class="modal__title">{{ t('save_chart_title') }}</h3>
-    <label class="form-label" for="chartTitleInput">{{ t('chart_title_label') }}</label>
-    <input class="form-control" id="chartTitleInput" type="text" maxlength="100"
-           placeholder="Ej: OEE semana 13">
-    <div class="modal__actions">
-      <button class="btn btn--outline" id="cancelSaveBtn">{{ t('btn_cancel') }}</button>
-      <button class="btn btn--primary" id="confirmSaveBtn">{{ t('btn_confirm_save') }}</button>
+<!-- Save modal -->
+<div class="modal fade" id="saveModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body">
+        <h6 class="fw-bold mb-3">{{ t('save_chart_title') }}</h6>
+        <label class="form-label small" for="chartTitleInput">{{ t('chart_title_label') }}</label>
+        <input class="form-control" id="chartTitleInput" type="text" maxlength="100"
+               placeholder="Ej: OEE semana 13">
+        <div class="d-flex gap-2 justify-content-end mt-3">
+          <button class="btn btn-outline-secondary btn-sm" id="cancelSaveBtn">{{ t('btn_cancel') }}</button>
+          <button class="btn btn-primary btn-sm" id="confirmSaveBtn">{{ t('btn_confirm_save') }}</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -132,154 +138,27 @@
 
 {% block scripts %}
 <style>
-/* ── Layout ──────────────────────────────────────────────── */
-.builder-layout {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 1.25rem;
-  padding: 1.25rem 1.5rem;
-  min-height: calc(100vh - 56px - 48px);
-  align-items: start;
-}
-
-/* ── Sidebar ─────────────────────────────────────────────── */
-.builder-sidebar {
-  background: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: sticky;
-  top: 1rem;
-  max-height: calc(100vh - 80px);
-  overflow: hidden;
-}
-.sidebar-header { display: flex; align-items: center; justify-content: space-between; }
-.sidebar-title { font-size: 0.9rem; font-weight: 700; color: var(--color-gray-900); }
-.sidebar-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em;
-  color: var(--color-gray-400); margin-bottom: .4rem; }
-.sidebar-section { display: flex; flex-direction: column; }
-.sidebar-section--grow { flex: 1; min-height: 0; }
-.suggestions-list { display: flex; flex-direction: column; gap: .35rem; }
-.suggestion-chip {
-  background: var(--color-gray-100); border: 1px solid var(--color-gray-200);
-  border-radius: 6px; padding: .35rem .65rem; font-size: .8rem;
-  text-align: left; cursor: pointer; transition: background .15s, border-color .15s;
-  color: var(--color-gray-700);
-}
-.suggestion-chip:hover { background: #e8f0fb; border-color: var(--color-primary); color: var(--color-primary); }
-
-/* Historial */
-.history-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: .4rem; }
-.history-empty { font-size: .8rem; color: var(--color-gray-400); text-align: center; padding: .75rem 0; }
-.history-item {
-  background: var(--color-gray-100); border-radius: 6px; padding: .5rem .65rem;
-  cursor: pointer; display: flex; align-items: flex-start; justify-content: space-between;
-  gap: .4rem; transition: background .15s;
-}
-.history-item:hover { background: #e8f0fb; }
-.history-item__title { font-size: .8rem; font-weight: 600; color: var(--color-gray-900);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-.history-item__date { font-size: .7rem; color: var(--color-gray-400); white-space: nowrap; }
-.history-item__del { font-size: .9rem; color: var(--color-gray-400); background: none;
-  border: none; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0; }
-.history-item__del:hover { color: var(--color-danger); }
-
-/* ── Main ────────────────────────────────────────────────── */
-.builder-main { display: flex; flex-direction: column; gap: 1rem; }
-.builder-header { display: flex; justify-content: space-between; align-items: flex-start; }
-.page-title { font-size: 1.35rem; font-weight: 700; color: var(--color-gray-900); display: flex; align-items: center; gap: .5rem; }
-.page-subtitle { font-size: .85rem; color: var(--color-gray-400); margin-top: .2rem; }
-
-/* ── Prompt card ─────────────────────────────────────────── */
-.builder-prompt-card { padding: 1rem; }
-.prompt-input-wrap { display: flex; flex-direction: column; gap: .5rem; }
-.prompt-textarea {
-  width: 100%; border: 1.5px solid var(--color-gray-200); border-radius: var(--radius);
-  padding: .75rem 1rem; font-size: .95rem; font-family: var(--font); resize: vertical;
-  min-height: 80px; transition: border-color .15s; outline: none;
-  color: var(--color-gray-900); background: #fff;
-}
-.prompt-textarea:focus { border-color: var(--color-primary); }
-.prompt-actions { display: flex; align-items: center; gap: .5rem; }
-.prompt-chars { font-size: .75rem; color: var(--color-gray-400); flex: 1; }
-.btn--generate { padding: .55rem 1.2rem; font-size: .9rem; display: flex; align-items: center; gap: .4rem; }
-.btn--voice {
-  width: 36px; height: 36px; border-radius: 50%; background: var(--color-gray-100);
-  border: 1.5px solid var(--color-gray-200); color: var(--color-gray-700);
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-  transition: background .15s, color .15s;
-}
-.btn--voice:hover { background: #e8f0fb; color: var(--color-primary); }
-.btn--voice.active { background: var(--color-danger); color: #fff; border-color: var(--color-danger); animation: pulse 1s infinite; }
-.btn--voice-labeled {
-  display: flex; align-items: center; gap: .4rem;
-  padding: .45rem .9rem; font-size: .85rem; cursor: pointer;
-  transition: background .15s, color .15s;
-}
-.btn--voice-labeled.active {
-  background: var(--color-danger); color: #fff;
-  border-color: var(--color-danger); animation: pulse 1s infinite;
-}
-@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
-
-.voice-status { display: flex; align-items: center; gap: .5rem; margin-top: .25rem; font-size: .85rem; color: var(--color-danger); }
-.voice-dot { width: 8px; height: 8px; background: var(--color-danger); border-radius: 50%; animation: pulse 1s infinite; }
-
-/* ── Chart area ──────────────────────────────────────────── */
-.chart-area { padding: 1rem; }
-.chart-area-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; flex-wrap: wrap; gap: .5rem; }
-.chart-meta { display: flex; align-items: center; gap: .5rem; }
-.chart-source-badge { font-size: .72rem; padding: .2rem .5rem; border-radius: 4px; font-weight: 600; }
+.voice-dot { width: 8px; height: 8px; background: var(--bs-danger); border-radius: 50%; animation: pulse-voice 1s infinite; }
+@keyframes pulse-voice { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
 .chart-source-badge.gateway { background: #e8f5e9; color: #27ae60; }
 .chart-source-badge.mock { background: #fff3cd; color: #856404; }
-.chart-rows-info { font-size: .75rem; color: var(--color-gray-400); }
-.chart-area-actions { display: flex; gap: .5rem; }
-.echarts-container { width: 100%; height: 420px; }
-
-/* ── Error / empty states ────────────────────────────────── */
-.chart-error { padding: 2rem; text-align: center; }
-.chart-error__icon { font-size: 2.5rem; margin-bottom: .5rem; }
-.chart-error__msg { color: var(--color-gray-700); margin-bottom: 1rem; }
-.builder-empty { display: flex; align-items: center; justify-content: center; min-height: 300px; }
-.builder-empty__inner { text-align: center; }
-.builder-empty__icon { font-size: 4rem; margin-bottom: .75rem; }
-.builder-empty__title { font-size: 1.1rem; font-weight: 600; color: var(--color-gray-700); }
-.builder-empty__sub { font-size: .85rem; color: var(--color-gray-400); margin-top: .3rem; }
-
-/* ── Badges ──────────────────────────────────────────────── */
-.badge { background: var(--color-gray-200); color: var(--color-gray-700);
-  border-radius: 10px; padding: .1rem .45rem; font-size: .7rem; font-weight: 700; }
-.badge--blue { background: #e8f0fb; color: var(--color-primary); }
-
-/* ── Modal ───────────────────────────────────────────────── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4);
-  display: none; align-items: center; justify-content: center; z-index: 1000; }
-.modal-overlay.is-open { display: flex; }
-.modal { background: #fff; border-radius: var(--radius); padding: 1.5rem;
-  width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
-.modal__title { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; }
-.modal__actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1rem; }
-
-/* ── Spinner ─────────────────────────────────────────────── */
-.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
-  border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .builder-layout { grid-template-columns: 1fr; }
-  .builder-sidebar { position: static; max-height: none; }
+.history-item {
+  background: #f8f9fa; border-radius: 6px; padding: 0.5rem 0.65rem;
+  cursor: pointer; display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 0.4rem; transition: background .15s; margin-bottom: 0.3rem;
 }
+.history-item:hover { background: #e8f0fb; }
+.history-item__title { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.history-item__date { font-size: 0.7rem; color: #6c757d; white-space: nowrap; }
+.history-item__del { font-size: 0.9rem; color: #6c757d; background: none; border: none; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+.history-item__del:hover { color: #dc3545; }
+.suggestion-chip:hover { background: #e8f0fb; border-color: #0d6efd; color: #0d6efd; }
 </style>
 
 <script>
 (function () {
   "use strict";
 
-  // ── Traducciones JS ──────────────────────────────────────
   const I18N = {
     noVoice:       {{ t('js_browser_no_voice') | tojson }},
     noSavedCharts: {{ t('no_saved_charts') | tojson }},
@@ -292,7 +171,6 @@
     saveError:     {{ t('js_save_error') | tojson }},
   };
 
-  // ── Referencias DOM ──────────────────────────────────────
   const promptInput    = document.getElementById("promptInput");
   const promptChars    = document.getElementById("promptChars");
   const generateBtn    = document.getElementById("generateBtn");
@@ -314,18 +192,17 @@
   const refreshHistory = document.getElementById("refreshHistory");
   const historyList    = document.getElementById("historyList");
   const historyCount   = document.getElementById("historyCount");
-  const saveModal      = document.getElementById("saveModal");
+  const saveModalEl    = document.getElementById("saveModal");
   const chartTitleInput= document.getElementById("chartTitleInput");
   const cancelSaveBtn  = document.getElementById("cancelSaveBtn");
   const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 
-  // ── Estado ───────────────────────────────────────────────
+  let saveModalInstance = null;
   let currentOption = null;
   let currentPrompt = "";
   let echartsInstance = null;
   let recognition = null;
 
-  // ── ECharts init ─────────────────────────────────────────
   function getChart() {
     const container = document.getElementById("echartsContainer");
     if (!echartsInstance) {
@@ -347,7 +224,6 @@
     setTimeout(() => chart.resize(), 50);
   }
 
-  // ── Prompt input ─────────────────────────────────────────
   promptInput.addEventListener("input", () => {
     promptChars.textContent = `${promptInput.value.length} / 500`;
   });
@@ -356,23 +232,18 @@
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
   });
 
-  // ── Voz ──────────────────────────────────────────────────
   voiceBtn.addEventListener("click", startVoice);
   stopVoiceBtn.addEventListener("click", stopVoice);
 
   function startVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert(I18N.noVoice);
-      return;
-    }
+    if (!SpeechRecognition) { alert(I18N.noVoice); return; }
     recognition = new SpeechRecognition();
     recognition.lang = document.documentElement.lang === "en" ? "en-US" : "es-ES";
     recognition.continuous = false;
     recognition.interimResults = true;
-
     recognition.onstart = () => {
-      voiceBtn.classList.add("active");
+      voiceBtn.classList.add("btn-danger"); voiceBtn.classList.remove("btn-outline-secondary");
       voiceStatus.style.display = "flex";
     };
     recognition.onresult = (e) => {
@@ -382,12 +253,12 @@
       promptChars.textContent = `${transcript.length} / 500`;
     };
     recognition.onend = () => {
-      voiceBtn.classList.remove("active");
+      voiceBtn.classList.remove("btn-danger"); voiceBtn.classList.add("btn-outline-secondary");
       voiceStatus.style.display = "none";
       recognition = null;
     };
     recognition.onerror = () => {
-      voiceBtn.classList.remove("active");
+      voiceBtn.classList.remove("btn-danger"); voiceBtn.classList.add("btn-outline-secondary");
       voiceStatus.style.display = "none";
       recognition = null;
     };
@@ -396,11 +267,10 @@
 
   function stopVoice() {
     if (recognition) { recognition.stop(); recognition = null; }
-    voiceBtn.classList.remove("active");
+    voiceBtn.classList.remove("btn-danger"); voiceBtn.classList.add("btn-outline-secondary");
     voiceStatus.style.display = "none";
   }
 
-  // ── Sugerencias predefinidas ─────────────────────────────
   document.querySelectorAll(".suggestion-chip").forEach(chip => {
     chip.addEventListener("click", () => {
       promptInput.value = chip.dataset.prompt;
@@ -410,7 +280,6 @@
     });
   });
 
-  // ── Generar gráfico ──────────────────────────────────────
   generateBtn.addEventListener("click", generate);
   retryBtn.addEventListener("click", generate);
 
@@ -431,27 +300,26 @@
         body: JSON.stringify({ prompt }),
       });
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Error del servidor");
 
       currentOption = data.option;
 
       if (data.error) {
-        chartWarning.textContent = "⚠ " + data.error;
+        chartWarning.textContent = "\u26A0 " + data.error;
         chartWarning.hidden = false;
       } else {
         chartWarning.hidden = true;
       }
 
       chartSourceBadge.textContent = data.source === "gateway" ? I18N.sourceGateway : I18N.sourceMock;
-      chartSourceBadge.className = "chart-source-badge " + (data.source === "gateway" ? "gateway" : "mock");
+      chartSourceBadge.className = "badge chart-source-badge " + (data.source === "gateway" ? "gateway" : "mock");
       chartRowsInfo.textContent = data.data_rows ? `${data.data_rows} ${I18N.recordsLabel}` : "";
 
       chartArea.hidden = false;
       renderChart(currentOption);
 
     } catch (err) {
-      chartErrorMsg.textContent = err.message || "Error desconocido al generar el gráfico.";
+      chartErrorMsg.textContent = err.message || "Error desconocido al generar el grafico.";
       chartError.hidden = false;
     } finally {
       setGenerating(false);
@@ -464,7 +332,6 @@
     generateBtnSpinner.hidden = !on;
   }
 
-  // ── Modificar ────────────────────────────────────────────
   modifyBtn.addEventListener("click", () => {
     promptInput.focus();
     promptInput.select();
@@ -472,17 +339,16 @@
     builderEmpty.hidden = false;
   });
 
-  // ── Guardar ──────────────────────────────────────────────
   saveBtn.addEventListener("click", () => {
     if (!currentOption) return;
     chartTitleInput.value = currentPrompt.slice(0, 80);
-    saveModal.hidden = false;
+    if (!saveModalInstance) saveModalInstance = new bootstrap.Modal(saveModalEl);
+    saveModalInstance.show();
     chartTitleInput.focus();
     chartTitleInput.select();
   });
 
-  cancelSaveBtn.addEventListener("click", () => { saveModal.hidden = true; });
-  saveModal.addEventListener("click", (e) => { if (e.target === saveModal) saveModal.hidden = true; });
+  cancelSaveBtn.addEventListener("click", () => { if (saveModalInstance) saveModalInstance.hide(); });
 
   confirmSaveBtn.addEventListener("click", async () => {
     const title = chartTitleInput.value.trim() || currentPrompt.slice(0, 60);
@@ -494,7 +360,7 @@
         body: JSON.stringify({ prompt: currentPrompt, title, option: currentOption }),
       });
       if (!res.ok) throw new Error(I18N.saveError);
-      saveModal.hidden = true;
+      if (saveModalInstance) saveModalInstance.hide();
       loadHistory();
       saveBtn.textContent = I18N.savedOk;
       setTimeout(() => { saveBtn.textContent = I18N.saveBtnLabel; }, 2000);
@@ -505,7 +371,6 @@
     }
   });
 
-  // ── Historial ─────────────────────────────────────────────
   refreshHistory.addEventListener("click", loadHistory);
 
   async function loadHistory() {
@@ -515,7 +380,7 @@
       historyCount.textContent = items.length;
 
       if (!items.length) {
-        historyList.innerHTML = `<p class="history-empty">${I18N.noSavedCharts}</p>`;
+        historyList.innerHTML = `<p class="text-muted small text-center py-2">${I18N.noSavedCharts}</p>`;
         return;
       }
 
@@ -525,7 +390,7 @@
             <div class="history-item__title" title="${escHtml(item.title)}">${escHtml(item.title)}</div>
             <div class="history-item__date">${formatDate(item.created_at)}</div>
           </div>
-          <button class="history-item__del" data-del="${item.id}" title="✕">✕</button>
+          <button class="history-item__del" data-del="${item.id}" title="\u2715">\u2715</button>
         </div>
       `).join("");
 
@@ -549,7 +414,7 @@
       });
 
     } catch (err) {
-      historyList.innerHTML = `<p class="history-empty">${I18N.errorHistory}</p>`;
+      historyList.innerHTML = `<p class="text-muted small text-center py-2">${I18N.errorHistory}</p>`;
     }
   }
 
@@ -567,7 +432,6 @@
     } catch { return iso.slice(0,16); }
   }
 
-  // ── Init ──────────────────────────────────────────────────
   loadHistory();
 
 })();

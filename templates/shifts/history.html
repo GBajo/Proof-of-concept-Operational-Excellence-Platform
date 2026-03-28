@@ -2,177 +2,173 @@
 {% block title %}{{ t('page_title_history') }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
   <div>
-    <h1>{{ t('history_title') }}</h1>
-    <p class="page-header__sub">{{ t('history_subtitle') }}</p>
+    <h1 class="h3 fw-bold mb-1">{{ t('history_title') }}</h1>
+    <p class="text-muted mb-0 small">{{ t('history_subtitle') }}</p>
   </div>
-  <a href="{{ url_for('views.shift_start') }}" class="btn btn--primary">{{ t('btn_new_shift') }}</a>
+  <a href="{{ url_for('views.shift_start') }}" class="btn btn-primary">{{ t('btn_new_shift') }}</a>
 </div>
 
-<!-- ── Filtros ── -->
-<section class="section">
-  <form method="get" action="{{ url_for('views.shifts_history') }}" class="history-filters">
-    <div class="history-filters__grid">
-
-      <div class="form__group">
-        <label class="form__label" for="f-line">{{ t('filter_line') }}</label>
-        <select name="line" id="f-line" class="form__select">
-          <option value="">{{ t('filter_all_lines') }}</option>
-          {% for n in range(1, 6) %}
-          <option value="{{ n }}" {% if filters.line == n %}selected{% endif %}>
-            {{ t('line_label') }} {{ n }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="form__group">
-        <label class="form__label" for="f-operator">{{ t('filter_operator') }}</label>
-        <input type="text" name="operator" id="f-operator" class="form__input"
-               placeholder="{{ t('operator_placeholder') }}" value="{{ filters.operator or '' }}">
-      </div>
-
-      <div class="form__group">
-        <label class="form__label" for="f-from">{{ t('filter_from') }}</label>
-        <input type="date" name="from" id="f-from" class="form__input"
-               value="{{ filters.from or '' }}">
-      </div>
-
-      <div class="form__group">
-        <label class="form__label" for="f-to">{{ t('filter_to') }}</label>
-        <input type="date" name="to" id="f-to" class="form__input"
-               value="{{ filters.to or '' }}">
-      </div>
-
-      <div class="form__group">
-        <label class="form__label" for="f-status">{{ t('filter_status') }}</label>
-        <select name="status" id="f-status" class="form__select">
-          <option value="">{{ t('filter_all_status') }}</option>
-          <option value="completed"   {% if filters.status == 'completed'   %}selected{% endif %}>{{ t('status_completed_filter') }}</option>
-          <option value="interrupted" {% if filters.status == 'interrupted' %}selected{% endif %}>{{ t('status_interrupted_filter') }}</option>
-        </select>
-      </div>
-
-      <div class="history-filters__actions">
-        <button type="submit" class="btn btn--primary">{{ t('btn_search') }}</button>
-        <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">{{ t('btn_clear') }}</a>
-      </div>
-
+<!-- Filters -->
+<section class="mb-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <form method="get" action="{{ url_for('views.shifts_history') }}">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-muted" for="f-line">{{ t('filter_line') }}</label>
+            <select name="line" id="f-line" class="form-select form-select-sm">
+              <option value="">{{ t('filter_all_lines') }}</option>
+              {% for n in range(1, 6) %}
+              <option value="{{ n }}" {% if filters.line == n %}selected{% endif %}>
+                {{ t('line_label') }} {{ n }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-muted" for="f-operator">{{ t('filter_operator') }}</label>
+            <input type="text" name="operator" id="f-operator" class="form-control form-control-sm"
+                   placeholder="{{ t('operator_placeholder') }}" value="{{ filters.operator or '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-muted" for="f-from">{{ t('filter_from') }}</label>
+            <input type="date" name="from" id="f-from" class="form-control form-control-sm"
+                   value="{{ filters.from or '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-muted" for="f-to">{{ t('filter_to') }}</label>
+            <input type="date" name="to" id="f-to" class="form-control form-control-sm"
+                   value="{{ filters.to or '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-muted" for="f-status">{{ t('filter_status') }}</label>
+            <select name="status" id="f-status" class="form-select form-select-sm">
+              <option value="">{{ t('filter_all_status') }}</option>
+              <option value="completed"   {% if filters.status == 'completed'   %}selected{% endif %}>{{ t('status_completed_filter') }}</option>
+              <option value="interrupted" {% if filters.status == 'interrupted' %}selected{% endif %}>{{ t('status_interrupted_filter') }}</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">{{ t('btn_search') }}</button>
+            <a href="{{ url_for('views.shifts_history') }}" class="btn btn-outline-secondary btn-sm">{{ t('btn_clear') }}</a>
+          </div>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </section>
 
-<!-- ── Resultados ── -->
-<section class="section">
-  <div class="history-results-header">
-    <span class="history-results-count">
+<!-- Results -->
+<section class="mb-4">
+  <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+    <span class="fw-semibold text-muted small">
       {{ shifts | length }}
       {% if shifts | length == 1 %}{{ t('shifts_found_singular') }}{% else %}{{ t('shifts_found_plural') }}{% endif %}
     </span>
     {% if filters.line or filters.operator or filters.from or filters.to or filters.status %}
-    <span class="history-active-filters">
-      {{ t('active_filters') }}
-      {% if filters.line %}<span class="history-filter-tag">{{ t('line_label') }} {{ filters.line }}</span>{% endif %}
-      {% if filters.operator %}<span class="history-filter-tag">{{ filters.operator }}</span>{% endif %}
-      {% if filters.from %}<span class="history-filter-tag">{{ t('filter_from_tag') }} {{ filters.from }}</span>{% endif %}
-      {% if filters.to %}<span class="history-filter-tag">{{ t('filter_to_tag') }} {{ filters.to }}</span>{% endif %}
-      {% if filters.status %}<span class="history-filter-tag">{{ filters.status | capitalize }}</span>{% endif %}
-    </span>
+    <div class="d-flex align-items-center gap-1 flex-wrap">
+      <span class="text-muted small">{{ t('active_filters') }}</span>
+      {% if filters.line %}<span class="badge bg-primary">{{ t('line_label') }} {{ filters.line }}</span>{% endif %}
+      {% if filters.operator %}<span class="badge bg-primary">{{ filters.operator }}</span>{% endif %}
+      {% if filters.from %}<span class="badge bg-primary">{{ t('filter_from_tag') }} {{ filters.from }}</span>{% endif %}
+      {% if filters.to %}<span class="badge bg-primary">{{ t('filter_to_tag') }} {{ filters.to }}</span>{% endif %}
+      {% if filters.status %}<span class="badge bg-primary">{{ filters.status | capitalize }}</span>{% endif %}
+    </div>
     {% endif %}
   </div>
 
   {% if shifts %}
-  <div class="history-table-wrap">
-    <table class="history-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>{{ t('col_date') }}</th>
-          <th>{{ t('col_operator') }}</th>
-          <th>{{ t('col_line') }}</th>
-          <th>{{ t('col_type') }}</th>
-          <th>{{ t('col_duration') }}</th>
-          <th>{{ t('col_units') }}</th>
-          <th>{{ t('col_reject') }}</th>
-          <th>{{ t('col_downtime') }}</th>
-          <th>{{ t('col_status') }}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in shifts %}
-        {% set has_kpi = s.last_units_produced is not none %}
-
-        <tr class="history-row {% if s.status == 'interrupted' %}history-row--interrupted{% endif %}">
-          <td class="history-id">{{ s.id }}</td>
-          <td class="history-date">
-            <div>{{ s.start_time[:10] | replace('-', '/') }}</div>
-            <div class="history-time">{{ s.start_time[11:16] }}
-              {% if s.end_time %}→ {{ s.end_time[11:16] }}{% endif %}
-            </div>
-          </td>
-          <td class="history-operator">{{ s.operator_name }}</td>
-          <td class="history-line">
-            <span class="history-line-badge">L{{ s.line_number }}</span>
-          </td>
-          <td class="history-type">
-            {% if s.shift_type == 'morning' %}☀ {{ t('shift_morning') }}
-            {% elif s.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }}
-            {% else %}🌙 {{ t('shift_night') }}{% endif %}
-          </td>
-          <td class="history-duration">
-            {% if s.end_time and s.start_time %}
-              {{ s.duration_h }}h {{ s.duration_m }}m
-            {% else %}—{% endif %}
-          </td>
-          <td class="history-units">
-            {% if has_kpi %}
-              <strong>{{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}</strong>
-              {% if s.last_target %}
-              <div class="history-units-bar">
-                {% set pct = (s.last_units_produced / s.last_target * 100) | round(0) %}
-                {% set pct_capped = pct if pct <= 100 else 100 %}
-                <div style="width:{{ pct_capped }}%;
-                  background:{% if pct >= 95 %}#27ae60{% elif pct >= 80 %}#f39c12{% else %}#e74c3c{% endif %}">
-                </div>
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>{{ t('col_date') }}</th>
+            <th>{{ t('col_operator') }}</th>
+            <th>{{ t('col_line') }}</th>
+            <th>{{ t('col_type') }}</th>
+            <th>{{ t('col_duration') }}</th>
+            <th>{{ t('col_units') }}</th>
+            <th>{{ t('col_reject') }}</th>
+            <th>{{ t('col_downtime') }}</th>
+            <th>{{ t('col_status') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in shifts %}
+          {% set has_kpi = s.last_units_produced is not none %}
+          <tr class="{% if s.status == 'interrupted' %}table-warning{% endif %}">
+            <td class="text-muted small">{{ s.id }}</td>
+            <td>
+              <div class="small fw-semibold">{{ s.start_time[:10] | replace('-', '/') }}</div>
+              <div class="text-muted" style="font-size:0.75rem;">{{ s.start_time[11:16] }}
+                {% if s.end_time %} → {{ s.end_time[11:16] }}{% endif %}
               </div>
-              {% endif %}
-            {% else %}—{% endif %}
-          </td>
-          <td class="history-reject">
-            {% if has_kpi and s.last_units_produced > 0 %}
-              {% set rate = (s.last_units_rejected / s.last_units_produced * 100) | round(1) %}
-              <span class="{% if rate <= 1 %}history-val--good{% elif rate <= 3 %}history-val--warn{% else %}history-val--bad{% endif %}">
-                {{ rate }}%
+            </td>
+            <td>{{ s.operator_name }}</td>
+            <td><span class="badge bg-primary">L{{ s.line_number }}</span></td>
+            <td class="small">
+              {% if s.shift_type == 'morning' %}☀ {{ t('shift_morning') }}
+              {% elif s.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }}
+              {% else %}🌙 {{ t('shift_night') }}{% endif %}
+            </td>
+            <td class="small">
+              {% if s.end_time and s.start_time %}
+                {{ s.duration_h }}h {{ s.duration_m }}m
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if has_kpi %}
+                <strong>{{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}</strong>
+                {% if s.last_target %}
+                <div class="progress mt-1" style="height:4px; width:80px;">
+                  {% set pct = (s.last_units_produced / s.last_target * 100) | round(0) %}
+                  {% set pct_capped = pct if pct <= 100 else 100 %}
+                  <div class="progress-bar {% if pct >= 95 %}bg-success{% elif pct >= 80 %}bg-warning{% else %}bg-danger{% endif %}"
+                       style="width:{{ pct_capped }}%"></div>
+                </div>
+                {% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if has_kpi and s.last_units_produced > 0 %}
+                {% set rate = (s.last_units_rejected / s.last_units_produced * 100) | round(1) %}
+                <span class="fw-semibold {% if rate <= 1 %}text-success{% elif rate <= 3 %}text-warning{% else %}text-danger{% endif %}">
+                  {{ rate }}%
+                </span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if has_kpi %}
+                {{ s.last_downtime | int }} min
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <span class="badge {% if s.status == 'completed' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                {% if s.status == 'completed' %}{{ t('badge_completed') }}{% else %}{{ t('badge_interrupted') }}{% endif %}
               </span>
-            {% else %}—{% endif %}
-          </td>
-          <td class="history-downtime">
-            {% if has_kpi %}
-              {{ s.last_downtime | int }} min
-            {% else %}—{% endif %}
-          </td>
-          <td>
-            <span class="badge {% if s.status == 'completed' %}badge--green{% else %}badge--orange{% endif %}">
-              {% if s.status == 'completed' %}{{ t('badge_completed') }}{% else %}{{ t('badge_interrupted') }}{% endif %}
-            </span>
-          </td>
-          <td>
-            <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
-               class="btn btn--sm">{{ t('btn_view_summary') }}</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            </td>
+            <td>
+              <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
+                 class="btn btn-outline-primary btn-sm">{{ t('btn_view_summary') }}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
   {% else %}
-  <div class="empty-state">
-    <p>{{ t('no_shifts_found') }}</p>
+  <div class="alert alert-info text-center py-4">
+    <p class="mb-2">{{ t('no_shifts_found') }}</p>
     {% if filters.line or filters.operator or filters.from or filters.to or filters.status %}
-    <a href="{{ url_for('views.shifts_history') }}" class="btn btn--secondary">{{ t('btn_view_all') }}</a>
+    <a href="{{ url_for('views.shifts_history') }}" class="btn btn-outline-secondary btn-sm">{{ t('btn_view_all') }}</a>
     {% endif %}
   </div>
   {% endif %}

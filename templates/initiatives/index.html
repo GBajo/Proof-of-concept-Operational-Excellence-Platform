@@ -2,240 +2,166 @@
 {% block title %}Iniciativas de Mejora{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div class="page-header__left">
-    <h1 class="page-title">📋 Iniciativas de Mejora Continua</h1>
-    <p class="page-subtitle">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Proyectos A3, Kaizen, DMAIC y 5Why</p>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 fw-bold mb-1">📋 Iniciativas de Mejora Continua</h1>
+    <p class="text-muted mb-0 small">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Proyectos A3, Kaizen, DMAIC y 5Why</p>
   </div>
 </div>
 
-<!-- FILTROS ──────────────────────────────────────────────────────────────── -->
-<form method="get" class="filter-bar filter-bar--full" id="filterForm">
-  <label class="filter-label">Estado:</label>
-  <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-    <option value="">Todos</option>
-    <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>En curso</option>
-    <option value="planned"     {% if current_status=='planned'     %}selected{% endif %}>Planificado</option>
-    <option value="completed"   {% if current_status=='completed'   %}selected{% endif %}>Completado</option>
-    <option value="on_hold"     {% if current_status=='on_hold'     %}selected{% endif %}>En espera</option>
-  </select>
-  <label class="filter-label">Metodología:</label>
-  <select name="methodology" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-    <option value="">Todas</option>
-    <option value="A3"    {% if current_method=='A3'    %}selected{% endif %}>A3</option>
-    <option value="Kaizen"{% if current_method=='Kaizen'%}selected{% endif %}>Kaizen</option>
-    <option value="DMAIC" {% if current_method=='DMAIC' %}selected{% endif %}>DMAIC</option>
-    <option value="5Why"  {% if current_method=='5Why'  %}selected{% endif %}>5Why</option>
-  </select>
-  <label class="filter-label">Línea:</label>
-  <select name="line" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-    <option value="">Todas</option>
-    {% for l in site_lines %}
-    <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
-    {% endfor %}
-  </select>
-  {% if current_status or current_method or current_line %}
-  <a href="/initiatives" class="filter-clear">✕ Limpiar</a>
-  {% endif %}
+<!-- Filters -->
+<form method="get" class="card border-0 shadow-sm mb-4" id="filterForm">
+  <div class="card-body py-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <label class="form-label small fw-bold text-muted mb-0">Estado:</label>
+      <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
+        <option value="">Todos</option>
+        <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>En curso</option>
+        <option value="planned"     {% if current_status=='planned'     %}selected{% endif %}>Planificado</option>
+        <option value="completed"   {% if current_status=='completed'   %}selected{% endif %}>Completado</option>
+        <option value="on_hold"     {% if current_status=='on_hold'     %}selected{% endif %}>En espera</option>
+      </select>
+      <label class="form-label small fw-bold text-muted mb-0">Metodologia:</label>
+      <select name="methodology" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
+        <option value="">Todas</option>
+        <option value="A3"    {% if current_method=='A3'    %}selected{% endif %}>A3</option>
+        <option value="Kaizen"{% if current_method=='Kaizen'%}selected{% endif %}>Kaizen</option>
+        <option value="DMAIC" {% if current_method=='DMAIC' %}selected{% endif %}>DMAIC</option>
+        <option value="5Why"  {% if current_method=='5Why'  %}selected{% endif %}>5Why</option>
+      </select>
+      <label class="form-label small fw-bold text-muted mb-0">Linea:</label>
+      <select name="line" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
+        <option value="">Todas</option>
+        {% for l in site_lines %}
+        <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
+        {% endfor %}
+      </select>
+      {% if current_status or current_method or current_line %}
+      <a href="/initiatives" class="btn btn-sm btn-outline-danger">✕ Limpiar</a>
+      {% endif %}
+    </div>
+  </div>
 </form>
 
-<!-- TIMELINE GANTT ───────────────────────────────────────────────────────── -->
-<section class="init-section">
-  <h2 class="section-title">📅 Timeline de Iniciativas</h2>
-  <div class="chart-card">
-    <div id="ganttChart" style="width:100%;height:320px"></div>
+<!-- Gantt timeline -->
+<section class="mb-4">
+  <h2 class="h5 text-primary fw-bold mb-3">📅 Timeline de Iniciativas</h2>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div id="ganttChart" style="width:100%;height:320px"></div>
+    </div>
   </div>
 </section>
 
-<!-- LISTA DE INICIATIVAS ──────────────────────────────────────────────────── -->
-<section class="init-section">
-  <h2 class="section-title">🗂 Iniciativas ({{ initiatives|length }})</h2>
+<!-- Initiatives list -->
+<section class="mb-4">
+  <h2 class="h5 text-primary fw-bold mb-3">🗂 Iniciativas ({{ initiatives|length }})</h2>
   {% if initiatives %}
-  <div class="initiatives-list">
+  <div class="row g-3">
     {% for ini in initiatives %}
-    <div class="init-card init-card--{{ ini.status }} {% if highlight == ini.id %}init-card--highlighted{% endif %}"
-         id="ini-{{ ini.id }}" data-id="{{ ini.id }}">
+    <div class="col-md-6 col-xl-4">
+      <div class="card border-0 shadow-sm h-100 init-card init-card--{{ ini.status }} {% if highlight == ini.id %}init-card--highlighted{% endif %}"
+           id="ini-{{ ini.id }}" data-id="{{ ini.id }}">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+              <span class="badge method-badge--{{ ini.methodology }}">{{ ini.methodology }}</span>
+              <span class="badge status-badge--{{ ini.status }}">
+                {% if ini.status == 'in_progress' %}🔄 En curso
+                {% elif ini.status == 'planned'   %}⏳ Planificado
+                {% elif ini.status == 'completed' %}✅ Completado
+                {% else %}⏸ En espera{% endif %}
+              </span>
+              {% if ini.line_number %}<span class="badge bg-light text-dark">L{{ ini.line_number }}</span>{% endif %}
+            </div>
+            <span class="small text-muted">👤 {{ ini.owner }}</span>
+          </div>
 
-      <div class="init-card__header">
-        <div class="init-card__badges">
-          <span class="method-badge method-badge--{{ ini.methodology }}">{{ ini.methodology }}</span>
-          <span class="status-badge status-badge--{{ ini.status }}">
-            {% if ini.status == 'in_progress' %}🔄 En curso
-            {% elif ini.status == 'planned'   %}⏳ Planificado
-            {% elif ini.status == 'completed' %}✅ Completado
-            {% else %}⏸ En espera{% endif %}
-          </span>
-          {% if ini.line_number %}<span class="line-badge">L{{ ini.line_number }}</span>{% endif %}
+          <h6 class="fw-bold mb-1">{{ ini.title }}</h6>
+          <p class="small text-muted mb-2">{{ ini.description }}</p>
+
+          <div class="d-flex gap-3 flex-wrap small text-muted mb-2">
+            <span>🗓 Inicio: {{ ini.start_date }}</span>
+            <span>🎯 Target: {{ ini.target_date }}</span>
+            {% if ini.completion_date %}
+            <span>✅ Completado: {{ ini.completion_date }}</span>
+            {% endif %}
+          </div>
+
+          {% if ini.expected_benefit %}
+          <div class="small text-muted mb-1"><span class="fw-semibold">💡 Beneficio esperado:</span> {{ ini.expected_benefit }}</div>
+          {% endif %}
+          {% if ini.actual_benefit %}
+          <div class="small text-success mb-1"><span class="fw-semibold">📈 Resultado real:</span> {{ ini.actual_benefit }}</div>
+          {% endif %}
+
+          {% if ini.problem_desc %}
+          <div class="mb-2">
+            <a href="/problems" class="text-decoration-none small fw-semibold text-warning">⚠ Problema origen: {{ ini.problem_desc[:60] }}{% if ini.problem_desc|length > 60 %}...{% endif %}</a>
+          </div>
+          {% endif %}
+
+          {% if ini.doc_id %}
+          <div class="mt-2">
+            <button class="btn btn-primary btn-sm" onclick="openDocument({{ ini.id }})">
+              📄 Ver documento {{ ini.doc_type }}
+            </button>
+          </div>
+          {% endif %}
         </div>
-        <span class="init-owner">👤 {{ ini.owner }}</span>
       </div>
-
-      <h3 class="init-title">{{ ini.title }}</h3>
-      <p class="init-desc">{{ ini.description }}</p>
-
-      <div class="init-dates">
-        <span>🗓 Inicio: {{ ini.start_date }}</span>
-        <span>🎯 Target: {{ ini.target_date }}</span>
-        {% if ini.completion_date %}
-        <span>✅ Completado: {{ ini.completion_date }}</span>
-        {% endif %}
-      </div>
-
-      {% if ini.expected_benefit %}
-      <div class="init-benefit">
-        <span class="benefit-label">💡 Beneficio esperado:</span> {{ ini.expected_benefit }}
-      </div>
-      {% endif %}
-      {% if ini.actual_benefit %}
-      <div class="init-benefit init-benefit--actual">
-        <span class="benefit-label">📈 Resultado real:</span> {{ ini.actual_benefit }}
-      </div>
-      {% endif %}
-
-      {% if ini.problem_desc %}
-      <div class="init-problem-link">
-        <a href="/problems" class="problem-origin-link">⚠ Problema origen: {{ ini.problem_desc[:60] }}{% if ini.problem_desc|length > 60 %}…{% endif %}</a>
-      </div>
-      {% endif %}
-
-      {% if ini.doc_id %}
-      <div class="init-actions">
-        <button class="btn btn--primary btn--sm"
-                onclick="openDocument({{ ini.id }})">
-          📄 Ver documento {{ ini.doc_type }}
-        </button>
-      </div>
-      {% endif %}
-
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <p class="empty-state">No hay iniciativas que coincidan con los filtros seleccionados.</p>
+  <p class="text-muted fst-italic">No hay iniciativas que coincidan con los filtros seleccionados.</p>
   {% endif %}
 </section>
 
-<!-- MODAL DOCUMENTO ──────────────────────────────────────────────────────── -->
-<div id="docModal" class="modal" style="display:none" onclick="closeDocModal(event)">
-  <div class="modal__box modal__box--wide" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 id="docModalTitle">Documento</h3>
-      <button class="modal__close" onclick="closeDocModal()">✕</button>
-    </div>
-    <div class="modal__body" id="docModalBody">
-      <div class="ai-loading">Cargando documento…</div>
+<!-- Document modal -->
+<div id="docModal" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="docModalTitle">Documento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="docModalBody">
+        <div class="text-muted">Cargando documento...</div>
+      </div>
     </div>
   </div>
 </div>
 
 <style>
-/* ── Page ────────────────────────────────── */
-.page-header { display:flex; justify-content:space-between; align-items:flex-start;
-  flex-wrap:wrap; gap:1rem; margin-bottom:1rem; }
-.page-title { font-size:1.6rem; font-weight:700; margin:0; }
-.page-subtitle { color:var(--color-gray-500); margin:0.25rem 0 0; font-size:0.9rem; }
-.section-title { font-size:1.1rem; font-weight:700; margin:0 0 1rem;
-  color:var(--color-primary); }
-.init-section { margin-bottom:2.5rem; }
+/* Initiative cards */
+.init-card { border-left: 4px solid #dee2e6 !important; transition: box-shadow .15s; }
+.init-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.10) !important; }
+.init-card--in_progress { border-left-color: #0d6efd !important; }
+.init-card--planned     { border-left-color: #ffc107 !important; }
+.init-card--completed   { border-left-color: #198754 !important; }
+.init-card--on_hold     { border-left-color: #6c757d !important; }
+.init-card--highlighted { outline: 3px solid #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.25) !important; }
 
-/* ── Filters ─────────────────────────────── */
-.filter-bar { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;
-  margin-bottom:1.5rem; }
-.filter-bar--full { background:var(--color-surface); padding:0.75rem 1rem;
-  border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
-.filter-label { font-size:0.82rem; font-weight:600; color:var(--color-gray-500); }
-.filter-select { font-size:0.82rem; padding:0.3rem 0.6rem; border-radius:6px;
-  border:1.5px solid var(--color-gray-200); background:var(--color-bg);
-  color:var(--color-text); cursor:pointer; }
-.filter-clear { font-size:0.8rem; color:#e53e3e; text-decoration:none;
-  font-weight:600; margin-left:0.5rem; }
+.method-badge--A3     { background: #bee3f8; color: #2c5282; }
+.method-badge--Kaizen { background: #c6f6d5; color: #276749; }
+.method-badge--DMAIC  { background: #e9d5ff; color: #553c9a; }
+.method-badge--5Why   { background: #fed7aa; color: #7c2d12; }
+.method-badge--other  { background: #e2e8f0; color: #4a5568; }
 
-/* ── Chart ───────────────────────────────── */
-.chart-card { background:var(--color-surface); border-radius:10px; padding:1.25rem;
-  box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.status-badge--in_progress { background: #ebf8ff; color: #2c5282; }
+.status-badge--planned     { background: #fffbeb; color: #92400e; }
+.status-badge--completed   { background: #f0fff4; color: #276749; }
+.status-badge--on_hold     { background: #f7fafc; color: #4a5568; }
 
-/* ── Initiative cards ────────────────────── */
-.initiatives-list { display:grid; gap:1rem;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-.init-card { background:var(--color-surface); border-radius:10px; padding:1.1rem;
-  border-left:4px solid var(--color-gray-300);
-  box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .15s; }
-.init-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.10); }
-.init-card--in_progress { border-left-color: #3182ce; }
-.init-card--planned     { border-left-color: #d97706; }
-.init-card--completed   { border-left-color: #38a169; }
-.init-card--on_hold     { border-left-color: #718096; }
-.init-card--highlighted { outline:3px solid #4299e1; box-shadow:0 0 0 3px rgba(66,153,225,.3); }
-
-.init-card__header { display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:0.4rem; margin-bottom:0.5rem; }
-.init-card__badges { display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap; }
-.init-owner { font-size:0.78rem; color:var(--color-gray-500); }
-
-.method-badge { font-size:0.7rem; font-weight:800; text-transform:uppercase;
-  padding:0.15rem 0.5rem; border-radius:4px; letter-spacing:.05em; }
-.method-badge--A3     { background:#bee3f8; color:#2c5282; }
-.method-badge--Kaizen { background:#c6f6d5; color:#276749; }
-.method-badge--DMAIC  { background:#e9d5ff; color:#553c9a; }
-.method-badge--5Why   { background:#fed7aa; color:#7c2d12; }
-.method-badge--other  { background:#e2e8f0; color:#4a5568; }
-
-.status-badge { font-size:0.72rem; font-weight:600; padding:0.15rem 0.5rem;
-  border-radius:4px; }
-.status-badge--in_progress { background:#ebf8ff; color:#2c5282; }
-.status-badge--planned     { background:#fffbeb; color:#92400e; }
-.status-badge--completed   { background:#f0fff4; color:#276749; }
-.status-badge--on_hold     { background:#f7fafc; color:#4a5568; }
-
-.line-badge { font-size:0.7rem; font-weight:700; background:var(--color-gray-100);
-  color:var(--color-gray-600); padding:0.15rem 0.45rem; border-radius:4px; }
-
-.init-title { font-size:0.95rem; font-weight:700; margin:0 0 0.35rem;
-  color:var(--color-text); line-height:1.35; }
-.init-desc  { font-size:0.83rem; color:var(--color-gray-600); margin:0 0 0.6rem;
-  line-height:1.4; }
-.init-dates { display:flex; gap:0.75rem; flex-wrap:wrap; font-size:0.78rem;
-  color:var(--color-gray-500); margin-bottom:0.5rem; }
-.init-benefit { font-size:0.82rem; color:var(--color-gray-600); margin-bottom:0.4rem; }
-.init-benefit--actual { color:#276749; }
-.benefit-label { font-weight:600; }
-.init-problem-link { margin:0.5rem 0; }
-.problem-origin-link { font-size:0.78rem; color:#d97706; text-decoration:none;
-  font-weight:600; }
-.problem-origin-link:hover { text-decoration:underline; }
-.init-actions { margin-top:0.75rem; }
-
-/* ── Buttons ─────────────────────────────── */
-.btn { display:inline-flex; align-items:center; gap:0.3rem; border-radius:7px;
-  font-weight:600; cursor:pointer; border:none; transition:all .15s; }
-.btn--sm { font-size:0.78rem; padding:0.3rem 0.75rem; }
-.btn--primary { background:var(--color-primary); color:#fff; }
-.btn--primary:hover { filter:brightness(1.1); }
-
-/* ── Modal ───────────────────────────────── */
-.modal { position:fixed; inset:0; background:rgba(0,0,0,.45);
-  display:flex; align-items:center; justify-content:center; z-index:1000; }
-.modal__box { background:var(--color-surface); border-radius:12px; padding:1.5rem;
-  max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
-.modal__box--wide { max-width:900px; }
-.modal__header { display:flex; justify-content:space-between; align-items:center;
-  margin-bottom:1rem; position:sticky; top:0; background:var(--color-surface);
-  padding-bottom:0.75rem; border-bottom:1px solid var(--color-gray-200); z-index:1; }
-.modal__header h3 { margin:0; font-size:1.05rem; }
-.modal__close { background:none; border:none; font-size:1.2rem; cursor:pointer;
-  color:var(--color-gray-500); }
-.ai-loading { color:var(--color-gray-400); }
-
-/* ── A3 document styles ──────────────────── */
-.a3-document { font-size:0.88rem; line-height:1.6; }
-.a3-document h2 { font-size:1.1rem; color:var(--color-primary); margin-bottom:0.25rem; }
-.a3-document h3 { font-size:0.95rem; font-weight:700; color:var(--color-gray-700);
-  margin:1.2rem 0 0.4rem; border-left:3px solid var(--color-primary);
-  padding-left:0.5rem; }
-.a3-document section { margin-bottom:0.75rem; }
-.a3-document table { font-size:0.82rem; }
-.a3-document pre { font-size:0.8rem; line-height:1.5; white-space:pre-wrap; }
-.empty-state { color:var(--color-gray-400); font-style:italic; font-size:0.88rem; }
+/* A3 document styles */
+.a3-document { font-size: 0.88rem; line-height: 1.6; }
+.a3-document h2 { font-size: 1.1rem; color: #0d6efd; margin-bottom: 0.25rem; }
+.a3-document h3 { font-size: 0.95rem; font-weight: 700; margin: 1.2rem 0 0.4rem; border-left: 3px solid #0d6efd; padding-left: 0.5rem; }
+.a3-document section { margin-bottom: 0.75rem; }
+.a3-document table { font-size: 0.82rem; }
+.a3-document pre { font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; }
 </style>
 {% endblock %}
 
@@ -243,8 +169,8 @@
 <script>
 const SITE_ID = "{{ site_id }}";
 {% if highlight %}const HIGHLIGHT_ID = {{ highlight }};{% else %}const HIGHLIGHT_ID = null;{% endif %}
+let docModalInstance = null;
 
-/* ── Gantt chart ──────────────────────────────────────────────── */
 (async function loadGantt() {
   const r = await fetch(`/api/initiatives/gantt?site=${SITE_ID}`);
   const data = await r.json();
@@ -255,9 +181,8 @@ const SITE_ID = "{{ site_id }}";
     completed: "#38a169",   on_hold: "#718096",
   };
 
-  // Prepare data for custom Gantt (scatter bars)
   const items = data.map(d => ({
-    name: d.title.length > 35 ? d.title.slice(0, 35) + "…" : d.title,
+    name: d.title.length > 35 ? d.title.slice(0, 35) + "\u2026" : d.title,
     start: d.start_date,
     end: d.completion_date || d.target_date,
     status: d.status,
@@ -265,15 +190,14 @@ const SITE_ID = "{{ site_id }}";
     color: STATUS_COLORS[d.status] || "#718096",
   }));
 
-  const chart = echarts.init(document.getElementById("ganttChart"), null,
-                             { renderer: "canvas" });
+  const chart = echarts.init(document.getElementById("ganttChart"), null, { renderer: "canvas" });
   chart.setOption({
     tooltip: {
       trigger: "item",
       formatter: p => {
         if (p.componentType !== "series") return "";
         const d = items[p.dataIndex];
-        return `<b>${d.name}</b><br>${d.method} · ${d.status}<br>${d.start} → ${d.end}`;
+        return `<b>${d.name}</b><br>${d.method} \u00B7 ${d.status}<br>${d.start} \u2192 ${d.end}`;
       },
     },
     grid: { left: "3%", right: "2%", top: "8%", bottom: "10%", containLabel: true },
@@ -313,39 +237,32 @@ const SITE_ID = "{{ site_id }}";
   window.addEventListener("resize", () => chart.resize());
 })();
 
-/* ── Open document modal ──────────────────────────────────────── */
 async function openDocument(initId) {
-  const modal = document.getElementById("docModal");
-  document.getElementById("docModalTitle").textContent = "Cargando…";
-  document.getElementById("docModalBody").innerHTML = '<div class="ai-loading">Cargando documento…</div>';
-  modal.style.display = "flex";
+  const modalEl = document.getElementById("docModal");
+  if (!docModalInstance) {
+    docModalInstance = new bootstrap.Modal(modalEl);
+  }
+  document.getElementById("docModalTitle").textContent = "Cargando\u2026";
+  document.getElementById("docModalBody").innerHTML = '<div class="text-muted">Cargando documento\u2026</div>';
+  docModalInstance.show();
 
   try {
     const r = await fetch(`/api/initiatives/${initId}/document?site=${SITE_ID}`);
     if (!r.ok) throw new Error("Not found");
     const d = await r.json();
-    document.getElementById("docModalTitle").textContent =
-      `${d.document_type}: ${d.initiative_title}`;
+    document.getElementById("docModalTitle").textContent = `${d.document_type}: ${d.initiative_title}`;
     document.getElementById("docModalBody").innerHTML = d.content_html;
   } catch {
     document.getElementById("docModalBody").innerHTML =
-      '<p style="color:var(--color-gray-400)">No se encontró el documento para esta iniciativa.</p>';
+      '<p class="text-muted">No se encontro el documento para esta iniciativa.</p>';
   }
 }
 
-function closeDocModal(e) {
-  if (!e || e.target === document.getElementById("docModal")) {
-    document.getElementById("docModal").style.display = "none";
-  }
-}
-
-/* ── Auto-scroll to highlighted initiative ──────────────────── */
 if (HIGHLIGHT_ID) {
   const el = document.getElementById("ini-" + HIGHLIGHT_ID);
   if (el) {
     setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
-    // Auto-open document if it has one
-    const btn = el.querySelector(".btn--primary");
+    const btn = el.querySelector(".btn-primary");
     if (btn) setTimeout(() => btn.click(), 700);
   }
 }

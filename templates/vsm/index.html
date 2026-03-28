@@ -2,112 +2,131 @@
 {% block title %}{{ t('vsm_title') }}{% endblock %}
 
 {% block content %}
-<div class="vsm-page">
-
-  <!-- ── Cabecera ────────────────────────────────────────────── -->
-  <div class="page-header vsm-header">
-    <div>
-      <h1>{{ t('vsm_title') }} <span class="badge badge--blue">VSM</span></h1>
-      <p class="page-header__sub">{{ t('vsm_subtitle') }}</p>
-    </div>
-    <div class="vsm-controls">
-      <label class="vsm-select-label" for="lineSelect">{{ t('vsm_line_label') }}</label>
-      <select id="lineSelect" class="form__select form__select--sm">
-        {% for l in lines %}
-        <option value="{{ l }}" {% if l == selected_line %}selected{% endif %}>
-          {{ t('line_label') }} {{ l }}
-        </option>
-        {% endfor %}
-      </select>
-      <span class="badge badge--green" id="liveIndicator">● {{ t('badge_live') }}</span>
-    </div>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 fw-bold mb-1">{{ t('vsm_title') }} <span class="badge bg-primary">VSM</span></h1>
+    <p class="text-muted mb-0 small">{{ t('vsm_subtitle') }}</p>
   </div>
-
-  <!-- ── VSM Canvas ───────────────────────────────────────────── -->
-  <section class="section vsm-canvas-section">
-    <div class="vsm-scroll-wrap" id="vsmScrollWrap">
-      <svg id="vsmSvg" class="vsm-svg" xmlns="http://www.w3.org/2000/svg">
-        <!-- Renderizado dinámico por JavaScript -->
-      </svg>
-    </div>
-  </section>
-
-  <!-- ── Métricas resumen ─────────────────────────────────────── -->
-  <section class="section">
-    <div class="vsm-metrics-row" id="vsmMetrics">
-      <div class="vsm-metric-card vsm-metric-card--blue">
-        <div class="vsm-metric-icon">⏱</div>
-        <div>
-          <div class="vsm-metric-value" id="mLeadTime">—</div>
-          <div class="vsm-metric-label">{{ t('vsm_lead_time') }}</div>
-        </div>
-      </div>
-      <div class="vsm-metric-card vsm-metric-card--green">
-        <div class="vsm-metric-icon">✅</div>
-        <div>
-          <div class="vsm-metric-value" id="mVaTime">—</div>
-          <div class="vsm-metric-label">{{ t('vsm_va_time') }}</div>
-        </div>
-      </div>
-      <div class="vsm-metric-card vsm-metric-card--purple">
-        <div class="vsm-metric-icon">📊</div>
-        <div>
-          <div class="vsm-metric-value" id="mVaRatio">—</div>
-          <div class="vsm-metric-label">{{ t('vsm_va_ratio') }}</div>
-        </div>
-      </div>
-      <div class="vsm-metric-card vsm-metric-card--red">
-        <div class="vsm-metric-icon">🚧</div>
-        <div>
-          <div class="vsm-metric-value" id="mBottleneck">—</div>
-          <div class="vsm-metric-label">{{ t('vsm_bottleneck') }}</div>
-        </div>
-      </div>
-      <div class="vsm-metric-card vsm-metric-card--teal">
-        <div class="vsm-metric-icon">📦</div>
-        <div>
-          <div class="vsm-metric-value" id="mWip">—</div>
-          <div class="vsm-metric-label">{{ t('vsm_total_wip') }}</div>
-        </div>
-      </div>
-      <div class="vsm-metric-card vsm-metric-card--yellow">
-        <div class="vsm-metric-icon">🎯</div>
-        <div>
-          <div class="vsm-metric-value" id="mOee">—</div>
-          <div class="vsm-metric-label">{{ t('vsm_oee') }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <label class="form-label small fw-bold text-muted mb-0" for="lineSelect">{{ t('vsm_line_label') }}</label>
+    <select id="lineSelect" class="form-select form-select-sm" style="width:auto;">
+      {% for l in lines %}
+      <option value="{{ l }}" {% if l == selected_line %}selected{% endif %}>
+        {{ t('line_label') }} {{ l }}
+      </option>
+      {% endfor %}
+    </select>
+    <span class="badge bg-success" id="liveIndicator">● {{ t('badge_live') }}</span>
+  </div>
 </div>
 
-<!-- ── Panel lateral de detalle ─────────────────────────────── -->
+<!-- VSM Canvas -->
+<section class="mb-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="vsm-scroll-wrap" id="vsmScrollWrap">
+        <svg id="vsmSvg" class="vsm-svg" xmlns="http://www.w3.org/2000/svg">
+          <!-- Rendered dynamically by JavaScript -->
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Summary metrics -->
+<section class="mb-4">
+  <div class="row g-3" id="vsmMetrics">
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm h-100 kpi-card-border-blue">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <span class="fs-4">⏱</span>
+          <div>
+            <div class="fs-5 fw-bold" id="mLeadTime">—</div>
+            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_lead_time') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm h-100 kpi-card-border-green">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <span class="fs-4">✅</span>
+          <div>
+            <div class="fs-5 fw-bold" id="mVaTime">—</div>
+            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_va_time') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm h-100 kpi-card-border-purple">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <span class="fs-4">📊</span>
+          <div>
+            <div class="fs-5 fw-bold" id="mVaRatio">—</div>
+            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_va_ratio') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm h-100 kpi-card-border-red">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <span class="fs-4">🚧</span>
+          <div>
+            <div class="fs-5 fw-bold" id="mBottleneck">—</div>
+            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_bottleneck') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm h-100 kpi-card-border-teal">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <span class="fs-4">📦</span>
+          <div>
+            <div class="fs-5 fw-bold" id="mWip">—</div>
+            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_total_wip') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm h-100 kpi-card-border-yellow">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <span class="fs-4">🎯</span>
+          <div>
+            <div class="fs-5 fw-bold" id="mOee">—</div>
+            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_oee') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Detail panel overlay -->
 <div class="vsm-detail-overlay" id="detailOverlay" hidden>
   <div class="vsm-detail-panel" id="detailPanel">
     <div class="vsm-detail-header">
       <h3 id="detailTitle">—</h3>
-      <button class="vsm-detail-close" id="detailClose">✕</button>
+      <button class="btn-close" id="detailClose" aria-label="Close"></button>
     </div>
-
     <div class="vsm-detail-kpis" id="detailKpis"></div>
-
     <div class="vsm-detail-section">
       <p class="vsm-detail-section-title">{{ t('vsm_ct_history') }}</p>
       <div id="detailChart" style="width:100%; height:180px;"></div>
     </div>
-
     <div class="vsm-detail-section" id="detailStopsSection">
       <p class="vsm-detail-section-title">{{ t('vsm_recent_stops') }}</p>
       <div id="detailStops"></div>
     </div>
-
     <div class="vsm-detail-section">
-      <button class="btn btn--primary" style="width:100%" id="detailAiBtn">
+      <button class="btn btn-primary w-100" id="detailAiBtn">
         🤖 {{ t('vsm_ask_ai') }}
       </button>
     </div>
-
     <div class="vsm-detail-section" id="detailAiSection" hidden>
       <p class="vsm-detail-section-title">{{ t('vsm_ai_suggestion') }}</p>
       <div class="vsm-ai-response" id="detailAiResponse">
@@ -120,57 +139,18 @@
 
 {% block scripts %}
 <style>
-/* ── Layout ──────────────────────────────────────────────────── */
-.vsm-page { padding: 0; }
-.vsm-header { padding: 1.25rem 1.5rem 0; }
-.vsm-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.vsm-select-label { font-size: 0.82rem; color: var(--color-gray-500); font-weight: 600; }
-
-/* ── Canvas scroll ───────────────────────────────────────────── */
-.vsm-canvas-section { padding: 1.25rem 1.5rem; }
+/* VSM Canvas scroll */
 .vsm-scroll-wrap {
   overflow-x: auto;
   background: #f0f4f8;
-  border-radius: 10px;
-  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  border: 1px solid var(--color-gray-200, #e8ecf0);
   padding: 1rem 0.5rem;
   min-height: 320px;
 }
 .vsm-svg { display: block; min-width: 100%; }
 
-/* ── Métricas ────────────────────────────────────────────────── */
-.vsm-metrics-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.85rem;
-}
-@media (max-width: 1100px) { .vsm-metrics-row { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 600px)  { .vsm-metrics-row { grid-template-columns: repeat(2, 1fr); } }
-
-.vsm-metric-card {
-  display: flex; align-items: center; gap: 0.75rem;
-  background: #fff; border-radius: 10px; padding: 1rem 1.1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border-left: 4px solid transparent;
-}
-.vsm-metric-card--blue   { border-left-color: #1a6faf; }
-.vsm-metric-card--green  { border-left-color: #27ae60; }
-.vsm-metric-card--purple { border-left-color: #8e44ad; }
-.vsm-metric-card--red    { border-left-color: #c0392b; }
-.vsm-metric-card--teal   { border-left-color: #16a085; }
-.vsm-metric-card--yellow { border-left-color: #e67e22; }
-
-.vsm-metric-icon { font-size: 1.4rem; flex-shrink: 0; }
-.vsm-metric-value {
-  font-size: 1.4rem; font-weight: 800; color: #2d3748; line-height: 1.1;
-  transition: color 0.4s;
-}
-.vsm-metric-label {
-  font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.04em; color: #718096; margin-top: 0.1rem;
-}
-
-/* ── Panel lateral ───────────────────────────────────────────── */
+/* Detail panel overlay */
 .vsm-detail-overlay {
   position: fixed; inset: 0; z-index: 900;
   pointer-events: none;
@@ -196,11 +176,6 @@
   background: #fff; position: sticky; top: 0; z-index: 1;
 }
 .vsm-detail-header h3 { font-size: 1rem; font-weight: 700; margin: 0; }
-.vsm-detail-close {
-  background: none; border: none; font-size: 1.1rem; cursor: pointer;
-  color: #718096; padding: 0.2rem 0.4rem;
-}
-.vsm-detail-close:hover { color: #2d3748; }
 
 .vsm-detail-section { padding: 1rem 1.25rem; border-bottom: 1px solid #f0f4f8; }
 .vsm-detail-section-title {
@@ -247,7 +222,7 @@
 .vsm-spinner { animation: vsm-pulse 1s infinite; display: inline-block; }
 @keyframes vsm-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* ── SVG estado colors ───────────────────────────────────────── */
+/* SVG state colors */
 .vsm-step--green     { fill: #e8f8f0; stroke: #27ae60; }
 .vsm-step--yellow    { fill: #fef9e7; stroke: #e6a817; }
 .vsm-step--red       { fill: #fde8e8; stroke: #c0392b; }
@@ -261,7 +236,6 @@
 (function () {
   "use strict";
 
-  // ── i18n desde servidor ───────────────────────────────────────
   const I18N = {
     linea:       {{ t('line_label') | tojson }},
     ct:          {{ t('vsm_ct') | tojson }},
@@ -280,7 +254,6 @@
     nominal:     {{ t('vsm_nominal') | tojson }},
   };
 
-  // ── Estado ───────────────────────────────────────────────────
   const APP_LANG = "{{ lang }}";
   let currentLine = {{ selected_line }};
   let stepsData = [];
@@ -288,7 +261,6 @@
   let activeStepId = null;
   let refreshTimer = null;
 
-  // ── DOM refs ─────────────────────────────────────────────────
   const lineSelect      = document.getElementById("lineSelect");
   const vsmSvg          = document.getElementById("vsmSvg");
   const detailOverlay   = document.getElementById("detailOverlay");
@@ -303,16 +275,12 @@
   const detailAiSection = document.getElementById("detailAiSection");
   const detailAiResp    = document.getElementById("detailAiResponse");
 
-  // ── SVG Layout constants ──────────────────────────────────────
-  const STEP_W      = 120;
-  const STEP_H      = 90;
-  const STEP_GAP    = 70;   // gap between boxes (for arrow + WIP)
-  const SVG_TOP     = 60;   // space for supplier/customer bar
-  const SVG_BOT_TL  = 50;   // space for timeline below
-  const STEP_Y      = SVG_TOP + 20;
-  const TL_Y        = STEP_Y + STEP_H + 30;  // timeline Y
-  const SVG_H       = TL_Y + SVG_BOT_TL + 20;
-  const INV_SIZE    = 18;   // triangle size
+  const STEP_W = 120, STEP_H = 90, STEP_GAP = 70;
+  const SVG_TOP = 60, SVG_BOT_TL = 50;
+  const STEP_Y = SVG_TOP + 20;
+  const TL_Y = STEP_Y + STEP_H + 30;
+  const SVG_H = TL_Y + SVG_BOT_TL + 20;
+  const INV_SIZE = 18;
 
   const COLOR_MAP = {
     green:  { fill: "#e8f8f0", stroke: "#27ae60", text: "#1a5c38" },
@@ -322,7 +290,6 @@
     gray:   { fill: "#f0f4f8", stroke: "#a0aab4", text: "#4a5568" },
   };
 
-  // ── SVG helpers ───────────────────────────────────────────────
   function svgEl(tag, attrs = {}) {
     const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
     for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
@@ -336,96 +303,76 @@
   }
 
   function truncate(s, maxLen = 14) {
-    return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
+    return s.length > maxLen ? s.slice(0, maxLen - 1) + "\u2026" : s;
   }
 
   function fmtCT(s) {
-    if (!s) return "—";
+    if (!s) return "\u2014";
     return s >= 60 ? `${Math.round(s / 60)}m${Math.round(s % 60)}s` : `${Number(s).toFixed(1)}s`;
   }
 
-  // ── Draw VSM ──────────────────────────────────────────────────
   function drawVSM(steps) {
     stepsData = steps;
     const n = steps.length;
-    const totalW = n * STEP_W + (n - 1) * STEP_GAP + 160; // +padding supplier/customer
-    const startX = 80; // offset for supplier icon
+    const totalW = n * STEP_W + (n - 1) * STEP_GAP + 160;
+    const startX = 80;
 
     vsmSvg.setAttribute("width",  Math.max(totalW, 900));
     vsmSvg.setAttribute("height", SVG_H);
     vsmSvg.innerHTML = "";
 
-    // ── Background ──
     vsmSvg.appendChild(svgEl("rect", {
-      x: 0, y: 0, width: totalW, height: SVG_H,
-      fill: "#f0f4f8", rx: 10,
+      x: 0, y: 0, width: totalW, height: SVG_H, fill: "#f0f4f8", rx: 10,
     }));
 
-    // ── Supplier icon (left) ──
-    drawActorIcon(vsmSvg, 10, STEP_Y, I18N.supplier, "📦");
-
-    // ── Customer icon (right) ──
+    drawActorIcon(vsmSvg, 10, STEP_Y, I18N.supplier, "\uD83D\uDCE6");
     const lastX = startX + (n - 1) * (STEP_W + STEP_GAP);
-    drawActorIcon(vsmSvg, lastX + STEP_W + 10, STEP_Y, I18N.customer, "🏭");
+    drawActorIcon(vsmSvg, lastX + STEP_W + 10, STEP_Y, I18N.customer, "\uD83C\uDFED");
 
-    // ── Timeline base line ──
-    const tlX1 = startX;
-    const tlX2 = lastX + STEP_W;
+    const tlX1 = startX, tlX2 = lastX + STEP_W;
     vsmSvg.appendChild(svgEl("line", {
       x1: tlX1, y1: TL_Y + 10, x2: tlX2, y2: TL_Y + 10,
       stroke: "#4a5568", "stroke-width": 2,
     }));
 
-    // ── Draw each step ──
     let tlX = tlX1;
     for (let i = 0; i < n; i++) {
-      const step  = steps[i];
-      const boxX  = startX + i * (STEP_W + STEP_GAP);
+      const step = steps[i];
+      const boxX = startX + i * (STEP_W + STEP_GAP);
       const color = step.color || "gray";
-      const c     = COLOR_MAP[color];
+      const c = COLOR_MAP[color];
 
-      // Process box
       drawProcessBox(vsmSvg, step, boxX, STEP_Y, c);
 
-      // Timeline segment (VA = green strip, NVA = red strip)
       const ctSec = step.actual_cycle_time || step.nom_ct || 10;
-      const isVA  = step.step_type === "value-add";
-      const tlW   = Math.max(8, Math.min(STEP_W, ctSec * 2.5));
+      const isVA = step.step_type === "value-add";
+      const tlW = Math.max(8, Math.min(STEP_W, ctSec * 2.5));
 
       vsmSvg.appendChild(svgEl("rect", {
         x: tlX, y: TL_Y, width: tlW, height: 20,
-        fill: isVA ? "#c6f6d5" : "#fed7d7",
-        rx: 3,
+        fill: isVA ? "#c6f6d5" : "#fed7d7", rx: 3,
       }));
       vsmSvg.appendChild(svgText(fmtCT(ctSec), tlX + tlW / 2, TL_Y + 14, {
         "font-size": "9", fill: isVA ? "#1a5c38" : "#7a1515", "font-weight": "600",
       }));
       tlX += tlW + (STEP_GAP - tlW < 0 ? 0 : STEP_GAP - tlW);
 
-      // Arrow + WIP triangle (between steps)
       if (i < n - 1) {
         const arrowX = boxX + STEP_W;
         const arrowMid = arrowX + STEP_GAP / 2;
         const arrowY = STEP_Y + STEP_H / 2;
-
-        // Push arrow (VSM style)
         drawPushArrow(vsmSvg, arrowX + 4, arrowY, STEP_GAP - 8);
-
-        // WIP triangle above arrow
-        const nextStep = steps[i + 1];
         const wip = (step.units_in_wip || 0);
         drawWIPTriangle(vsmSvg, arrowMid, STEP_Y - 5, wip);
       }
     }
 
-    // ── Timeline label ──
-    vsmSvg.appendChild(svgText("← VA / NVA →", (tlX1 + tlX2) / 2, TL_Y + 38, {
+    vsmSvg.appendChild(svgText("\u2190 VA / NVA \u2192", (tlX1 + tlX2) / 2, TL_Y + 38, {
       "font-size": "9", fill: "#718096", "font-style": "italic",
     }));
   }
 
   function drawActorIcon(svg, x, y, label, icon) {
-    // Factory rectangle (VSM standard: box with D-line)
     const g = svgEl("g");
     g.appendChild(svgEl("rect", {
       x, y, width: 44, height: 44, fill: "#fff",
@@ -444,7 +391,6 @@
     const g = svgEl("g", { "data-step-id": step.step_id, class: "vsm-step-group" });
     g.style.cursor = "pointer";
 
-    // Main box
     const rect = svgEl("rect", {
       x, y, width: STEP_W, height: STEP_H,
       fill: c.fill, stroke: c.stroke, "stroke-width": 2, rx: 6,
@@ -452,20 +398,11 @@
     });
     g.appendChild(rect);
 
-    // Bottom status bar
     const statusColors = { running: "#27ae60", stopped: "#c0392b", changeover: "#1a6faf", waiting: "#a0aab4" };
     const barColor = statusColors[step.status] || "#a0aab4";
-    g.appendChild(svgEl("rect", {
-      x, y: y + STEP_H - 14, width: STEP_W, height: 14,
-      fill: barColor, rx: 4,
-    }));
-    // Mask top of bar to keep bottom rounded only
-    g.appendChild(svgEl("rect", {
-      x, y: y + STEP_H - 14, width: STEP_W, height: 7,
-      fill: barColor,
-    }));
+    g.appendChild(svgEl("rect", { x, y: y + STEP_H - 14, width: STEP_W, height: 14, fill: barColor, rx: 4, }));
+    g.appendChild(svgEl("rect", { x, y: y + STEP_H - 14, width: STEP_W, height: 7, fill: barColor, }));
 
-    // Step name
     const nameLines = wrapText(step.step_name, 16);
     nameLines.forEach((line, i) => {
       g.appendChild(svgText(line, x + STEP_W / 2, y + 18 + i * 14, {
@@ -473,11 +410,9 @@
       }));
     });
 
-    // KPIs inside box
     const ctVal = fmtCT(step.actual_cycle_time);
-    const nomVal = fmtCT(step.nom_ct);
-    const coVal = step.nom_co ? `${step.nom_co}m` : "—";
-    const wipVal = step.units_in_wip != null ? step.units_in_wip : "—";
+    const coVal = step.nom_co ? `${step.nom_co}m` : "\u2014";
+    const wipVal = step.units_in_wip != null ? step.units_in_wip : "\u2014";
 
     const kyStart = y + 44;
     [
@@ -490,9 +425,8 @@
       }));
     });
 
-    // Status label in bar
-    const statusLabel = { running: "▶ RUN", stopped: "■ STOP", changeover: "⟳ C/O", waiting: "◌ WAIT" };
-    g.appendChild(svgText(statusLabel[step.status] || "◌ WAIT", x + STEP_W / 2, y + STEP_H - 3, {
+    const statusLabel = { running: "\u25B6 RUN", stopped: "\u25A0 STOP", changeover: "\u27F3 C/O", waiting: "\u25CC WAIT" };
+    g.appendChild(svgText(statusLabel[step.status] || "\u25CC WAIT", x + STEP_W / 2, y + STEP_H - 3, {
       "font-size": "8.5", fill: "#fff", "font-weight": "700",
     }));
 
@@ -501,9 +435,7 @@
   }
 
   function drawPushArrow(svg, x, y, length) {
-    // VSM push arrow: filled block arrow
-    const arrowHead = 10;
-    const shaftH = 8;
+    const arrowHead = 10, shaftH = 8;
     const pts = [
       `${x},${y - shaftH / 2}`,
       `${x + length - arrowHead},${y - shaftH / 2}`,
@@ -513,21 +445,15 @@
       `${x + length - arrowHead},${y + shaftH / 2}`,
       `${x},${y + shaftH / 2}`,
     ].join(" ");
-    svg.appendChild(svgEl("polygon", {
-      points: pts, fill: "#4a5568", stroke: "none",
-    }));
+    svg.appendChild(svgEl("polygon", { points: pts, fill: "#4a5568", stroke: "none", }));
   }
 
   function drawWIPTriangle(svg, cx, cy, wip) {
     const s = INV_SIZE;
     const pts = `${cx},${cy - s} ${cx - s},${cy + 4} ${cx + s},${cy + 4}`;
     const g = svgEl("g");
-    g.appendChild(svgEl("polygon", {
-      points: pts, fill: "#fef9e7", stroke: "#e6a817", "stroke-width": 1.5,
-    }));
-    g.appendChild(svgText(wip.toString(), cx, cy + 2, {
-      "font-size": "8", fill: "#7a5800", "font-weight": "700",
-    }));
+    g.appendChild(svgEl("polygon", { points: pts, fill: "#fef9e7", stroke: "#e6a817", "stroke-width": 1.5, }));
+    g.appendChild(svgText(wip.toString(), cx, cy + 2, { "font-size": "8", fill: "#7a5800", "font-weight": "700", }));
     svg.appendChild(g);
   }
 
@@ -548,7 +474,6 @@
     return lines.slice(0, 2);
   }
 
-  // ── Update metrics ────────────────────────────────────────────
   function updateMetrics(m) {
     const s = m.lead_time_s || 0;
     const va = m.va_time_s || 0;
@@ -565,12 +490,11 @@
     setVal("mLeadTime", fmtCT(s));
     setVal("mVaTime",   fmtCT(va));
     setVal("mVaRatio",  (m.va_ratio_pct || 0) + "%");
-    setVal("mBottleneck", m.bottleneck || "—");
+    setVal("mBottleneck", m.bottleneck || "\u2014");
     setVal("mWip",      (m.total_wip || 0) + " uds");
     setVal("mOee",      (m.oee_pct || 0) + "%");
   }
 
-  // ── Refresh live data ─────────────────────────────────────────
   async function refreshLive() {
     try {
       const res = await fetch(`/api/vsm/live-data?line=${currentLine}&lang=${APP_LANG}`);
@@ -578,10 +502,8 @@
       if (!data.steps || !data.steps.length) return;
 
       if (stepsData.length !== data.steps.length) {
-        // First load or line change → full redraw
         drawVSM(data.steps);
       } else {
-        // Incremental update: update colors + values in-place
         data.steps.forEach(step => {
           const g = vsmSvg.querySelector(`[data-step-id="${step.step_id}"]`);
           if (!g) return;
@@ -597,12 +519,11 @@
     }
   }
 
-  // ── Detail panel ──────────────────────────────────────────────
   async function openDetail(stepId) {
     activeStepId = stepId;
     detailOverlay.hidden = false;
     detailAiSection.hidden = true;
-    detailTitle.textContent = "…";
+    detailTitle.textContent = "\u2026";
     detailKpis.innerHTML = "";
     detailStops.innerHTML = "";
 
@@ -615,12 +536,11 @@
 
       detailTitle.textContent = step.step_name;
 
-      // KPI chips
       const latest = history[history.length - 1];
       const chips = [
         { val: fmtCT(latest?.actual_cycle_time), lbl: "C/T actual" },
-        { val: (latest?.units_in_wip ?? "—"), lbl: "WIP" },
-        { val: (latest?.defect_count ?? "—"), lbl: "Defectos" },
+        { val: (latest?.units_in_wip ?? "\u2014"), lbl: "WIP" },
+        { val: (latest?.defect_count ?? "\u2014"), lbl: "Defectos" },
       ];
       detailKpis.innerHTML = chips.map(c => `
         <div class="vsm-kpi-chip">
@@ -628,10 +548,8 @@
           <span class="vsm-kpi-chip__lbl">${c.lbl}</span>
         </div>`).join("");
 
-      // ECharts CT history
       renderDetailChart(history, step.nominal_cycle_time_seconds);
 
-      // Stops
       if (stops.length) {
         detailStops.innerHTML = stops.map(s => `
           <div class="vsm-stop-item">
@@ -666,8 +584,7 @@
       legend: { bottom: 0, textStyle: { fontSize: 9 }, data: ["C/T real", I18N.nominal] },
       grid: { top: 10, right: 10, bottom: 30, left: 38 },
       xAxis: { type: "category", data: times, axisLabel: { fontSize: 8, rotate: 30 } },
-      yAxis: { type: "value", name: "seg", nameTextStyle: { fontSize: 8 },
-               axisLabel: { fontSize: 8 } },
+      yAxis: { type: "value", name: "seg", nameTextStyle: { fontSize: 8 }, axisLabel: { fontSize: 8 } },
       series: [
         { name: "C/T real", type: "line", data: vals, smooth: true,
           lineStyle: { width: 2, color: "#0057a8" },
@@ -681,20 +598,19 @@
     setTimeout(() => detailChartInst.resize(), 50);
   }
 
-  // ── AI Analysis ───────────────────────────────────────────────
   detailAiBtn.addEventListener("click", async () => {
     if (!activeStepId) return;
     detailAiSection.hidden = false;
-    detailAiResp.innerHTML = `<span class="vsm-spinner">⏳</span> ${I18N.aiLoading}`;
+    detailAiResp.innerHTML = `<span class="vsm-spinner">\u23F3</span> ${I18N.aiLoading}`;
 
     const step = stepsData.find(s => s.step_id === activeStepId);
     if (!step) { detailAiResp.textContent = I18N.aiError; return; }
 
-    const prompt = `Analiza el paso de proceso "${step.step_name}" en la línea ${currentLine}.
+    const prompt = `Analiza el paso de proceso "${step.step_name}" en la l\u00EDnea ${currentLine}.
 Cycle time actual: ${fmtCT(step.actual_cycle_time)} (nominal: ${fmtCT(step.nom_ct)}).
 Estado: ${step.status}. WIP: ${step.units_in_wip} unidades.
 Tipo: ${step.step_type}.
-¿Cuáles son las causas más probables de desviación y qué mejoras Lean/VSM recomiendas?`;
+\u00BFCu\u00E1les son las causas m\u00E1s probables de desviaci\u00F3n y qu\u00E9 mejoras Lean/VSM recomiendas?`;
 
     try {
       const res = await fetch("/api/assistant/suggest", {
@@ -709,7 +625,6 @@ Tipo: ${step.step_type}.
     }
   });
 
-  // ── Close panel ───────────────────────────────────────────────
   detailClose.addEventListener("click", () => {
     detailOverlay.hidden = true;
     activeStepId = null;
@@ -721,7 +636,6 @@ Tipo: ${step.step_type}.
     }
   });
 
-  // ── Line selector ─────────────────────────────────────────────
   lineSelect.addEventListener("change", () => {
     currentLine = parseInt(lineSelect.value, 10);
     stepsData = [];
@@ -729,7 +643,6 @@ Tipo: ${step.step_type}.
     refreshLive();
   });
 
-  // ── Init + polling ────────────────────────────────────────────
   refreshLive();
   refreshTimer = setInterval(refreshLive, 15000);
 
