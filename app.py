@@ -43,12 +43,25 @@ def create_app() -> Flask:
 
     @app.before_request
     def set_current_site():
-        """Lee el site activo desde cookie y lo guarda en g."""
+        """Lee el site activo desde cookie y lo guarda en g.
+        Si el contexto es 'global' y se accede a una página de planta, redirige a /global.
+        """
+        from flask import redirect
         from site_aggregator import SITES, DEFAULT_SITE
+
         site = flask_request.cookies.get("site", DEFAULT_SITE)
         if site not in SITES and site != "global":
             site = DEFAULT_SITE
         g.current_site = site
+
+        # Si el contexto es global y se accede a páginas operativas de planta,
+        # redirigir a la vista global para evitar datos inconsistentes.
+        if site == "global" and flask_request.method == "GET":
+            path = flask_request.path
+            # Páginas que requieren un site específico seleccionado
+            site_required_prefixes = ("/shift", "/dashboard", "/shifts", "/vsm")
+            if any(path.startswith(p) for p in site_required_prefixes):
+                return redirect("/global")
 
     @app.context_processor
     def inject_globals():

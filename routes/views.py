@@ -28,9 +28,17 @@ def set_site():
     site = request.form.get("site", DEFAULT_SITE)
     if site not in SITES and site != "global":
         site = DEFAULT_SITE
-    redirect_to = request.form.get("next") or request.referrer or "/"
+
+    next_url = request.form.get("next", "").strip()
+
     if site == "global":
         redirect_to = "/global"
+    elif next_url and not next_url.endswith("/global"):
+        redirect_to = next_url
+    else:
+        # Venimos de la vista global u otro contexto global → ir al inicio del site
+        redirect_to = "/"
+
     resp = make_response(redirect(redirect_to))
     resp.set_cookie("site", site, max_age=60 * 60 * 24 * 365, samesite="Lax")
     return resp
