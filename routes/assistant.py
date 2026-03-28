@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from database import get_db
+from site_aggregator import SITES, DEFAULT_SITE
 import json
 
 bp = Blueprint("assistant", __name__)
@@ -24,7 +25,9 @@ def suggest():
         from retriever import get_context
         from llm_client import ask_assistant
 
-        chunks  = get_context(query, top_k=4)
+        site_id = getattr(g, "current_site", DEFAULT_SITE)
+        db_path = SITES.get(site_id, SITES[DEFAULT_SITE])["db_path"]
+        chunks  = get_context(query, top_k=4, db_path=db_path)
         result  = ask_assistant(query, chunks, category=category)
 
         sources = list({c["source_file"] for c in chunks}) if chunks else []

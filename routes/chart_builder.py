@@ -21,7 +21,7 @@ from flask import Blueprint, jsonify, render_template, request
 
 from database import get_db
 from llm_client import _call_gateway, _get_api_key
-from ECHARTS_SYSTEM_PROMPT import ECHARTS_SYSTEM_PROMPT
+from echarts_system_prompt import ECHARTS_SYSTEM_PROMPT
 
 bp = Blueprint("chart_builder", __name__)
 

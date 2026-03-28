@@ -58,16 +58,14 @@ def get_shifts(status: Optional[str] = None, line: Optional[int] = None) -> list
 def end_shift(shift_id: int, handover_notes: Optional[str] = None,
               status: str = "completed") -> bool:
     db = get_db()
-    db.execute(
+    cursor = db.execute(
         """UPDATE shifts
            SET end_time = datetime('now'), status = ?, handover_notes = ?
            WHERE id = ? AND status = 'active'""",
         (status, handover_notes, shift_id),
     )
     db.commit()
-    return db.execute(
-        "SELECT changes()"
-    ).fetchone()[0] > 0
+    return cursor.rowcount > 0
 
 
 def update_shift(shift_id: int, fields: dict) -> bool:
@@ -150,9 +148,9 @@ def get_line_performance_summary(days: int = 7) -> list[dict]:
         """
         SELECT s.line_number,
                COUNT(DISTINCT s.id)     AS shift_count,
-               MAX(k.units_produced)    AS total_units,
-               MAX(k.units_rejected)    AS total_rejected,
-               MAX(k.downtime_minutes)  AS total_downtime,
+               SUM(k.units_produced)    AS total_units,
+               SUM(k.units_rejected)    AS total_rejected,
+               SUM(k.downtime_minutes)  AS total_downtime,
                MAX(k.target_units)      AS target_units
         FROM shifts s
         JOIN kpi_readings k ON k.shift_id = s.id

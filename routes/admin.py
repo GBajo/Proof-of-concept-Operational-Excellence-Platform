@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, redirect, url_for, jsonify, request
+from flask import Blueprint, render_template, redirect, url_for, jsonify, request, g
 from database import get_db
+from site_aggregator import SITES, DEFAULT_SITE
 from pathlib import Path
 import os
 
@@ -8,6 +9,12 @@ bp = Blueprint("admin", __name__)
 DOCS_DIR = Path(__file__).parent.parent / "docs"
 SUPPORTED_EXT = {".pdf", ".docx", ".xlsx", ".xls"}
 MAX_UPLOAD_MB = 50
+
+
+def _current_db_path() -> str:
+    """Devuelve la ruta al DB del site activo en la solicitud actual."""
+    site_id = getattr(g, "current_site", DEFAULT_SITE)
+    return SITES.get(site_id, SITES[DEFAULT_SITE])["db_path"]
 
 
 def _get_index_stats(db) -> list[dict]:
@@ -130,7 +137,7 @@ def admin_upload():
 
     # Indexar inmediatamente
     from ingest import index_file, get_conn
-    db_path = os.environ.get("DATABASE_PATH", "opex.db")
+    db_path = _current_db_path()
     try:
         conn = get_conn(db_path)
         result = index_file(save_path, conn, force=True)
@@ -156,7 +163,7 @@ def admin_index_url():
         return jsonify({"ok": False, "message": "La URL debe empezar por http:// o https://"}), 400
 
     from ingest import index_url, get_conn
-    db_path = os.environ.get("DATABASE_PATH", "opex.db")
+    db_path = _current_db_path()
     try:
         conn = get_conn(db_path)
         result = index_url(url, conn, force=True)
@@ -176,7 +183,7 @@ def admin_index_url():
 @bp.delete("/admin/docs/delete/<path:filename>")
 def admin_delete(filename: str):
     """Elimina un documento (fragmentos KB + archivo en disco si existe)."""
-    db_path = os.environ.get("DATABASE_PATH", "opex.db")
+    db_path = _current_db_path()
     from ingest import get_conn, delete_source
     try:
         conn = get_conn(db_path)
@@ -198,7 +205,7 @@ def admin_delete(filename: str):
 def admin_reindex():
     """Re-indexa todos los documentos de docs/ (forzando actualización)."""
     from ingest import run_ingest
-    db_path = os.environ.get("DATABASE_PATH", "opex.db")
+    db_path = _current_db_path()
     try:
         summary = run_ingest(
             docs_dir=DOCS_DIR,
@@ -221,7 +228,7 @@ def admin_reindex():
 def admin_reindex_file(filename: str):
     """Re-indexa un único archivo."""
     from ingest import index_file, get_conn
-    db_path = os.environ.get("DATABASE_PATH", "opex.db")
+    db_path = _current_db_path()
     path = DOCS_DIR / filename
     if not path.exists():
         return jsonify({"ok": False, "message": "Archivo no encontrado"}), 404

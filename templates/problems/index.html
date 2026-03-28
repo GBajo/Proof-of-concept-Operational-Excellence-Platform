@@ -351,19 +351,19 @@ function askAI(problemText) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shift_id: 1,
-          text: "Analiza el siguiente problema recurrente en planta y sugiere acciones de mejora basadas en mejores prácticas de manufacturing farmacéutico: " + problemText,
-          mode: "manual",
+          query: "Analiza el siguiente problema recurrente en planta y sugiere acciones de mejora basadas en mejores prácticas de manufacturing farmacéutico: " + problemText,
+          category: "production",
         }),
       });
     })
     .then(r => r.json())
     .then(data => {
       const result = document.getElementById("aiResult");
-      if (data.response) {
-        result.innerHTML = `<div style="white-space:pre-wrap">${data.response}</div>`;
+      if (data.text) {
+        result.innerHTML = `<div style="white-space:pre-wrap">${data.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
         if (data.sources && data.sources.length) {
-          result.innerHTML += `<p style="font-size:0.78rem;color:var(--color-gray-500);margin-top:0.5rem">
-            Fuentes: ${data.sources.map(s => `<em>${s}</em>`).join(", ")}</p>`;
+          const srcs = data.sources.map(s => `<em>${s.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</em>`).join(", ");
+          result.innerHTML += `<p style="font-size:0.78rem;color:var(--color-gray-500);margin-top:0.5rem">Fuentes: ${srcs}</p>`;
         }
       } else {
         result.innerHTML = '<p style="color:var(--color-gray-400)">El asistente no pudo generar una respuesta en este momento.</p>';

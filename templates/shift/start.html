@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ t('page_title_start') }}{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
+{% block scripts %}
+<script>
+const SHIFT_I18N = {
+  occupied:        "{{ t('line_occupied') }}",
+  free:            "{{ t('line_free') }}",
+  lineLabel:       "{{ t('line_label') }}",
+  activeOperator:  "{{ t('active_operator') }}",
+  errSelectOp:     "{{ t('err_select_operator') }}",
+  errSelectLine:   "{{ t('err_select_line') }}",
+  btnStarting:     "{{ t('btn_starting') }}",
+  errStartShift:   "{{ t('err_start_shift') }}",
+  errConnection:   "{{ t('err_connection') }}",
+};
+</script>
+<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
 
 {% block content %}
 <div class="start-layout">
@@ -42,7 +56,7 @@
           <span>{{ t('packaging_line_label') }}</span>
         </div>
         <div class="line-grid" id="line-grid">
-          {% for n in range(1, 6) %}
+          {% for n in site_lines %}
           <label class="line-card" id="line-card-{{ n }}" data-line="{{ n }}">
             <input type="radio" name="line_number" value="{{ n }}" required>
             <div class="line-card__inner">

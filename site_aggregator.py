@@ -70,11 +70,11 @@ def get_site_connection(site_id: str) -> sqlite3.Connection:
 # ── Cálculo de OEE ────────────────────────────────────────────────────────────
 
 def _calc_oee(units: float, rejected: float, downtime: float,
-              shifts: int, nom_speed: float = 1200.0) -> dict:
-    planned = shifts * 480.0
+              shifts: int, planned_time: float = 0.0, nom_speed: float = 1200.0) -> dict:
+    planned = planned_time if planned_time > 0 else shifts * 480.0
     avail = max(0.0, (planned - downtime) / planned * 100) if planned else 0.0
-    perf  = min(100.0, units / (nom_speed * max(planned - downtime, 1) / 60) * 100)
-    qual  = (units - rejected) / units * 100 if units else 100.0
+    perf  = units / (nom_speed * max(planned - downtime, 1) / 60) * 100 if nom_speed and planned else 0.0
+    qual  = (units - rejected) / units * 100 if units else 0.0
     oee   = round(avail * perf * qual / 10_000, 1)
     return {
         "oee":          oee,
@@ -96,18 +96,22 @@ def get_site_kpis(site_id: str, days: int = 7) -> dict:
                 COUNT(DISTINCT s.id)      AS total_shifts,
                 SUM(k.units_produced)     AS total_units,
                 SUM(k.units_rejected)     AS total_rejected,
-                SUM(k.downtime_minutes)   AS total_downtime
+                SUM(k.downtime_minutes)   AS total_downtime,
+                SUM(k.planned_time_min)   AS total_planned_time,
+                AVG(k.nominal_speed)      AS avg_nominal_speed
             FROM shifts s
             JOIN kpi_readings k ON k.shift_id = s.id
             WHERE s.start_time >= ? AND s.status = 'completed'
         """, (since,)).fetchone()
 
-        total   = row["total_units"]    or 0
-        rej     = row["total_rejected"] or 0
-        dt      = row["total_downtime"] or 0
-        shifts  = row["total_shifts"]   or 1
+        total   = row["total_units"]        or 0
+        rej     = row["total_rejected"]     or 0
+        dt      = row["total_downtime"]     or 0
+        shifts  = row["total_shifts"]       or 1
+        planned = row["total_planned_time"] or (shifts * 480.0)
+        nom_spd = row["avg_nominal_speed"]  or 1200.0
 
-        oee_data = _calc_oee(total, rej, dt, shifts)
+        oee_data = _calc_oee(total, rej, dt, shifts, planned_time=planned, nom_speed=nom_spd)
 
         return {
             "site_id":       site_id,
@@ -158,7 +162,9 @@ def get_cross_site_comparison(metric: str = "oee", days: int = 14) -> dict:
                     SUM(k.units_produced)     AS units,
                     SUM(k.units_rejected)     AS rejected,
                     SUM(k.downtime_minutes)   AS downtime,
-                    COUNT(DISTINCT s.id)      AS shifts
+                    COUNT(DISTINCT s.id)      AS shifts,
+                    SUM(k.planned_time_min)   AS planned_time,
+                    AVG(k.nominal_speed)      AS avg_nominal_speed
                 FROM shifts s
                 JOIN kpi_readings k ON k.shift_id = s.id
                 WHERE s.start_time >= ? AND s.status = 'completed'
@@ -171,6 +177,8 @@ def get_cross_site_comparison(metric: str = "oee", days: int = 14) -> dict:
                 oee_data = _calc_oee(
                     r["units"] or 0, r["rejected"] or 0,
                     r["downtime"] or 0, r["shifts"] or 1,
+                    planned_time=r["planned_time"] or 0,
+                    nom_speed=r["avg_nominal_speed"] or 1200.0,
                 )
                 val = {
                     "oee":          oee_data["oee"],
@@ -203,7 +211,8 @@ def get_global_summary(days: int = 7) -> dict:
     total_downtime = sum(k["total_downtime"] for k in all_kpis)
     total_shifts   = sum(k["total_shifts"]   for k in all_kpis)
 
-    oee_data = _calc_oee(total_units, total_rejected, total_downtime, total_shifts)
+    oee_data = _calc_oee(total_units, total_rejected, total_downtime, total_shifts,
+                         planned_time=0.0, nom_speed=1200.0)
     return {
         "sites":         len(all_kpis),
         "total_units":   total_units,

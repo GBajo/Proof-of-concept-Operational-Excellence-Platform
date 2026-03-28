@@ -22,9 +22,10 @@ function startLiveClock() {
   const el = document.getElementById('live-clock');
   if (!el) return;
   const tick = () => {
-    el.textContent = new Date().toLocaleTimeString('es-ES', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-    });
+    el.textContent = new Date().toLocaleTimeString(
+      document.documentElement.lang === 'en' ? 'en-US' : 'es-ES',
+      { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
+    );
   };
   tick();
   setInterval(tick, 1000);
@@ -32,7 +33,8 @@ function startLiveClock() {
 
 async function loadLineStatus() {
   let active = 0;
-  const total = 5;
+  const lineCards = document.querySelectorAll('#line-grid .line-card');
+  const total = lineCards.length;
 
   for (let line = 1; line <= total; line++) {
     try {
@@ -48,7 +50,7 @@ async function loadLineStatus() {
         if (statusEl) {
           statusEl.innerHTML =
             '<span class="line-dot line-dot--occupied"></span>' +
-            '<span class="line-status-text" style="color:#c0392b">OCUPADA</span>';
+            `<span class="line-status-text" style="color:#c0392b">${(typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.occupied : 'OCUPADA')}</span>`;
         }
         if (card) card.classList.add('line-card--occupied');
         if (input) input.disabled = true;
@@ -58,7 +60,9 @@ async function loadLineStatus() {
         const infoPanel = document.getElementById('active-lines-info');
         if (occupiedList) {
           const li = document.createElement('li');
-          li.textContent = `Línea ${line} — ${data.operator_name || 'Operario activo'}`;
+          const lbl = typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.lineLabel : 'Línea';
+          const op  = typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.activeOperator : 'Operario activo';
+          li.textContent = `${lbl} ${line} — ${data.operator_name || op}`;
           occupiedList.appendChild(li);
         }
         if (infoPanel) infoPanel.style.display = '';
@@ -67,7 +71,7 @@ async function loadLineStatus() {
         if (statusEl) {
           statusEl.innerHTML =
             '<span class="line-dot line-dot--free"></span>' +
-            '<span class="line-status-text" style="color:#27ae60">LIBRE</span>';
+            `<span class="line-status-text" style="color:#27ae60">${(typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.free : 'LIBRE')}</span>`;
         }
       }
     } catch {
@@ -100,18 +104,18 @@ async function handleStartShift(e) {
   const shiftType   = form.querySelector('input[name="shift_type"]:checked');
 
   if (!operatorId) {
-    showError(errorBox, 'Por favor, seleccione un operario.');
+    showError(errorBox, typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.errSelectOp : 'Por favor, seleccione un operario.');
     return;
   }
   if (!lineNumber) {
-    showError(errorBox, 'Por favor, seleccione una línea de packaging.');
+    showError(errorBox, typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.errSelectLine : 'Por favor, seleccione una línea de packaging.');
     return;
   }
 
   const submitBtn = form.querySelector('button[type="submit"]');
   const origText  = submitBtn.innerHTML;
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="btn-icon">⏳</span> Iniciando…';
+  submitBtn.innerHTML = `<span class="btn-icon">⏳</span> ${typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.btnStarting : 'Iniciando…'}`;
 
   const payload = {
     operator_id: parseInt(operatorId),
@@ -127,14 +131,14 @@ async function handleStartShift(e) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showError(errorBox, data.error || 'Error al iniciar turno.');
+      showError(errorBox, data.error || (typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.errStartShift : 'Error al iniciar turno.'));
       submitBtn.disabled = false;
       submitBtn.innerHTML = origText;
       return;
     }
     window.location.href = `/shift/${data.id}/active`;
   } catch {
-    showError(errorBox, 'Error de conexión. Inténtalo de nuevo.');
+    showError(errorBox, typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.errConnection : 'Error de conexión. Inténtalo de nuevo.');
     submitBtn.disabled = false;
     submitBtn.innerHTML = origText;
   }
@@ -155,7 +159,10 @@ async function handleEndShift(e) {
 
   const submitBtn = document.getElementById('end-btn');
   const origHTML = submitBtn ? submitBtn.innerHTML : '';
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Cerrando turno...'; }
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.btnClosingShift : 'Cerrando turno...';
+  }
 
   const status = form.querySelector('input[name="status"]:checked').value;
   const payload = {
@@ -172,14 +179,14 @@ async function handleEndShift(e) {
     const data = await res.json();
     if (!res.ok) {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = origHTML; }
-      errorBox.textContent = data.error || 'Error al cerrar turno';
+      errorBox.textContent = data.error || (typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.errCloseShift : 'Error al cerrar turno');
       errorBox.style.display = 'block';
       return;
     }
     window.location.href = `/shift/${shiftId}/summary`;
   } catch {
     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = origHTML; }
-    errorBox.textContent = 'Error de conexión. Inténtalo de nuevo.';
+    errorBox.textContent = typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.errConnection : 'Error de conexión. Inténtalo de nuevo.';
     errorBox.style.display = 'block';
   }
 }

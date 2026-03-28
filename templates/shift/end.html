@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ t('page_title_end') }} — {{ t('line_label') }} {{ shift.line_number }}{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
+{% block scripts %}
+<script>
+const SHIFT_I18N = {
+  btnClosingShift: "{{ t('btn_closing_shift') }}",
+  errCloseShift:   "{{ t('err_close_shift') }}",
+  errConnection:   "{{ t('err_connection') }}",
+};
+</script>
+<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
 
 {% block content %}
 <div class="end-layout">

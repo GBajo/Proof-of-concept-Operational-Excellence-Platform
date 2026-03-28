@@ -34,6 +34,6 @@ def get_comments_by_shift(shift_id: int,
 
 def delete_comment(comment_id: int) -> bool:
     db = get_db()
-    db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+    cursor = db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
     db.commit()
-    return db.execute("SELECT changes()").fetchone()[0] > 0
+    return cursor.rowcount > 0

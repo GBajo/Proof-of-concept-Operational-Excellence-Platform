@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, abort, redirect, url_for, request, make_response
+from flask import Blueprint, render_template, abort, redirect, url_for, request, make_response, g
 from models.shift import get_shift_by_id, get_active_lines, get_shifts_history, get_line_performance_summary
 from models.operator import get_all_operators
 from models.comment import get_comments_by_shift
 from models.kpi import calculate_oee
+from site_aggregator import SITES, DEFAULT_SITE
 import json
 
 bp = Blueprint("views", __name__)
@@ -61,7 +62,9 @@ def index():
 @bp.get("/shift/start")
 def shift_start():
     operators = get_all_operators()
-    return render_template("shift/start.html", operators=operators)
+    site_id = getattr(g, "current_site", DEFAULT_SITE)
+    site_lines = SITES.get(site_id, SITES[DEFAULT_SITE])["lines"]
+    return render_template("shift/start.html", operators=operators, site_lines=site_lines)
 
 
 @bp.get("/shift/<int:shift_id>/active")

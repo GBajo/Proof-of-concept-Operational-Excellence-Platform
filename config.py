@@ -11,4 +11,9 @@ class DevelopmentConfig(Config):
     DEBUG: bool = True
 
 
-config = DevelopmentConfig()
+class ProductionConfig(Config):
+    DEBUG: bool = False
+
+
+_env = os.environ.get("FLASK_ENV", "development")
+config = ProductionConfig() if _env == "production" else DevelopmentConfig()

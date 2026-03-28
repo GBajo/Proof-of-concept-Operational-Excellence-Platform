@@ -7,7 +7,8 @@
  */
 function formatNumber(n) {
   if (n === null || n === undefined) return '—';
-  return Number(n).toLocaleString('es-ES');
+  const locale = document.documentElement.lang === 'en' ? 'en-US' : 'es-ES';
+  return Number(n).toLocaleString(locale);
 }
 
 /**
@@ -36,11 +37,12 @@ function isoToTime(iso) {
  * @returns {string}
  */
 function categoryLabel(cat) {
+  const isEn = document.documentElement.lang === 'en';
   const map = {
-    safety: 'Seguridad',
-    quality: 'Calidad',
-    production: 'Producción',
-    maintenance: 'Mantenimiento',
+    safety:      isEn ? 'Safety'       : 'Seguridad',
+    quality:     isEn ? 'Quality'      : 'Calidad',
+    production:  isEn ? 'Production'   : 'Producción',
+    maintenance: isEn ? 'Maintenance'  : 'Mantenimiento',
   };
   return map[cat] || cat;
 }

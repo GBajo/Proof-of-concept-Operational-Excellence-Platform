@@ -697,13 +697,13 @@ Tipo: ${step.step_type}.
 ¿Cuáles son las causas más probables de desviación y qué mejoras Lean/VSM recomiendas?`;
 
     try {
-      const res = await fetch("/api/assistant/ask", {
+      const res = await fetch("/api/assistant/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: prompt, shift_id: null }),
+        body: JSON.stringify({ query: prompt, shift_id: 1, category: "production" }),
       });
       const data = await res.json();
-      detailAiResp.textContent = data.response || data.text || I18N.aiError;
+      detailAiResp.textContent = data.text || I18N.aiError;
     } catch {
       detailAiResp.textContent = I18N.aiError;
     }
