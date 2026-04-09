@@ -36,12 +36,12 @@ async function loadLineStatus() {
   const lineCards = document.querySelectorAll('#line-grid .line-card');
   const total = lineCards.length;
 
-  for (let line = 1; line <= total; line++) {
+  for (const card of lineCards) {
+    const line = parseInt(card.dataset.line, 10);
+    const statusEl = document.getElementById(`line-status-${line}`);
+    const input = card.querySelector('input[type="radio"]');
     try {
       const res = await fetch(`/api/shifts/active?line=${line}`);
-      const card = document.getElementById(`line-card-${line}`);
-      const statusEl = document.getElementById(`line-status-${line}`);
-      const input = card ? card.querySelector('input[type="radio"]') : null;
 
       if (res.ok) {
         // Línea ocupada
@@ -52,7 +52,7 @@ async function loadLineStatus() {
             '<span class="line-dot line-dot--occupied"></span>' +
             `<span class="line-status-text" style="color:#c0392b">${(typeof SHIFT_I18N !== 'undefined' ? SHIFT_I18N.occupied : 'OCUPADA')}</span>`;
         }
-        if (card) card.classList.add('line-card--occupied');
+        card.classList.add('line-card--occupied');
         if (input) input.disabled = true;
 
         // Añadir a la lista del aside
@@ -75,7 +75,6 @@ async function loadLineStatus() {
         }
       }
     } catch {
-      const statusEl = document.getElementById(`line-status-${line}`);
       if (statusEl) {
         statusEl.innerHTML =
           '<span class="line-dot" style="background:#a0aab4"></span>' +

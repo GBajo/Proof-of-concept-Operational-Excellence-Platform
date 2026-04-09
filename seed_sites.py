@@ -396,6 +396,26 @@ CREATE INDEX IF NOT EXISTS idx_problems_line       ON top_problems(line_number);
 CREATE INDEX IF NOT EXISTS idx_initiatives_site    ON improvement_initiatives(site_id);
 CREATE INDEX IF NOT EXISTS idx_initiatives_status  ON improvement_initiatives(status);
 CREATE INDEX IF NOT EXISTS idx_init_docs_init      ON initiative_documents(initiative_id);
+CREATE TABLE IF NOT EXISTS notification_config (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id     TEXT NOT NULL UNIQUE,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS notification_log (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type   TEXT NOT NULL,
+    title        TEXT NOT NULL,
+    recipient    TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL CHECK(status IN ('sent','failed','skipped')),
+    site_id      TEXT NOT NULL DEFAULT '',
+    line_number  TEXT NOT NULL DEFAULT '',
+    error_detail TEXT NOT NULL DEFAULT '',
+    sent_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_notif_log_sent_at    ON notification_log(sent_at);
+CREATE INDEX IF NOT EXISTS idx_notif_log_event_type ON notification_log(event_type);
+CREATE INDEX IF NOT EXISTS idx_notif_log_status     ON notification_log(status);
 """
 
 

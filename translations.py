@@ -520,6 +520,23 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "vsm_ct_axis":           {"es": "Ciclo (s)",            "en": "Cycle (s)"},
     "vsm_nominal":           {"es": "Nominal",              "en": "Nominal"},
 
+    # ── VSM Comparativa multi-planta ──────────────────────────
+    "vsm_compare_title":     {"es": "Comparativa de Cycle Time entre plantas",
+                              "en": "Cycle Time Comparison Across Sites"},
+    "vsm_compare_subtitle":  {"es": "C/T real vs nominal por paso — todas las plantas",
+                              "en": "Actual vs nominal C/T per step — all sites"},
+    "vsm_compare_line":      {"es": "Línea comparada:",    "en": "Compared line:"},
+    "vsm_compare_site":      {"es": "Planta",              "en": "Site"},
+    "vsm_compare_lead":      {"es": "Lead Time",           "en": "Lead Time"},
+    "vsm_compare_va":        {"es": "Tiempo VA",           "en": "VA Time"},
+    "vsm_compare_ratio":     {"es": "% VA",                "en": "% VA"},
+    "vsm_compare_bottleneck":{"es": "Cuello botella",      "en": "Bottleneck"},
+    "vsm_compare_oee":       {"es": "OEE",                 "en": "OEE"},
+    "vsm_compare_chart_title":{"es": "C/T por paso (seg)", "en": "C/T per step (sec)"},
+    "vsm_compare_actual":    {"es": "Real",                "en": "Actual"},
+    "vsm_compare_toggle":    {"es": "Comparar plantas",    "en": "Compare sites"},
+    "vsm_compare_loading":   {"es": "Cargando comparativa...","en": "Loading comparison..."},
+
     # ── Multi-site ────────────────────────────────────────────
     "nav_global":            {"es": "Global",               "en": "Global"},
     "site_label":            {"es": "Planta:",              "en": "Site:"},

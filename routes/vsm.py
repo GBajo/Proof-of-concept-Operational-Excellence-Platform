@@ -17,7 +17,7 @@ import json
 import random
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, g
 
 from database import get_db
 
@@ -219,6 +219,88 @@ def _compute_metrics(steps: list[dict]) -> dict:
     }
 
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _check_and_notify_stopped_steps(
+    db, steps: list[dict], line_number: int, base_url: str = ""
+) -> None:
+    """
+    Para cada paso con status='stopped', comprueba cuánto tiempo lleva parado.
+    Si supera STOPPED_THRESHOLD_MIN minutos, dispara la notificación a Teams.
+    Para evitar spam, sólo notifica una vez por paso en una ventana de
+    NOTIFY_COOLDOWN_MIN minutos (comprobando notification_log).
+    """
+    STOPPED_THRESHOLD_MIN = 5
+    NOTIFY_COOLDOWN_MIN = 15  # no repetir la misma notificación antes de X min
+
+    from site_aggregator import DEFAULT_SITE
+    site_id = getattr(g, "current_site", DEFAULT_SITE)
+
+    for step in steps:
+        if step.get("status") != "stopped":
+            continue
+
+        step_id = step.get("step_id")
+        step_name = step.get("step_name", f"Paso {step_id}")
+        ts_str = step.get("timestamp")
+
+        if not ts_str:
+            continue
+
+        # Calcular duración de la parada actual
+        try:
+            ts_dt = datetime.fromisoformat(ts_str)
+        except ValueError:
+            continue
+
+        stopped_minutes = (datetime.utcnow() - ts_dt).total_seconds() / 60
+        if stopped_minutes < STOPPED_THRESHOLD_MIN:
+            continue
+
+        # Comprobar cooldown usando la DB global de notificaciones
+        try:
+            import sqlite3 as _sqlite3
+            from site_aggregator import SITES, DEFAULT_SITE as _DEFAULT_SITE
+            _log_db = _sqlite3.connect(SITES[_DEFAULT_SITE]["db_path"])
+            _log_db.row_factory = _sqlite3.Row
+            recent = _log_db.execute(
+                """SELECT id FROM notification_log
+                   WHERE event_type = 'vsm_stopped'
+                     AND line_number = ?
+                     AND site_id = ?
+                     AND title LIKE ?
+                     AND sent_at >= datetime('now', ?)
+                   LIMIT 1""",
+                (
+                    str(line_number),
+                    site_id,
+                    f"%{step_name}%",
+                    f"-{NOTIFY_COOLDOWN_MIN} minutes",
+                ),
+            ).fetchone()
+            _log_db.close()
+        except Exception:
+            recent = None
+
+        if recent:
+            continue
+
+        # Disparar notificación
+        try:
+            from notifications import notify_vsm_stopped
+            notify_vsm_stopped(
+                step_name=step_name,
+                step_id=step_id,
+                line_number=line_number,
+                stopped_minutes=stopped_minutes,
+                site_id=site_id,
+                base_url=base_url,
+            )
+        except Exception:
+            import logging as _logging
+            _logging.getLogger(__name__).exception("Error al enviar notificación VSM stopped")
+
+
 # ── Rutas HTML ────────────────────────────────────────────────────────────────
 
 @bp.get("/vsm")
@@ -271,6 +353,10 @@ def api_vsm_live():
                            / (s.get("nom_ct") or 1), 3)
 
     metrics = _compute_metrics(steps)
+
+    # ── Trigger: detectar pasos stopped durante más de 5 minutos ──────────────
+    _check_and_notify_stopped_steps(db, steps, line, request.host_url.rstrip("/"))
+
     return jsonify({"steps": steps, "metrics": metrics})
 
 
@@ -309,6 +395,100 @@ def api_step_history(step_id: int):
         "history": [dict(r) for r in reversed(history)],
         "recent_stops": [dict(r) for r in stops],
     })
+
+
+@bp.get("/api/vsm/compare")
+def api_vsm_compare():
+    """
+    Devuelve comparativa de cycle time (real y nominal) de todas las plantas
+    para la línea indicada.  Formato de respuesta:
+    {
+      "steps":  ["Recepción granel", "Alimentación", ...],   # nombres de los pasos
+      "sites": [
+        {
+          "site_id":   "alcobendas",
+          "site_name": "Alcobendas",
+          "flag":      "🇪🇸",
+          "line":      1,
+          "data": [                           # un elemento por paso, en orden
+            {
+              "step_name":    "Recepción granel",
+              "nom_ct":       45.0,
+              "actual_ct":    48.2,           # null si no hay lectura
+              "ratio":        1.07,           # actual / nominal
+              "status":       "running",
+              "color":        "yellow",
+            }, ...
+          ],
+          "metrics": { ... }                  # igual que /api/vsm/live-data
+        }, ...
+      ]
+    }
+    """
+    from site_aggregator import SITES, get_site_connection
+
+    line = int(request.args.get("line", 1))
+    lang = request.args.get("lang", "es")
+
+    # Obtener nombres canónicos de pasos (orden fijo, usamos PHARMA_STEPS)
+    step_names = [_translate_step_name(name, lang) for _, name, *_ in PHARMA_STEPS]
+
+    result_sites = []
+
+    for site_id, site_meta in SITES.items():
+        # Sólo procesamos si la línea existe para este site
+        if line not in site_meta.get("lines", []):
+            continue
+        try:
+            conn = get_site_connection(site_id)
+            # Asegurar que existen datos de ejemplo para esta línea
+            db_proxy = type("Proxy", (), {
+                "execute": conn.execute,
+                "commit": conn.commit,
+            })()
+            _seed_vsm(db_proxy, lines=[line])
+
+            rows = conn.execute(
+                """
+                SELECT ps.id AS step_id, ps.step_order, ps.step_name, ps.step_type,
+                       ps.nominal_cycle_time_seconds AS nom_ct,
+                       ps.nominal_changeover_minutes AS nom_co,
+                       ld.actual_cycle_time, ld.units_in_wip,
+                       ld.status, ld.current_speed, ld.defect_count, ld.timestamp
+                FROM process_steps ps
+                LEFT JOIN step_live_data ld ON ld.id = (
+                    SELECT id FROM step_live_data
+                    WHERE step_id = ps.id
+                    ORDER BY timestamp DESC LIMIT 1
+                )
+                WHERE ps.line_number = ?
+                ORDER BY ps.step_order
+                """,
+                (line,),
+            ).fetchall()
+            conn.close()
+        except Exception:
+            continue
+
+        steps = [dict(r) for r in rows]
+        for s in steps:
+            s["step_name"] = _translate_step_name(s["step_name"], lang)
+            s["color"] = _step_color(s)
+            nom = s.get("nom_ct") or 1
+            actual = s.get("actual_cycle_time") or nom
+            s["ratio"] = round(actual / nom, 3)
+
+        metrics = _compute_metrics(steps)
+        result_sites.append({
+            "site_id":   site_id,
+            "site_name": site_meta["name"],
+            "flag":      site_meta["flag"],
+            "line":      line,
+            "data":      steps,
+            "metrics":   metrics,
+        })
+
+    return jsonify({"steps": step_names, "sites": result_sites})
 
 
 @bp.post("/api/vsm/seed")

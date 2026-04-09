@@ -4,6 +4,13 @@ from database import get_db
 
 def create_shift(operator_id: int, line_number: int, shift_type: str) -> int:
     db = get_db()
+    # Comprobar turno activo existente dentro de la misma transacción
+    existing = db.execute(
+        "SELECT id FROM shifts WHERE line_number = ? AND status = 'active'",
+        (line_number,),
+    ).fetchone()
+    if existing:
+        raise ValueError(f"La línea {line_number} ya tiene un turno activo (id={existing['id']})")
     cursor = db.execute(
         """INSERT INTO shifts (operator_id, line_number, shift_type)
            VALUES (?, ?, ?)""",

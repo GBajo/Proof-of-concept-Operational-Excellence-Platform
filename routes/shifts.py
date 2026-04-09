@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from models.shift import (
     create_shift, get_shift_by_id, get_shifts,
     get_active_shift_by_line, end_shift, update_shift,
@@ -33,7 +33,10 @@ def start_shift():
     try:
         shift_id = create_shift(operator_id, line_number, shift_type)
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        err = str(e)
+        if "UNIQUE constraint failed" in err:
+            return jsonify({"error": f"La línea {line_number} ya tiene un turno activo"}), 409
+        return jsonify({"error": err}), 400
 
     return jsonify(get_shift_by_id(shift_id)), 201
 
@@ -71,6 +74,26 @@ def update_shift_endpoint(shift_id: int):
 
     if "status" in fields and fields["status"] in ("completed", "interrupted"):
         end_shift(shift_id, fields.get("handover_notes"), fields["status"])
+        # ── Trigger: notificar fin de turno a Teams ────────────────────────────
+        try:
+            from notifications import notify_shift_end
+            from site_aggregator import DEFAULT_SITE
+            updated = get_shift_by_id(shift_id)
+            oee_data = calculate_oee(shift_id)
+            oee_val = (oee_data or {}).get("oee")
+            site_id = getattr(g, "current_site", DEFAULT_SITE)
+            base_url = request.host_url.rstrip("/")
+            notify_shift_end(
+                operator_name=(updated or {}).get("operator_name", ""),
+                line_number=(updated or shift).get("line_number", "?"),
+                shift_id=shift_id,
+                oee_value=oee_val,
+                site_id=site_id,
+                base_url=base_url,
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Error al enviar notificación fin de turno")
     else:
         update_shift(shift_id, fields)
 

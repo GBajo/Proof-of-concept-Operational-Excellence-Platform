@@ -106,6 +106,56 @@
   </div>
 </section>
 
+<!-- Sección comparativa multi-planta -->
+<section class="mb-4" id="vsmCompareSection">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+      <div>
+        <h6 class="fw-bold mb-0">{{ t('vsm_compare_title') }}</h6>
+        <small class="text-muted">{{ t('vsm_compare_subtitle') }}</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">{{ t('vsm_compare_line') }}</span>
+        <span class="badge bg-primary" id="compareLineLabel">—</span>
+        <button class="btn btn-sm btn-outline-primary" id="btnToggleCompare">
+          📊 {{ t('vsm_compare_toggle') }}
+        </button>
+      </div>
+    </div>
+    <div id="vsmCompareBody" hidden>
+      <div class="card-body p-3">
+        <!-- Gráfico de barras C/T por paso y planta -->
+        <div id="compareChart" style="width:100%; height:360px;"></div>
+        <!-- Tabla resumen por planta -->
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-hover align-middle" id="compareTable">
+            <thead class="table-light">
+              <tr>
+                <th>{{ t('vsm_compare_site') }}</th>
+                <th>{{ t('vsm_compare_lead') }}</th>
+                <th>{{ t('vsm_compare_va') }}</th>
+                <th>{{ t('vsm_compare_ratio') }}</th>
+                <th>{{ t('vsm_compare_bottleneck') }}</th>
+                <th>{{ t('vsm_compare_oee') }}</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody">
+              <tr><td colspan="6" class="text-center text-muted py-3">{{ t('vsm_compare_loading') }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Tabla detallada C/T por paso -->
+        <div class="table-responsive mt-2">
+          <table class="table table-sm table-bordered align-middle" id="compareDetailTable">
+            <thead class="table-light" id="compareDetailHead"></thead>
+            <tbody id="compareDetailBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Detail panel overlay -->
 <div class="vsm-detail-overlay" id="detailOverlay" hidden>
   <div class="vsm-detail-panel" id="detailPanel">
@@ -645,6 +695,211 @@ Tipo: ${step.step_type}.
 
   refreshLive();
   refreshTimer = setInterval(refreshLive, 15000);
+
+  // ── Comparativa multi-planta ────────────────────────────────────────────────
+
+  const I18N_CMP = {
+    actual:   {{ t('vsm_compare_actual') | tojson }},
+    nominal:  {{ t('vsm_nominal') | tojson }},
+    chart:    {{ t('vsm_compare_chart_title') | tojson }},
+    loading:  {{ t('vsm_compare_loading') | tojson }},
+  };
+
+  const SITE_COLORS = ["#0057a8", "#e6a817", "#27ae60", "#c0392b", "#8e44ad", "#16a085"];
+
+  let compareChartInst = null;
+  let compareLoaded = false;
+
+  const btnToggle      = document.getElementById("btnToggleCompare");
+  const compareBody    = document.getElementById("vsmCompareBody");
+  const compareLabel   = document.getElementById("compareLineLabel");
+  const compareTbody   = document.getElementById("compareTableBody");
+  const compareDetHead = document.getElementById("compareDetailHead");
+  const compareDetBody = document.getElementById("compareDetailBody");
+
+  function fmtCTcmp(s) {
+    if (!s && s !== 0) return "—";
+    return s >= 60 ? `${Math.round(s/60)}m${Math.round(s%60)}s` : `${Number(s).toFixed(1)}s`;
+  }
+
+  function ratioClass(ratio) {
+    if (!ratio) return "";
+    if (ratio > 1.25) return "table-danger";
+    if (ratio > 1.10) return "table-warning";
+    if (ratio < 0.95) return "table-success";
+    return "";
+  }
+
+  async function loadCompare() {
+    compareLabel.textContent = `L${currentLine}`;
+    compareTbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">${I18N_CMP.loading}</td></tr>`;
+    compareDetHead.innerHTML = "";
+    compareDetBody.innerHTML = "";
+
+    try {
+      const res = await fetch(`/api/vsm/compare?line=${currentLine}&lang=${APP_LANG}`);
+      const data = await res.json();
+      renderCompareTable(data);
+      renderCompareChart(data);
+      renderCompareDetailTable(data);
+    } catch (e) {
+      compareTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Error al cargar comparativa</td></tr>`;
+    }
+  }
+
+  function renderCompareTable(data) {
+    if (!data.sites || !data.sites.length) {
+      compareTbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Sin datos</td></tr>`;
+      return;
+    }
+    compareTbody.innerHTML = data.sites.map((site, i) => {
+      const m = site.metrics || {};
+      const color = SITE_COLORS[i % SITE_COLORS.length];
+      const dot = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:6px;"></span>`;
+      return `<tr>
+        <td>${dot}${site.flag} <strong>${site.site_name}</strong></td>
+        <td>${fmtCTcmp(m.lead_time_s)}</td>
+        <td>${fmtCTcmp(m.va_time_s)}</td>
+        <td><span class="badge ${m.va_ratio_pct >= 60 ? 'bg-success' : m.va_ratio_pct >= 40 ? 'bg-warning text-dark' : 'bg-danger'}">${m.va_ratio_pct || 0}%</span></td>
+        <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle">${m.bottleneck || '—'}</span></td>
+        <td><strong>${m.oee_pct || 0}%</strong></td>
+      </tr>`;
+    }).join("");
+  }
+
+  function renderCompareChart(data) {
+    if (!data.sites || !data.sites.length) return;
+    const steps = data.steps || [];
+
+    if (!compareChartInst) {
+      compareChartInst = echarts.init(document.getElementById("compareChart"), null, { renderer: "canvas" });
+      window.addEventListener("resize", () => compareChartInst && compareChartInst.resize());
+    }
+
+    // Series: una por planta (C/T real) + una de nominal (común)
+    const series = [];
+    // Nominal (primer site — todos tienen los mismos nominales)
+    const firstSite = data.sites[0];
+    if (firstSite) {
+      series.push({
+        name: I18N_CMP.nominal,
+        type: "bar",
+        barGap: "5%",
+        data: firstSite.data.map(s => +(s.nom_ct || 0).toFixed(2)),
+        itemStyle: { color: "#cbd5e0", borderRadius: [3, 3, 0, 0] },
+        label: { show: false },
+      });
+    }
+
+    data.sites.forEach((site, i) => {
+      const color = SITE_COLORS[i % SITE_COLORS.length];
+      series.push({
+        name: `${site.flag} ${site.site_name}`,
+        type: "bar",
+        barGap: "5%",
+        data: site.data.map(s => {
+          const val = +(s.actual_cycle_time || s.nom_ct || 0).toFixed(2);
+          const ratio = s.ratio || 1;
+          // Color dinámico por ratio
+          const itemColor = ratio > 1.25 ? "#c0392b" : ratio > 1.10 ? "#e6a817" : color;
+          return { value: val, itemStyle: { color: itemColor } };
+        }),
+        label: {
+          show: true, position: "top", fontSize: 9,
+          formatter: p => p.value > 0 ? `${p.value}s` : "",
+          color: "#4a5568",
+        },
+        markPoint: {
+          symbol: "pin", symbolSize: 30,
+          data: site.data
+            .map((s, idx) => s.ratio > 1.25 ? { name: "!", coord: [idx, s.actual_cycle_time], itemStyle: { color: "#c0392b" } } : null)
+            .filter(Boolean),
+        },
+      });
+    });
+
+    compareChartInst.setOption({
+      backgroundColor: "transparent",
+      textStyle: { fontFamily: "inherit", fontSize: 11, color: "#4a5568" },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        formatter: params => {
+          const step = params[0]?.name || "";
+          let html = `<strong>${step}</strong><br>`;
+          params.forEach(p => {
+            html += `${p.marker}${p.seriesName}: <strong>${p.value}s</strong><br>`;
+          });
+          return html;
+        },
+      },
+      legend: { bottom: 0, textStyle: { fontSize: 10 } },
+      grid: { top: 20, right: 20, bottom: 60, left: 50 },
+      xAxis: {
+        type: "category", data: steps,
+        axisLabel: { fontSize: 9, rotate: 30, interval: 0 },
+      },
+      yAxis: {
+        type: "value", name: I18N_CMP.chart,
+        nameTextStyle: { fontSize: 9 }, axisLabel: { fontSize: 9 },
+        splitLine: { lineStyle: { type: "dashed", color: "#e8ecf0" } },
+      },
+      series,
+    }, true);
+
+    setTimeout(() => compareChartInst.resize(), 50);
+  }
+
+  function renderCompareDetailTable(data) {
+    if (!data.sites || !data.sites.length) return;
+    const steps = data.steps || [];
+
+    // Cabecera: Paso | Nominal | Planta1 (ratio) | Planta2 (ratio) | ...
+    compareDetHead.innerHTML = `<tr>
+      <th style="min-width:120px">Paso</th>
+      <th>Nominal</th>
+      ${data.sites.map((s, i) => {
+        const color = SITE_COLORS[i % SITE_COLORS.length];
+        return `<th style="border-top:3px solid ${color}">${s.flag} ${s.site_name}</th>`;
+      }).join("")}
+    </tr>`;
+
+    // Filas: una por paso
+    compareDetBody.innerHTML = steps.map((stepName, idx) => {
+      const nomCT = (data.sites[0]?.data[idx]?.nom_ct || 0);
+      const cells = data.sites.map(site => {
+        const s = site.data[idx] || {};
+        const actual = s.actual_cycle_time || s.nom_ct;
+        const ratio = s.ratio || 1;
+        const cls = ratioClass(ratio);
+        const indicator = ratio > 1.25 ? " ▲" : ratio > 1.10 ? " △" : "";
+        return `<td class="${cls}">${fmtCTcmp(actual)}<small class="text-muted ms-1">${ratio ? `×${ratio.toFixed(2)}` : ""}${indicator}</small></td>`;
+      });
+      return `<tr>
+        <td class="fw-semibold small">${stepName}</td>
+        <td class="text-muted small">${fmtCTcmp(nomCT)}</td>
+        ${cells.join("")}
+      </tr>`;
+    }).join("");
+  }
+
+  btnToggle.addEventListener("click", () => {
+    const hidden = compareBody.hidden;
+    compareBody.hidden = !hidden;
+    if (!hidden) return; // cerrar
+    if (!compareLoaded) {
+      compareLoaded = true;
+      loadCompare();
+    }
+  });
+
+  // Recargar comparativa cuando cambie la línea (si ya está abierta)
+  lineSelect.addEventListener("change", () => {
+    if (!compareBody.hidden) {
+      compareLoaded = false;
+      loadCompare();
+    }
+  });
 
 })();
 </script>
