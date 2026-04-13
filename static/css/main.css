@@ -778,3 +778,56 @@
     margin: 1.5cm 1.5cm 2cm 1.5cm;
   }
 }
+
+/* ============================================================
+   Alert system — bell icon, banner, panel
+   ============================================================ */
+
+/* Bell pulsing when critical alerts exist */
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50% { transform: rotate(10deg); }
+  20%, 40% { transform: rotate(-10deg); }
+  60% { transform: rotate(0deg); }
+}
+
+.bell-critical {
+  animation: bell-ring 1.5s ease-in-out infinite;
+  color: #f8d7da !important;
+}
+
+/* Critical banner at top of content area */
+.alert-banner-critical {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  z-index: 1040;
+  background: #dc3545;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  animation: banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes banner-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Alert panel items */
+.alert-item:hover { background: rgba(0,0,0,.04); }
+.alert-item:last-child { border-bottom: 0 !important; }
+
+/* Extra small badge */
+.badge-sm { font-size: 0.65rem; padding: 0.2em 0.45em; }
+
+/* Extra small button */
+.btn-xs {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  line-height: 1.4;
+}

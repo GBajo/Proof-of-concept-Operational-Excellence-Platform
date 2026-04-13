@@ -29,6 +29,7 @@ def create_app() -> Flask:
     from routes.problems import bp as problems_bp
     from routes.initiatives import bp as initiatives_bp
     from routes.notifications import bp as notifications_bp
+    from routes.alerts import bp as alerts_bp
 
     app.register_blueprint(operators_bp)
     app.register_blueprint(shifts_bp)
@@ -41,6 +42,7 @@ def create_app() -> Flask:
     app.register_blueprint(problems_bp)
     app.register_blueprint(initiatives_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(alerts_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
     @app.before_request
@@ -63,7 +65,7 @@ def create_app() -> Flask:
 
         # Idioma desde cookie (es por defecto)
         lang = flask_request.cookies.get("lang", "es")
-        if lang not in ("es", "en"):
+        if lang not in ("es", "en", "ja"):
             lang = "es"
 
         # Site activo
@@ -79,6 +81,13 @@ def create_app() -> Flask:
             "current_site":         current_site,
             "sites":                SITES,
         }
+
+    # ── Arrancar el monitor en segundo plano ──────────────────────────────────
+    # Solo arranca una vez (evita doble start en modo debug con reloader)
+    import os
+    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        from monitor import start_monitor
+        start_monitor()
 
     return app
 

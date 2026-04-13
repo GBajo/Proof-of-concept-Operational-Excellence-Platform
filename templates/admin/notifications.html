@@ -64,7 +64,7 @@
                 <input class="form-check-input" type="checkbox"
                        id="event_{{ event_key }}"
                        name="event_{{ event_key }}"
-                       {% if cfg.events.get(event_key, true) %}checked{% endif %}>
+                       {% if cfg.events.get(event_key, True) != False %}checked{% endif %}>
                 <label class="form-check-label" for="event_{{ event_key }}">
                   {{ event_label }}
                 </label>

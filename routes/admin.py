@@ -9,6 +9,8 @@ bp = Blueprint("admin", __name__)
 DOCS_DIR = Path(__file__).parent.parent / "docs"
 SUPPORTED_EXT = {".pdf", ".docx", ".xlsx", ".xls"}
 MAX_UPLOAD_MB = 50
+# Extensiones ejecutables/peligrosas que nunca se aceptan aunque pasen el SUPPORTED_EXT check
+_BLOCKED_EXT = {".py", ".sh", ".bat", ".exe", ".js", ".php", ".rb", ".pl", ".ps1"}
 
 
 def _current_db_path() -> str:
@@ -115,7 +117,7 @@ def admin_upload():
         return jsonify({"ok": False, "message": "Nombre de archivo vacío."}), 400
 
     ext = Path(f.filename).suffix.lower()
-    if ext not in SUPPORTED_EXT:
+    if ext not in SUPPORTED_EXT or ext in _BLOCKED_EXT:
         return jsonify({
             "ok": False,
             "message": f"Formato no soportado: {ext}. Usa PDF, DOCX o XLSX."

@@ -28,7 +28,15 @@ function formatPct(n) {
  */
 function isoToTime(iso) {
   if (!iso) return '';
-  return iso.replace('T', ' ').substring(11, 16);
+  // Usar Date para parsear correctamente independientemente del formato ISO
+  try {
+    const d = new Date(iso.replace(' ', 'T'));
+    if (isNaN(d.getTime())) throw new Error('invalid date');
+    return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch {
+    // Fallback: extracción posicional para formato YYYY-MM-DD HH:MM:SS
+    return iso.replace('T', ' ').substring(11, 16);
+  }
 }
 
 /**

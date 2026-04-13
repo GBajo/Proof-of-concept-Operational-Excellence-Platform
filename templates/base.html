@@ -84,6 +84,30 @@
         <input type="hidden" name="lang" value="en">
         <button type="submit" class="lang-btn {% if lang == 'en' %}lang-btn--active{% endif %}">EN</button>
       </form>
+      <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="hidden" name="lang" value="ja">
+        <button type="submit" class="lang-btn {% if lang == 'ja' %}lang-btn--active{% endif %}">日本語</button>
+      </form>
+    </div>
+
+    <!-- Bell icon + alerts dropdown -->
+    <div class="dropdown ms-2" id="alertsDropdown">
+      <button class="btn btn-dark border-0 position-relative px-2" type="button"
+              data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+              id="bellBtn" title="{{ t('alerts_active') }}">
+        <i class="bi bi-bell fs-5" id="bellIcon"></i>
+        <span id="alertBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none"></span>
+      </button>
+      <div class="dropdown-menu dropdown-menu-end shadow p-0" style="width:380px;max-height:480px;overflow-y:auto;" id="alertPanel">
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+          <span class="fw-semibold small">{{ t('alerts_active') }}</span>
+          <a href="{{ url_for('alerts.alerts_history') }}" class="btn btn-link btn-sm p-0 small">{{ t('alerts_see_history') }}</a>
+        </div>
+        <div id="alertList">
+          <div class="text-center text-muted small py-3">{{ t('alerts_loading') }}</div>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -172,6 +196,20 @@
         </a>
       </div>
       <div class="nav-item">
+        <a class="nav-link {% if request.path.startswith('/admin/alert-rules') %}active{% endif %}"
+           href="{{ url_for('alerts.alert_rules_page') }}">
+          <i class="bi bi-sliders"></i>
+          <span class="nav-text">Reglas de alerta</span>
+        </a>
+      </div>
+      <div class="nav-item">
+        <a class="nav-link {% if request.path.startswith('/alerts') %}active{% endif %}"
+           href="{{ url_for('alerts.alerts_history') }}">
+          <i class="bi bi-bell-fill"></i>
+          <span class="nav-text">Historial alertas</span>
+        </a>
+      </div>
+      <div class="nav-item">
         <a class="nav-link {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') %}active{% endif %}"
            href="{{ url_for('admin.admin_docs') }}">
           <i class="bi bi-book"></i>
@@ -205,12 +243,126 @@
   <!-- Bootstrap 5.3 JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+  <!-- Traducciones para JS -->
+  <script>
+    const ALERTS_I18N = {
+      noAlerts:   "{{ t('alerts_none') }}",
+      ack:        "{{ t('alerts_ack') }}",
+      resolve:    "{{ t('alerts_resolve') }}",
+    };
+  </script>
   <!-- Sidebar toggle -->
   <script>
     document.getElementById('sidebarToggle').addEventListener('click', function() {
       document.body.classList.toggle('sidebar-collapsed');
     });
   </script>
+
+  <!-- ── Critical alert banner (inserted dynamically) ── -->
+  <div id="criticalBanner" class="d-none alert-banner-critical">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <span id="criticalBannerText"></span>
+    <button type="button" class="btn-close btn-close-white ms-auto" onclick="document.getElementById('criticalBanner').classList.add('d-none')"></button>
+  </div>
+
+  <!-- ── Polling de alertas en tiempo real (cada 10 s) ── -->
+  <script>
+  (function() {
+    const badge    = document.getElementById('alertBadge');
+    const bellIcon = document.getElementById('bellIcon');
+    const alertList = document.getElementById('alertList');
+    const critBanner = document.getElementById('criticalBanner');
+    const critText   = document.getElementById('criticalBannerText');
+
+    const SEV_COLOR  = { critical: '#dc3545', warning: '#ffc107', info: '#0dcaf0' };
+    const SEV_ICON   = { critical: '🔴', warning: '🟡', info: '🔵' };
+    const SEV_BADGE  = { critical: 'bg-danger', warning: 'bg-warning text-dark', info: 'bg-info text-dark' };
+
+    async function fetchAlerts() {
+      try {
+        const r = await fetch('/api/alerts/active');
+        if (!r.ok) return;
+        const data = await r.json();
+        const alerts = data.alerts || [];
+        const total  = data.total_active || 0;
+
+        // Badge
+        if (total > 0) {
+          badge.textContent = total > 99 ? '99+' : total;
+          badge.classList.remove('d-none');
+        } else {
+          badge.classList.add('d-none');
+        }
+
+        // Bell pulsing si hay críticas
+        const hasCritical = alerts.some(a => a.severity === 'critical');
+        bellIcon.classList.toggle('bell-critical', hasCritical);
+
+        // Critical banner
+        const critAlerts = alerts.filter(a => a.severity === 'critical');
+        if (critAlerts.length > 0) {
+          critText.textContent = critAlerts.map(a => `L${a.line_number}: ${a.title}`).join(' | ');
+          critBanner.classList.remove('d-none');
+        } else {
+          critBanner.classList.add('d-none');
+        }
+
+        // Panel desplegable
+        if (alerts.length === 0) {
+          alertList.innerHTML = `<div class="text-center text-muted small py-3">${ALERTS_I18N.noAlerts} ✅</div>`;
+          return;
+        }
+
+        alertList.innerHTML = alerts.map(a => `
+          <div class="alert-item px-3 py-2 border-bottom" style="border-left:3px solid ${SEV_COLOR[a.severity]||'#aaa'}">
+            <div class="d-flex align-items-start gap-2">
+              <span class="mt-1">${SEV_ICON[a.severity]||'⚪'}</span>
+              <div class="flex-grow-1 min-w-0">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                  <span class="badge ${SEV_BADGE[a.severity]} badge-sm">${a.severity}</span>
+                  <span class="badge bg-secondary badge-sm">L${a.line_number}</span>
+                  <span class="text-muted small ms-auto">${(a.timestamp||'').slice(0,16)}</span>
+                </div>
+                <div class="small fw-semibold text-truncate">${a.title}</div>
+                <div class="small text-muted text-truncate">${a.description}</div>
+              </div>
+            </div>
+            <div class="d-flex gap-1 mt-2">
+              <button class="btn btn-xs btn-outline-warning py-0 px-2"
+                      onclick="ackAlert(${a.id})">${ALERTS_I18N.ack}</button>
+              <button class="btn btn-xs btn-outline-success py-0 px-2"
+                      onclick="resolveAlert(${a.id})">${ALERTS_I18N.resolve}</button>
+            </div>
+          </div>
+        `).join('');
+
+      } catch(e) {
+        // silencioso — no interrumpir UX
+      }
+    }
+
+    async function ackAlert(id) {
+      await fetch(`/api/alerts/${id}/acknowledge`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ acknowledged_by: 'usuario' }),
+      });
+      fetchAlerts();
+    }
+    async function resolveAlert(id) {
+      await fetch(`/api/alerts/${id}/resolve`, { method: 'POST' });
+      fetchAlerts();
+    }
+
+    // Exponer globalmente para que los botones del panel funcionen
+    window.ackAlert     = ackAlert;
+    window.resolveAlert = resolveAlert;
+
+    fetchAlerts();
+    setInterval(fetchAlerts, 10000);
+  })();
+  </script>
+
   {% block scripts %}{% endblock %}
 </body>
 </html>

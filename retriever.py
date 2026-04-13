@@ -15,7 +15,9 @@ import os
 import re
 import sqlite3
 
-DB_PATH = os.environ.get("DATABASE_PATH", "opex.db")
+from site_aggregator import SITES, DEFAULT_SITE as _DEFAULT_SITE
+
+DB_PATH = os.environ.get("DATABASE_PATH", SITES[_DEFAULT_SITE]["db_path"])
 
 # ── Stopwords en español ──────────────────────────────────────
 STOPWORDS: set[str] = {

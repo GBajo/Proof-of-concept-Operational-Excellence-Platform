@@ -41,6 +41,14 @@ def start_shift():
     return jsonify(get_shift_by_id(shift_id)), 201
 
 
+@bp.get("/api/shifts/active-lines")
+def active_lines_api():
+    """Devuelve la lista de turnos activos con shift_id y line_number."""
+    from models.shift import get_active_lines
+    shifts = get_active_lines()
+    return jsonify([{"shift_id": s["shift_id"], "line_number": s["line_number"]} for s in shifts])
+
+
 @bp.get("/api/shifts/active")
 def active_shift():
     line = request.args.get("line", type=int)

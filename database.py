@@ -37,6 +37,15 @@ def close_db(e=None) -> None:
             except AttributeError:
                 pass
             db.close()
+    # Conexión de reglas de alertas (gestionada por routes/alerts.py bajo la clave
+    # g._alerts_rules_db, siempre apuntando a la BD del DEFAULT_SITE)
+    rules_db = getattr(g, "_alerts_rules_db", None)
+    if rules_db is not None:
+        try:
+            delattr(g, "_alerts_rules_db")
+        except AttributeError:
+            pass
+        rules_db.close()
     # Compatibilidad con clave legacy "db" si quedara alguna
     db = g.pop("db", None)
     if db is not None:

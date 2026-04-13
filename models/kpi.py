@@ -68,9 +68,9 @@ def calculate_oee(shift_id: int) -> dict:
     operating_time = max(planned_time - total_downtime, 0.0)
     availability = operating_time / planned_time if planned_time > 0 else 0.0
 
-    # Rendimiento (sin clampe: permite reflejar sobre-rendimiento real)
+    # Rendimiento (clamp a 100 %: no se puede superar el nominal)
     ideal_units = nominal_speed * (operating_time / 60.0) if nominal_speed > 0 else 0.0
-    performance = (total_produced / ideal_units) if ideal_units > 0 else 0.0
+    performance = min((total_produced / ideal_units), 1.0) if ideal_units > 0 else 0.0
 
     # Calidad
     good_units = max(total_produced - total_rejected, 0)

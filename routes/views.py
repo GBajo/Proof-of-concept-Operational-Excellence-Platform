@@ -13,7 +13,7 @@ bp = Blueprint("views", __name__)
 def set_lang():
     """Guarda el idioma preferido en una cookie y redirige al referer."""
     lang = request.form.get("lang", "es")
-    if lang not in ("es", "en"):
+    if lang not in ("es", "en", "ja"):
         lang = "es"
     redirect_to = request.form.get("next") or request.referrer or "/"
     resp = make_response(redirect(redirect_to))

@@ -32,7 +32,11 @@ MAX_TOKENS = 1024
 
 SYSTEM_PROMPT = (
     "Eres un asistente técnico experto en líneas de empaquetado farmacéutico. "
-    "Responde siempre en español. "
+    "Detect the language of the user's message and ALWAYS respond in that same language. "
+    "If the user writes in English, respond in English. "
+    "If the user writes in Spanish, respond in Spanish. "
+    "If the user writes in French, respond in French. "
+    "Match the user's language exactly. "
     "Basa tus respuestas en la documentación proporcionada como contexto. "
     "Si la documentación no cubre el problema, indícalo claramente y da "
     "recomendaciones generales basadas en buenas prácticas. "
@@ -123,7 +127,7 @@ def _call_gateway(user_message: str, api_key: str, system: Optional[str] = None)
         )
 
     client = anthropic.Anthropic(
-        api_key="placeholder",
+        api_key=api_key,          # usado también como Bearer en el header
         base_url=GATEWAY_BASE_URL,
         timeout=TIMEOUT,
         default_headers={"Authorization": f"Bearer {api_key}"},

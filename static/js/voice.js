@@ -32,7 +32,11 @@ function startRecording() {
   }
 
   recognition = new SpeechRecognition();
-  recognition.lang = 'es-ES';
+  // Adaptar el idioma de reconocimiento al idioma activo de la interfaz
+  const langMap = { es: 'es-ES', en: 'en-US', ja: 'ja-JP' };
+  recognition.lang = (typeof APP_LANG !== 'undefined' && langMap[APP_LANG])
+    ? langMap[APP_LANG]
+    : 'es-ES';
   recognition.continuous = true;   // captura frases largas
   recognition.interimResults = true;
 

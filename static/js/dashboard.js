@@ -524,10 +524,7 @@ function initBarChart() {
   if (!el) return;
   barChart = echarts.init(el, null, { renderer: 'svg' });
 
-  const lines    = ['Línea 1', 'Línea 2', 'Línea 3', 'Línea 4', 'Línea 5'];
-  const targets  = [9600, 9600, 9600, 9600, 9600];
-  const produced = [8940, 9250, 7800, 9600, 9120];
-
+  // Inicializar vacío; se llena con datos reales en loadBarChartData()
   barChart.setOption({
     ...COMMON_OPTS,
     grid: { top: 10, right: 80, bottom: 10, left: 70, containLabel: false },
@@ -540,43 +537,18 @@ function initBarChart() {
     },
     yAxis: {
       type: 'category',
-      data: lines,
+      data: [],
       axisLabel: { color: PALETTE.textLight, fontSize: 11 },
       axisLine: { lineStyle: { color: PALETTE.gridLine } },
       axisTick: { show: false },
     },
     series: [
-      {
-        name: 'Objetivo',
-        type: 'bar',
-        data: targets,
-        barGap: '-100%',
-        barCategoryGap: '40%',
-        itemStyle: { color: 'rgba(255,255,255,0.07)', borderRadius: 4 },
-        z: 1,
-      },
-      {
-        name: 'Producido',
-        type: 'bar',
-        data: produced.map((v, i) => ({
-          value: v,
-          itemStyle: {
-            color: v >= targets[i] * 0.95 ? PALETTE.success
-                 : v >= targets[i] * 0.80 ? PALETTE.warning
-                 : PALETTE.danger,
-            borderRadius: 4,
-          },
-        })),
-        barCategoryGap: '40%',
-        label: {
-          show: true,
-          position: 'right',
-          color: PALETTE.textLight,
-          fontSize: 10,
-          formatter: p => p.value.toLocaleString('es-ES'),
-        },
-        z: 2,
-      },
+      { name: 'Objetivo',  type: 'bar', data: [], barGap: '-100%', barCategoryGap: '40%',
+        itemStyle: { color: 'rgba(255,255,255,0.07)', borderRadius: 4 }, z: 1 },
+      { name: 'Producido', type: 'bar', data: [], barCategoryGap: '40%',
+        label: { show: true, position: 'right', color: PALETTE.textLight, fontSize: 10,
+                 formatter: p => p.value != null ? p.value.toLocaleString('es-ES') : '—' },
+        z: 2 },
     ],
     legend: {
       data: ['Objetivo', 'Producido'],
@@ -584,14 +556,65 @@ function initBarChart() {
       right: 0, top: 0,
     },
     tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      backgroundColor: PALETTE.bgCard,
-      borderColor: PALETTE.gridLine,
+      trigger: 'axis', axisPointer: { type: 'shadow' },
+      backgroundColor: PALETTE.bgCard, borderColor: PALETTE.gridLine,
       textStyle: { color: PALETTE.textLight, fontSize: 12 },
     },
   });
   window.addEventListener('resize', () => barChart && barChart.resize());
+
+  // Cargar datos reales desde la API
+  loadBarChartData();
+}
+
+async function loadBarChartData() {
+  if (!barChart) return;
+  try {
+    const res = await fetch('/api/shifts/active-lines');
+    if (!res.ok) return;
+    const data = await res.json();
+    const activeLines = Array.isArray(data) ? data : (data.lines || []);
+
+    if (activeLines.length === 0) {
+      // No hay turnos activos: mostrar mensaje
+      barChart.setOption({ title: { text: 'Sin turnos activos', left: 'center', top: 'center',
+        textStyle: { color: PALETTE.textDim, fontSize: 12 } } });
+      return;
+    }
+
+    const lineLabels = [];
+    const targets    = [];
+    const produced   = [];
+
+    // Para cada línea activa, obtener KPIs del turno
+    await Promise.all(activeLines.map(async (line) => {
+      try {
+        const kpiRes = await fetch(`/api/kpis/${line.shift_id}/aggregate`);
+        if (!kpiRes.ok) return;
+        const kpi = await kpiRes.json();
+        lineLabels.push(`Línea ${line.line_number}`);
+        targets.push(kpi.target_units || 9600);
+        produced.push({
+          value: kpi.total_units_produced || 0,
+          itemStyle: {
+            color: (kpi.total_units_produced || 0) >= (kpi.target_units || 9600) * 0.95 ? PALETTE.success
+                 : (kpi.total_units_produced || 0) >= (kpi.target_units || 9600) * 0.80 ? PALETTE.warning
+                 : PALETTE.danger,
+            borderRadius: 4,
+          },
+        });
+      } catch { /* silencioso */ }
+    }));
+
+    barChart.setOption({
+      title: undefined,
+      yAxis: { data: lineLabels },
+      series: [
+        { data: targets },
+        { data: produced },
+      ],
+    });
+  } catch { /* silencioso */ }
 }
 
 // ── Donut: distribución tipos de parada ─────────────────────

@@ -1,10 +1,13 @@
 import os
+import secrets
 
 
 class Config:
     DATABASE_PATH: str = os.environ.get("DATABASE_PATH", "opex.db")
     DEBUG: bool = False
-    SECRET_KEY: str = os.environ.get("SECRET_KEY", "opex-dev-secret")
+    # En producción, SECRET_KEY debe estar definida como variable de entorno.
+    # En desarrollo, se genera un secreto aleatorio por sesión si no está configurada.
+    SECRET_KEY: str = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 
 class DevelopmentConfig(Config):

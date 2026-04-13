@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import random
+import sqlite3
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, render_template, request, g
@@ -263,22 +264,24 @@ def _check_and_notify_stopped_steps(
             from site_aggregator import SITES, DEFAULT_SITE as _DEFAULT_SITE
             _log_db = _sqlite3.connect(SITES[_DEFAULT_SITE]["db_path"])
             _log_db.row_factory = _sqlite3.Row
-            recent = _log_db.execute(
-                """SELECT id FROM notification_log
-                   WHERE event_type = 'vsm_stopped'
-                     AND line_number = ?
-                     AND site_id = ?
-                     AND title LIKE ?
-                     AND sent_at >= datetime('now', ?)
-                   LIMIT 1""",
-                (
-                    str(line_number),
-                    site_id,
-                    f"%{step_name}%",
-                    f"-{NOTIFY_COOLDOWN_MIN} minutes",
-                ),
-            ).fetchone()
-            _log_db.close()
+            try:
+                recent = _log_db.execute(
+                    """SELECT id FROM notification_log
+                       WHERE event_type = 'vsm_stopped'
+                         AND line_number = ?
+                         AND site_id = ?
+                         AND title LIKE ?
+                         AND sent_at >= datetime('now', ?)
+                       LIMIT 1""",
+                    (
+                        str(line_number),
+                        site_id,
+                        f"%{step_name}%",
+                        f"-{NOTIFY_COOLDOWN_MIN} minutes",
+                    ),
+                ).fetchone()
+            finally:
+                _log_db.close()
         except Exception:
             recent = None
 
@@ -441,12 +444,10 @@ def api_vsm_compare():
             continue
         try:
             conn = get_site_connection(site_id)
+            # Asegurar row_factory antes de pasar la conexión a _seed_vsm
+            conn.row_factory = sqlite3.Row
             # Asegurar que existen datos de ejemplo para esta línea
-            db_proxy = type("Proxy", (), {
-                "execute": conn.execute,
-                "commit": conn.commit,
-            })()
-            _seed_vsm(db_proxy, lines=[line])
+            _seed_vsm(conn, lines=[line])
 
             rows = conn.execute(
                 """

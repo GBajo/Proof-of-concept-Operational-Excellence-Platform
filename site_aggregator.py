@@ -52,6 +52,16 @@ SITES: dict[str, dict] = {
         "target_oee": 85,
         "lines":      [1, 2, 3],
     },
+    "seishin": {
+        "name":       "Seishin",
+        "country":    "Japan",
+        "flag":       "🇯🇵",
+        "timezone":   "Asia/Tokyo",
+        "utc_offset": 9,
+        "db_path":    "site_seishin.db",
+        "target_oee": 90,
+        "lines":      [1, 2, 3],
+    },
 }
 
 DEFAULT_SITE = "alcobendas"
@@ -187,7 +197,9 @@ def get_cross_site_comparison(metric: str = "oee", days: int = 14) -> dict:
                     "quality":      oee_data["quality"],
                     "units":        r["units"] or 0,
                     "downtime":     round(r["downtime"] or 0, 1),
-                }.get(metric, oee_data["oee"])
+                }.get(metric)  # devuelve None si la métrica no existe, no silencia con OEE
+                if val is None:
+                    val = oee_data.get(metric, 0)  # último recurso: 0, no valor incorrecto
                 series.append({"date": r["date"], "value": val})
 
             result[site_id] = {

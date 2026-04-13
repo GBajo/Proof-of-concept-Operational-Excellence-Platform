@@ -230,6 +230,54 @@ SITE_CFG: dict[str, dict] = {
         },
         "co_comment": "Cambio formato completato in {min} minuti",
     },
+
+    "seishin": {
+        "operators": [
+            ("Tanaka Hiroshi",   "operator",    "SEI-001"),
+            ("Yamamoto Yuki",    "operator",    "SEI-002"),
+            ("Nakamura Kenji",   "operator",    "SEI-003"),
+            ("Suzuki Aiko",      "quality",     "SEI-004"),
+            ("Ito Masashi",      "maintenance", "SEI-005"),
+            ("Watanabe Emi",     "supervisor",  "SEI-006"),
+        ],
+        "downtime_range":  (8, 25),    # Best-in-class: minimal downtime (TPM culture)
+        "speed_range":     (1080, 1220),
+        "reject_rate":     0.010,
+        "co_range":        (14, 24),   # SMED-driven short changeovers
+        "comments": {
+            "production": [
+                "段取り替え完了: {min}分 — 標準手順通り",
+                "ライン速度調整完了、異常なし",
+                "ロット切替え順調に完了",
+                "包装ステーションの軽微な詰まり解消: {min}分",
+                "生産目標達成、シフト好調",
+                "かんばん補充完了、在庫問題なし",
+                "TPM自主保全チェック完了",
+            ],
+            "quality": [
+                "重量検査: 全品規格内 — 不合格ゼロ",
+                "シリアル化確認: 100%合格",
+                "ラベル検査: 異常なし",
+                "密封テスト: 全品合格",
+                "ポカヨケ装置正常動作確認",
+                "一発合格率 99.0% — 目標達成",
+            ],
+            "maintenance": [
+                "定期保全完了 — スケジュール通り",
+                "コンベアベルト張力調整 (予防措置)",
+                "充填ノズル清掃、異常なし",
+                "予知保全アラート対応 — ベアリング交換",
+                "5S点検実施: エリアスコア 4.8/5",
+            ],
+            "safety": [
+                "安全点検完了、全項目合格",
+                "5S監査合格 — エリアスコア 4.9/5",
+                "保護具確認: 全員適切着用",
+                "ヒヤリハット報告書提出: 是正措置済み",
+            ],
+        },
+        "co_comment": "段取り替え完了: {min}分 — SMED標準手順",
+    },
 }
 
 
@@ -416,6 +464,59 @@ CREATE TABLE IF NOT EXISTS notification_log (
 CREATE INDEX IF NOT EXISTS idx_notif_log_sent_at    ON notification_log(sent_at);
 CREATE INDEX IF NOT EXISTS idx_notif_log_event_type ON notification_log(event_type);
 CREATE INDEX IF NOT EXISTS idx_notif_log_status     ON notification_log(status);
+CREATE TABLE IF NOT EXISTS alert_rules (
+    id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    name                   TEXT NOT NULL,
+    metric                 TEXT NOT NULL
+                           CHECK(metric IN ('oee','reject_rate','downtime','line_speed','cycle_time')),
+    operator               TEXT NOT NULL
+                           CHECK(operator IN ('less_than','greater_than','equals')),
+    threshold_value        REAL NOT NULL,
+    severity               TEXT NOT NULL DEFAULT 'warning'
+                           CHECK(severity IN ('info','warning','critical')),
+    active                 INTEGER NOT NULL DEFAULT 1,
+    notification_channels  TEXT NOT NULL DEFAULT '["app"]',
+    cooldown_minutes       INTEGER NOT NULL DEFAULT 30,
+    created_at             TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS alert_rule_cooldowns (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    rule_id         INTEGER NOT NULL,
+    site_id         TEXT NOT NULL,
+    line_number     INTEGER NOT NULL,
+    last_triggered  TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(rule_id, site_id, line_number)
+);
+CREATE TABLE IF NOT EXISTS alerts (
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id                 TEXT NOT NULL,
+    line_number             INTEGER NOT NULL,
+    timestamp               TEXT NOT NULL DEFAULT (datetime('now')),
+    source                  TEXT NOT NULL DEFAULT 'rule'
+                            CHECK(source IN ('rule','ai')),
+    rule_id                 INTEGER,
+    severity                TEXT NOT NULL DEFAULT 'warning'
+                            CHECK(severity IN ('info','warning','critical')),
+    title                   TEXT NOT NULL,
+    description             TEXT NOT NULL,
+    metric_name             TEXT NOT NULL DEFAULT '',
+    metric_value            REAL,
+    threshold_value         REAL,
+    status                  TEXT NOT NULL DEFAULT 'active'
+                            CHECK(status IN ('active','acknowledged','resolved')),
+    acknowledged_by         TEXT,
+    acknowledged_at         TEXT,
+    resolved_at             TEXT,
+    notification_sent_app   INTEGER NOT NULL DEFAULT 0,
+    notification_sent_teams INTEGER NOT NULL DEFAULT 0,
+    notification_sent_email INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_alerts_site        ON alerts(site_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_status      ON alerts(status);
+CREATE INDEX IF NOT EXISTS idx_alerts_severity    ON alerts(severity);
+CREATE INDEX IF NOT EXISTS idx_alerts_timestamp   ON alerts(timestamp);
+CREATE INDEX IF NOT EXISTS idx_alerts_rule        ON alerts(rule_id);
+CREATE INDEX IF NOT EXISTS idx_cooldown_rule_site ON alert_rule_cooldowns(rule_id, site_id, line_number);
 """
 
 
@@ -569,14 +670,6 @@ def seed_site(site_id: str, force: bool = False) -> None:
 
     conn.executemany("""
         INSERT INTO comments (shift_id, operator_id, text, timestamp, category, source)
-        VALUES (?,?,?,?,'production','manual')
-    """, [(r[0], r[1], r[2], r[3]) for r in comment_rows])
-
-    # Actualizar categoría correcta (no se puede hacer con executemany fácil)
-    # Reinsertamos con categoría
-    conn.execute("DELETE FROM comments")
-    conn.executemany("""
-        INSERT INTO comments (shift_id, operator_id, text, timestamp, category, source)
         VALUES (?,?,?,?,?,'manual')
     """, comment_rows)
 
@@ -697,7 +790,7 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
             {
                 "line": 2, "cat": "quality",
                 "desc": "Torque closure variability exceeding ±5% spec on capping station",
-                "freq": 3.8, "impact": 8, "status": "in_progress" if False else "investigating",
+                "freq": 3.8, "impact": 8, "status": "in_progress",
                 "first": "2026-01-08", "last": "2026-03-25",
                 "root": "Worn torque clutch coupling combined with ambient temperature variation",
                 "counter": "Replace clutch coupling Q1; implement torque SPC control chart",
@@ -1491,12 +1584,62 @@ def migrate_legacy_db() -> None:
         _safe_print(f"  [ok] Migracion completada")
 
 
+def _seed_alert_rules() -> None:
+    """Inserta reglas de alerta por defecto en la BD del DEFAULT_SITE (una sola vez)."""
+    db_path = SITES[DEFAULT_SITE]["db_path"]
+    conn = sqlite3.connect(db_path)
+    existing = conn.execute("SELECT COUNT(*) FROM alert_rules").fetchone()[0]
+    if existing >= 8:
+        conn.close()
+        return
+
+    rules = [
+        # OEE crítico < 60%
+        ("OEE crítico — por debajo del 60%", "oee", "less_than", 60.0, "critical",
+         '["app","teams","email"]', 60),
+        # OEE bajo < 75%
+        ("OEE bajo — por debajo del 75%", "oee", "less_than", 75.0, "warning",
+         '["app","teams"]', 30),
+        # Tasa de rechazo crítica > 5%
+        ("Tasa de rechazo crítica — superior al 5%", "reject_rate", "greater_than", 5.0, "critical",
+         '["app","teams","email"]', 60),
+        # Tasa de rechazo advertencia > 2%
+        ("Tasa de rechazo elevada — superior al 2%", "reject_rate", "greater_than", 2.0, "warning",
+         '["app"]', 20),
+        # Parada larga > 10 min
+        ("Parada de línea prolongada — más de 10 min", "downtime", "greater_than", 10.0, "critical",
+         '["app","teams","email"]', 45),
+        # Parada corta > 5 min
+        ("Parada de línea — más de 5 min", "downtime", "greater_than", 5.0, "warning",
+         '["app","teams"]', 15),
+        # Velocidad de línea < 80% nominal (se evalúa como % de nominal)
+        ("Velocidad de línea baja — por debajo del 80% del nominal", "line_speed",
+         "less_than", 80.0, "warning", '["app"]', 20),
+        # Tiempo de ciclo VSM > 120% nominal
+        ("Tiempo de ciclo VSM elevado — superior al 120% del nominal", "cycle_time",
+         "greater_than", 120.0, "warning", '["app"]', 15),
+    ]
+
+    conn.execute("DELETE FROM alert_rules")
+    conn.executemany(
+        """INSERT INTO alert_rules
+           (name, metric, operator, threshold_value, severity,
+            notification_channels, cooldown_minutes)
+           VALUES (?,?,?,?,?,?,?)""",
+        rules,
+    )
+    conn.commit()
+    conn.close()
+    _safe_print("  [ok] Reglas de alerta por defecto insertadas")
+
+
 def seed_all_sites(force: bool = False) -> None:
     """Inicializa todas las plantas. Migra opex.db si procede."""
     _safe_print("[ seed_sites ] Iniciando generacion de datos multi-planta...")
     migrate_legacy_db()
     for site_id in SITES:
         seed_site(site_id, force=force)
+    _seed_alert_rules()
     _safe_print("[ seed_sites ] Completado.")
 
 

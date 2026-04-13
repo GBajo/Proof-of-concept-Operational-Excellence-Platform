@@ -24,7 +24,12 @@ from typing import Iterator
 
 # ── Constantes ──────────────────────────────────────────────
 DOCS_DIR    = Path(__file__).parent / "docs"
-DB_PATH     = os.environ.get("DATABASE_PATH", "opex.db")
+try:
+    from site_aggregator import SITES, DEFAULT_SITE as _DEFAULT_SITE
+    _DEFAULT_DB = SITES[_DEFAULT_SITE]["db_path"]
+except Exception:
+    _DEFAULT_DB = "site_alcobendas.db"
+DB_PATH     = os.environ.get("DATABASE_PATH", _DEFAULT_DB)
 CHUNK_WORDS = 500
 OVERLAP_WORDS = 50
 
@@ -206,15 +211,20 @@ def search(query: str, top_k: int = 5,
     conn.row_factory = sqlite3.Row
     words = [w.strip() for w in query.lower().split() if len(w) > 2]
     if not words:
+        conn.close()
         return []
 
-    # Puntuación: número de palabras del query que aparecen en el chunk
+    # Filtrar en BD: solo chunks que contienen al menos una palabra del query
+    like_clauses = " OR ".join("LOWER(chunk_text) LIKE ?" for _ in words)
+    params = [f"%{w}%" for w in words]
     rows = conn.execute(
-        "SELECT id, source_file, source_type, chunk_index, chunk_text "
-        "FROM knowledge_base"
+        f"SELECT id, source_file, source_type, chunk_index, chunk_text "
+        f"FROM knowledge_base WHERE {like_clauses}",
+        params,
     ).fetchall()
     conn.close()
 
+    # Puntuar por número de palabras del query presentes en el chunk
     scored: list[tuple[int, dict]] = []
     for row in rows:
         text_lower = row["chunk_text"].lower()

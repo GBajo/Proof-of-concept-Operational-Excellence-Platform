@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}Historial de Alertas{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h2 class="mb-0"><i class="bi bi-bell-fill text-warning me-2"></i>Historial de Alertas</h2>
+  <a href="{{ url_for('alerts.alert_rules_page') }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-sliders me-1"></i>Gestionar reglas
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-2">
+        <label class="form-label small fw-semibold">Severidad</label>
+        <select name="severity" class="form-select form-select-sm">
+          <option value="">Todas</option>
+          <option value="critical" {% if filt_severity=='critical' %}selected{% endif %}>🔴 Crítica</option>
+          <option value="warning"  {% if filt_severity=='warning'  %}selected{% endif %}>🟡 Aviso</option>
+          <option value="info"     {% if filt_severity=='info'     %}selected{% endif %}>🔵 Info</option>
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label small fw-semibold">Origen</label>
+        <select name="source" class="form-select form-select-sm">
+          <option value="">Todos</option>
+          <option value="rule" {% if filt_source=='rule' %}selected{% endif %}>Regla fija</option>
+          <option value="ai"   {% if filt_source=='ai'   %}selected{% endif %}>IA</option>
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label small fw-semibold">Estado</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">Todos</option>
+          <option value="active"       {% if filt_status=='active'       %}selected{% endif %}>Activa</option>
+          <option value="acknowledged" {% if filt_status=='acknowledged' %}selected{% endif %}>Aceptada</option>
+          <option value="resolved"     {% if filt_status=='resolved'     %}selected{% endif %}>Resuelta</option>
+        </select>
+      </div>
+      <div class="col-sm-1">
+        <label class="form-label small fw-semibold">Línea</label>
+        <select name="line" class="form-select form-select-sm">
+          <option value="">Todas</option>
+          {% for ln in sites[current_site].lines if current_site != 'global' else [] %}
+          <option value="{{ ln }}" {% if filt_line == ln|string %}selected{% endif %}>L{{ ln }}</option>
+          {% else %}
+          <option value="1" {% if filt_line=='1' %}selected{% endif %}>L1</option>
+          <option value="2" {% if filt_line=='2' %}selected{% endif %}>L2</option>
+          <option value="3" {% if filt_line=='3' %}selected{% endif %}>L3</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label small fw-semibold">Desde</label>
+        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ filt_from }}">
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label small fw-semibold">Hasta</label>
+        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ filt_to }}">
+      </div>
+      <div class="col-sm-1">
+        <button type="submit" class="btn btn-primary btn-sm w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Gráficos ECharts -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 fw-semibold">
+        <i class="bi bi-bar-chart-stacked me-1"></i>Alertas por día (últimos 14 días)
+      </div>
+      <div class="card-body p-2">
+        <div id="chartDays" style="height:220px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 fw-semibold">
+        <i class="bi bi-trophy me-1"></i>Top 5 reglas disparadas
+      </div>
+      <div class="card-body p-2">
+        <div id="chartTopRules" style="height:220px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 fw-semibold">
+        <i class="bi bi-clock-history me-1"></i>Tiempo medio resolución
+      </div>
+      <div class="card-body p-2">
+        <div id="chartAvgRes" style="height:220px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla de alertas -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+    <span class="fw-semibold"><i class="bi bi-table me-1"></i>Alertas ({{ alerts|length }})</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Timestamp</th>
+            <th>Sev.</th>
+            <th>Título</th>
+            <th>Línea</th>
+            <th>Métrica</th>
+            <th>Valor</th>
+            <th>Origen</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in alerts %}
+          <tr>
+            <td class="text-nowrap small">{{ a.timestamp[:16] }}</td>
+            <td>
+              {% if a.severity == 'critical' %}
+                <span class="badge bg-danger">🔴 Crítica</span>
+              {% elif a.severity == 'warning' %}
+                <span class="badge bg-warning text-dark">🟡 Aviso</span>
+              {% else %}
+                <span class="badge bg-info text-dark">🔵 Info</span>
+              {% endif %}
+            </td>
+            <td class="small">{{ a.title }}</td>
+            <td class="text-center">L{{ a.line_number }}</td>
+            <td class="small text-muted">{{ a.metric_name }}</td>
+            <td class="small">
+              {% if a.metric_value is not none %}
+                {{ "%.1f"|format(a.metric_value) }}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if a.source == 'ai' %}
+                <span class="badge bg-purple text-white" style="background:#6f42c1!important;">IA</span>
+              {% else %}
+                <span class="badge bg-secondary">Regla</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if a.status == 'active' %}
+                <span class="badge bg-danger">Activa</span>
+              {% elif a.status == 'acknowledged' %}
+                <span class="badge bg-warning text-dark">Aceptada</span>
+              {% else %}
+                <span class="badge bg-success">Resuelta</span>
+              {% endif %}
+            </td>
+            <td class="text-nowrap">
+              {% if a.status == 'active' %}
+              <button class="btn btn-xs btn-outline-warning py-0 px-1 me-1"
+                      onclick="ackAlert({{ a.id }})" title="Aceptar">
+                <i class="bi bi-check"></i>
+              </button>
+              {% endif %}
+              {% if a.status in ('active', 'acknowledged') %}
+              <button class="btn btn-xs btn-outline-success py-0 px-1"
+                      onclick="resolveAlert({{ a.id }})" title="Resolver">
+                <i class="bi bi-check-all"></i>
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="text-center text-muted py-4">No hay alertas con los filtros actuales.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Gráfico alertas por día ───────────────────────────────────────────────────
+(function() {
+  const raw = {{ chart_days | safe }};
+  if (!raw.length) return;
+  const days     = raw.map(r => r.day);
+  const critical = raw.map(r => r.critical || 0);
+  const warning  = raw.map(r => r.warning  || 0);
+  const info     = raw.map(r => r.info     || 0);
+
+  echarts.init(document.getElementById('chartDays')).setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: ['Crítica','Aviso','Info'], bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { top: 10, bottom: 40, left: 40, right: 10 },
+    xAxis: { type: 'category', data: days, axisLabel: { fontSize: 10, rotate: 30 } },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [
+      { name: 'Crítica', type: 'bar', stack: 'total', data: critical,
+        itemStyle: { color: '#dc3545' } },
+      { name: 'Aviso',   type: 'bar', stack: 'total', data: warning,
+        itemStyle: { color: '#ffc107' } },
+      { name: 'Info',    type: 'bar', stack: 'total', data: info,
+        itemStyle: { color: '#0dcaf0' } },
+    ],
+  });
+})();
+
+// ── Top reglas ───────────────────────────────────────────────────────────────
+(function() {
+  const raw = {{ top_rules | safe }};
+  if (!raw.length) {
+    document.getElementById('chartTopRules').innerHTML =
+      '<p class="text-muted text-center small pt-4">Sin datos</p>';
+    return;
+  }
+  echarts.init(document.getElementById('chartTopRules')).setOption({
+    tooltip: { trigger: 'item' },
+    grid: { top: 5, bottom: 5, left: 5, right: 5 },
+    yAxis: { type: 'category', data: raw.map(r => r.name.length > 25 ? r.name.slice(0,25)+'…' : r.name),
+             axisLabel: { fontSize: 10 } },
+    xAxis: { type: 'value', minInterval: 1 },
+    series: [{
+      type: 'bar', data: raw.map(r => r.cnt),
+      label: { show: true, position: 'right', fontSize: 10 },
+      itemStyle: { color: '#0d6efd' },
+    }],
+  });
+})();
+
+// ── Tiempo medio resolución ──────────────────────────────────────────────────
+(function() {
+  const raw = {{ avg_res | safe }};
+  if (!raw.length) {
+    document.getElementById('chartAvgRes').innerHTML =
+      '<p class="text-muted text-center small pt-4">Sin datos</p>';
+    return;
+  }
+  const colorMap = { critical: '#dc3545', warning: '#ffc107', info: '#0dcaf0' };
+  echarts.init(document.getElementById('chartAvgRes')).setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} min' },
+    series: [{
+      type: 'pie', radius: ['40%','70%'],
+      data: raw.map(r => ({
+        name: r.severity,
+        value: Math.round(r.avg_minutes || 0),
+        itemStyle: { color: colorMap[r.severity] || '#aaa' },
+      })),
+      label: { fontSize: 11 },
+    }],
+  });
+})();
+
+// ── Acciones ─────────────────────────────────────────────────────────────────
+async function ackAlert(id) {
+  await fetch(`/api/alerts/${id}/acknowledge`, { method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ acknowledged_by: 'usuario' }) });
+  location.reload();
+}
+async function resolveAlert(id) {
+  await fetch(`/api/alerts/${id}/resolve`, { method: 'POST' });
+  location.reload();
+}
+</script>
+{% endblock %}
