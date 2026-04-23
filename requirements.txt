@@ -1,6 +1,6 @@
 Flask==3.0.3
 pdfplumber==0.11.0
-PyPDF2==3.0.1
+PyPDF2==3.0.1        # fallback para extracción PDF cuando pdfplumber falla
 python-docx==1.1.2
 openpyxl==3.1.5
 requests==2.32.3

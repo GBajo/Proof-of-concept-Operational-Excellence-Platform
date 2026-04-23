@@ -10,6 +10,8 @@ bp = Blueprint("assistant", __name__)
 def suggest():
     """
     Recibe un comentario y devuelve una sugerencia del asistente.
+    Usa el Orchestrator para clasificar el mensaje, activar agentes
+    especializados y sintetizar una respuesta final.
     Body JSON: { shift_id, comment_id (opcional), query, category }
     """
     data = request.get_json(silent=True) or {}
@@ -18,46 +20,56 @@ def suggest():
     query      = (data.get("query") or "").strip()
     category   = data.get("category", "production")
 
-    if not shift_id or not query:
-        return jsonify({"error": "shift_id y query son obligatorios"}), 400
+    if not query:
+        return jsonify({"error": "query es obligatorio"}), 400
 
     try:
-        from retriever import get_context
-        from llm_client import ask_assistant
+        from agents.orchestrator import Orchestrator
 
         site_id = getattr(g, "current_site", DEFAULT_SITE)
         db_path = SITES.get(site_id, SITES[DEFAULT_SITE])["db_path"]
-        chunks  = get_context(query, top_k=4, db_path=db_path)
-        result  = ask_assistant(query, chunks, category=category)
 
-        sources = list({c["source_file"] for c in chunks}) if chunks else []
-
-        db = get_db()
-        cur = db.execute(
-            """INSERT INTO assistant_suggestions
-               (shift_id, comment_id, query_text, context_sources,
-                response_text, model_used, source)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (
-                shift_id,
-                comment_id,
-                query,
-                json.dumps(sources, ensure_ascii=False),
-                result["text"],
-                result.get("model", "unknown"),
-                result.get("source", "mock"),
-            ),
+        orchestrator = Orchestrator(site_id=site_id, db_path=db_path)
+        result = orchestrator.run(
+            user_message=query,
+            shift_id=shift_id,
+            comment_id=comment_id,
+            category=category,
         )
-        db.commit()
-        suggestion_id = cur.lastrowid
+
+        sources = result.get("sources", [])
+        suggestion_id = None
+
+        # Solo guardar en BD si hay turno activo
+        if shift_id:
+            db = get_db()
+            cur = db.execute(
+                """INSERT INTO assistant_suggestions
+                   (shift_id, comment_id, query_text, context_sources,
+                    response_text, model_used, source)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    shift_id,
+                    comment_id,
+                    query,
+                    json.dumps(sources, ensure_ascii=False),
+                    result["text"],
+                    result.get("model", "unknown"),
+                    result.get("source", "mock"),
+                ),
+            )
+            db.commit()
+            suggestion_id = cur.lastrowid
 
         return jsonify({
-            "id":       suggestion_id,
-            "text":     result["text"],
-            "sources":  sources,
-            "model":    result.get("model", "unknown"),
-            "source":   result.get("source", "mock"),
-            "error":    result.get("error"),
+            "id":          suggestion_id,
+            "text":        result["text"],
+            "sources":     sources,
+            "model":       result.get("model", "unknown"),
+            "source":      result.get("source", "mock"),
+            "agents_used": result.get("agents_used", []),
+            "reasoning":   result.get("reasoning"),
+            "error":       result.get("error"),
         }), 201
 
     except Exception as e:

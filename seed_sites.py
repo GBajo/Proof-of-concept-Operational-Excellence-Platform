@@ -49,96 +49,141 @@ PHARMA_STEPS = [
 
 SITE_CFG: dict[str, dict] = {
     "alcobendas": {
+        # 3 operadores por línea (L1: blísteres, L2: viales, L3: sobres)
+        # + 1 calidad + 1 mantenimiento + 1 supervisor = 12 en total
         "operators": [
-            ("Pedro García",    "operator",    "ALB-001"),
-            ("María López",     "operator",    "ALB-002"),
-            ("Carlos Martínez", "operator",    "ALB-003"),
-            ("Ana Rodríguez",   "quality",     "ALB-004"),
-            ("José Fernández",  "maintenance", "ALB-005"),
-            ("Isabel Torres",   "supervisor",  "ALB-006"),
+            # Línea 1 — blísteres
+            ("Pedro García",      "operator",    "ALB-001"),
+            ("Marta Sánchez",     "operator",    "ALB-002"),
+            ("Javier Ruiz",       "operator",    "ALB-003"),
+            # Línea 2 — viales
+            ("María López",       "operator",    "ALB-004"),
+            ("Carlos Martínez",   "operator",    "ALB-005"),
+            ("Lucía Herrero",     "operator",    "ALB-006"),
+            # Línea 3 — sobres
+            ("Raúl Moreno",       "operator",    "ALB-007"),
+            ("Cristina Jiménez",  "operator",    "ALB-008"),
+            ("Sergio Navarro",    "operator",    "ALB-009"),
+            # Roles de soporte
+            ("Ana Rodríguez",     "quality",     "ALB-010"),
+            ("José Fernández",    "maintenance", "ALB-011"),
+            ("Isabel Torres",     "supervisor",  "ALB-012"),
         ],
-        "downtime_range":  (22, 52),   # min/turno
-        "speed_range":     (960, 1175),
+        # OEE objetivo ~82%: Disponibilidad 92%, Rendimiento 91%, Calidad 98%
+        # Problema recurrente de atasco en etiquetadora → downtime elevado
+        "downtime_range":  (25, 58),   # min/turno — atasco etiquetadora aumenta paradas
+        "speed_range":     (940, 1155),
         "reject_rate":     0.020,
-        "co_range":        (38, 58),   # min changeover
+        "co_range":        (45, 68),   # min changeover — cambios de formato lentos
         "comments": {
             "production": [
-                "Atasco en transportador de blísteres, solucionado en {min} min",
-                "Ajuste de velocidad de línea completado sin incidencias",
-                "Cambio de lote iniciado sin anomalías",
-                "Velocidad reducida por acumulación en estuchado",
-                "Turno con buen ritmo de producción, sin paradas mayores",
-                "Recuperación tras micro-parada en selladora",
+                "Atasco en etiquetadora automática — parada de {min} min, reinicio manual",
+                "Cambio de formato L{min} completado con retraso: piezas no preconfiguradas",
+                "Atasco recurrente en rodillos de avance de etiquetadora, limpieza correctiva",
+                "Velocidad reducida al 85% por acumulación en estuchadora, se recupera en turno",
+                "Cambio de lote iniciado sin anomalías, sin paradas significativas",
+                "Recuperación tras micro-parada en selladora; velocidad nominal al cabo de 10 min",
+                "Turno con buen ritmo de producción tras resolver atasco inicial en etiquetadora",
+                "Cambio de formato lento ({min} min) — herramientas no preasignadas en carro",
             ],
             "quality": [
                 "Calibración de balanza completada, dentro de especificación",
-                "Control de peso: 2 unidades fuera de rango, rechazadas",
+                "Control de peso: 2 unidades fuera de rango (±2%), rechazadas y documentadas",
                 "Verificación de serialización correcta al 100%",
-                "Revisión de etiquetas: sin anomalías detectadas",
-                "Control de hermeticidad conforme",
-                "Registro de temperatura de sellado dentro de rango",
+                "Revisión de etiquetas: adhesivo insuficiente en 3 unidades, corregido",
+                "Control de hermeticidad conforme en blísteres de turno",
+                "Registro de temperatura de sellado dentro de rango especificado",
+                "Inspección de cierre de viales: todo conforme, sin desviaciones",
             ],
             "maintenance": [
-                "Lubricación de cadena transportadora realizada",
-                "Ajuste de sensor de nivel de llenado",
-                "Fallo intermitente en selladora corregido",
-                "Cambio de O-ring en bomba de llenado",
-                "Mantenimiento preventivo de etiquetadora completado",
-                "Tensión de correa ajustada en encajadora",
+                "Limpieza de rodillos de avance de etiquetadora completada (cada 4h según SOP)",
+                "Sustitución de guía de papel en etiquetadora — desgaste detectado en inspección",
+                "Ajuste de sensor de nivel de llenado en viales, verificado OK",
+                "Lubricación de cadena transportadora realizada según plan preventivo",
+                "Cambio de O-ring en bomba de llenado (desgaste en inspección de turno)",
+                "Tensión de correa ajustada en encajadora — vibración reducida",
+                "Fallo intermitente en selladora corregido; se monitoriza en próximo turno",
             ],
             "safety": [
-                "Revisión de EPIs completada, todo conforme",
-                "Zona de trabajo limpia y ordenada — 5S OK",
-                "Derrame menor en zona de llenado: limpiado correctamente",
+                "Revisión de EPIs completada al inicio de turno, todo conforme",
+                "Zona de trabajo limpia y ordenada — 5S OK tras cambio de formato",
+                "Derrame menor en zona de llenado: contenido, limpiado y notificado",
             ],
         },
-        "co_comment": "Cambio de formato completado en {min} minutos",
+        "co_comment": "Cambio de formato completado en {min} min — tiempo superior al objetivo (<40 min)",
     },
 
     "indianapolis": {
+        # 3 operators per line (L1: autoinjectors, L2: insulin pens, L3: vials)
+        # + 1 quality + 1 maintenance + 1 supervisor = 12 total
         "operators": [
-            ("John Smith",      "operator",    "IND-001"),
-            ("Emily Johnson",   "operator",    "IND-002"),
-            ("Michael Davis",   "operator",    "IND-003"),
-            ("Sarah Wilson",    "quality",     "IND-004"),
-            ("Robert Brown",    "maintenance", "IND-005"),
-            ("Jennifer Taylor", "supervisor",  "IND-006"),
+            # Line 1 — autoinjectors
+            ("James Carter",     "operator",    "IND-001"),
+            ("Emily Johnson",    "operator",    "IND-002"),
+            ("Michael Davis",    "operator",    "IND-003"),
+            # Line 2 — insulin pens
+            ("Sarah Wilson",     "operator",    "IND-004"),
+            ("Robert Brown",     "operator",    "IND-005"),
+            ("Patricia Moore",   "operator",    "IND-006"),
+            # Line 3 — vials
+            ("Christopher Lee",  "operator",    "IND-007"),
+            ("Amanda Harris",    "operator",    "IND-008"),
+            ("Daniel Thompson",  "operator",    "IND-009"),
+            # Support roles
+            ("Karen Martinez",   "quality",     "IND-010"),
+            ("Steven Anderson",  "maintenance", "IND-011"),
+            ("Jennifer Taylor",  "supervisor",  "IND-012"),
         ],
-        "downtime_range":  (10, 30),   # Best performer: low downtime
-        "speed_range":     (1060, 1200),
+        # OEE target ~88%: Availability 95%, Performance 94%, Quality 98.5%
+        # Benchmark site for changeover — SMED fully deployed (avg 45 min)
+        # Recurring issue: intermittent 2D camera read errors in serialization module
+        "downtime_range":  (12, 32),   # min/12h shift
+        "speed_range":     (1055, 1195),
         "reject_rate":     0.015,
-        "co_range":        (16, 28),   # SMED leader: short changeovers
+        "co_range":        (38, 55),   # benchmark changeover ~45 min average
+        # ── Indianapolis-specific: 12-hour shifts (day 06:00-18:00, night 18:00-06:00) ──
+        "shift_config":    {"day": 6, "night": 18},
+        "shift_hours":     12,
+        "kpi_hours":       [3, 7, 11],   # 3 readings spread across 12h shift
+        "target_units":    14400,
+        "planned_time_min": 720.0,
+        "comment_range":   (15, 700),
         "comments": {
             "production": [
-                "SMED changeover completed in {min}min — within target",
-                "Color-coded changeover kits used, smooth transition",
-                "Line running at nominal speed, no issues",
-                "Kaizen improvement applied to labeling station today",
-                "Visual management board updated, all targets green",
-                "Production ahead of schedule — excellent shift",
-                "Pre-staged changeover kit ready for next format",
+                "SMED changeover completed in {min} min — color-coded kit, within target",
+                "Pre-staged changeover kit ready, transition smooth and on time",
+                "Serialization module: 2D camera read error — line stopped {min} min, camera cleaned and restarted",
+                "Intermittent serialization reject at L{min} station — 4 units reprocessed, root cause under review",
+                "Line running at nominal speed, all targets green on visual management board",
+                "Production ahead of schedule this shift — excellent teamwork",
+                "Changeover kit restocked after format change, area 5S verified",
+                "Minor slowdown at filling station resolved — nominal speed recovered in 8 min",
             ],
             "quality": [
-                "Weight check within specification limits — zero rejects",
-                "Serialization verification passed 100%",
-                "SOP v2.3 followed for all inline QC checks",
-                "Hermetic seal test: all units passed",
-                "Label inspection: no anomalies found",
-                "Right First Time 98.5% this shift",
+                "Weight check within spec limits — zero rejects this reading",
+                "Serialization verification: 3 units rejected due to camera misread — reprocessed OK",
+                "Inline QC check per SOP v2.3 — all results within limits",
+                "Hermetic seal test: all autoinjector units passed",
+                "Label adhesion check: all vials compliant",
+                "Right First Time 98.5% this shift — above monthly target",
+                "Torque closure SPC control chart in limits — Cpk 1.41",
             ],
             "maintenance": [
-                "Preventive maintenance completed per schedule",
-                "Conveyor belt tension adjusted proactively",
-                "Filler nozzle cleaned, no leaks detected",
-                "Predictive maintenance alert resolved — bearing replaced",
+                "Serialization camera lens cleaned — adhesion residue found, SOP updated",
+                "Preventive maintenance completed per TPM schedule, no issues found",
+                "Conveyor belt tension adjusted proactively — vibration reduced",
+                "Filling nozzle cleaned, no leaks or residue detected",
+                "Predictive maintenance alert resolved — conveyor bearing replaced",
+                "Changeover kit trolley restocked and verified for next format",
             ],
             "safety": [
-                "Safety walkthrough completed, all clear",
-                "5S audit passed — area score 4.9/5",
-                "PPE check: all operators compliant",
+                "Safety walkthrough completed at shift start — all clear",
+                "5S area audit passed — score 4.8/5",
+                "PPE check: all operators compliant before line start",
+                "Near-miss report submitted: spillage at filling station, cleaned immediately",
             ],
         },
-        "co_comment": "SMED changeover: {min}min — color-coded kit, SOP v2.3",
+        "co_comment": "SMED changeover: {min} min — color-coded kit, SOP v2.3 followed",
     },
 
     "fegersheim": {
@@ -301,7 +346,7 @@ CREATE TABLE IF NOT EXISTS shifts (
     status         TEXT NOT NULL DEFAULT 'active'
                    CHECK(status IN ('active','completed','interrupted')),
     shift_type     TEXT NOT NULL DEFAULT 'morning'
-                   CHECK(shift_type IN ('morning','afternoon','night')),
+                   CHECK(shift_type IN ('morning','afternoon','night','day')),
     handover_notes TEXT,
     created_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -517,6 +562,20 @@ CREATE INDEX IF NOT EXISTS idx_alerts_severity    ON alerts(severity);
 CREATE INDEX IF NOT EXISTS idx_alerts_timestamp   ON alerts(timestamp);
 CREATE INDEX IF NOT EXISTS idx_alerts_rule        ON alerts(rule_id);
 CREATE INDEX IF NOT EXISTS idx_cooldown_rule_site ON alert_rule_cooldowns(rule_id, site_id, line_number);
+
+CREATE TABLE IF NOT EXISTS kaizen_reports (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id            TEXT NOT NULL,
+    report_text        TEXT NOT NULL,
+    opportunities_json TEXT NOT NULL DEFAULT '[]',
+    model_used         TEXT NOT NULL DEFAULT 'unknown',
+    source             TEXT NOT NULL DEFAULT 'mock'
+                       CHECK(source IN ('gateway','mock')),
+    generated_at       TEXT NOT NULL DEFAULT (datetime('now')),
+    read_at            TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_kaizen_reports_site ON kaizen_reports(site_id);
+CREATE INDEX IF NOT EXISTS idx_kaizen_reports_ts   ON kaizen_reports(generated_at);
 """
 
 
@@ -572,13 +631,24 @@ def seed_site(site_id: str, force: bool = False) -> None:
         op_ids.append(cur.lastrowid)
     conn.commit()
 
-    operator_ids = op_ids[:3]  # los 3 primeros son operadores de línea
+    # Para Alcobendas: 9 operadores de línea (3 por línea), otros sites: los 3 primeros
+    num_line_ops = len([o for o in cfg["operators"] if o[1] == "operator"])
+    if num_line_ops >= 9:
+        # 3 operadores por línea: L1=op_ids[0:3], L2=op_ids[3:6], L3=op_ids[6:9]
+        line_operators = {1: op_ids[0:3], 2: op_ids[3:6], 3: op_ids[6:9]}
+    else:
+        line_operators = {1: op_ids[:3], 2: op_ids[:3], 3: op_ids[:3]}
 
-    # ── 2. Turnos (14 días × 3 líneas × 3 turnos = 126 por planta) ──
-    now        = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    shift_hrs  = {"morning": 6, "afternoon": 14, "night": 22}
-    categories = (["production"] * 3 + ["quality"] * 2
-                  + ["maintenance"] * 1 + ["safety"] * 1)
+    # ── 2. Turnos (14 días × 3 líneas × N turnos por día) ──
+    now           = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    shift_config  = cfg.get("shift_config", {"morning": 6, "afternoon": 14, "night": 22})
+    shift_hours   = cfg.get("shift_hours", 8)
+    kpi_hours     = cfg.get("kpi_hours", [2, 4, 6])
+    target_units  = cfg.get("target_units", 9600)
+    planned_tmin  = cfg.get("planned_time_min", 480.0)
+    comment_range = cfg.get("comment_range", (15, 455))
+    categories    = (["production"] * 3 + ["quality"] * 2
+                     + ["maintenance"] * 1 + ["safety"] * 1)
 
     shift_rows:   list[tuple] = []
     kpi_rows:     list[tuple] = []
@@ -587,10 +657,10 @@ def seed_site(site_id: str, force: bool = False) -> None:
     for day_offset in range(14, 0, -1):
         day = now - timedelta(days=day_offset)
         for line in [1, 2, 3]:
-            for shift_type, start_hour in shift_hrs.items():
+            for shift_type, start_hour in shift_config.items():
                 start_dt = day.replace(hour=start_hour)
-                end_dt   = start_dt + timedelta(hours=8)
-                op_id    = random.choice(operator_ids)
+                end_dt   = start_dt + timedelta(hours=shift_hours)
+                op_id    = random.choice(line_operators.get(line, op_ids[:3]))
                 dt_min   = random.uniform(*cfg["downtime_range"])
                 co_min   = random.randint(*cfg["co_range"])
                 notes    = cfg["co_comment"].format(min=co_min)
@@ -626,14 +696,14 @@ def seed_site(site_id: str, force: bool = False) -> None:
         start_dt  = datetime.fromisoformat(row[3])
         dt_min    = random.uniform(*cfg["downtime_range"])
         speed     = random.uniform(*cfg["speed_range"])
-        avail_t   = 480.0 - dt_min
+        avail_t   = planned_tmin - dt_min
         units     = int(speed * avail_t / 60 * random.uniform(0.95, 1.05))
         rej_rate  = cfg["reject_rate"] * random.uniform(0.5, 2.0)
         units_rej = int(units * rej_rate)
 
-        # 3 lecturas por turno (h2, h5, h8)
-        for frac_idx, h in enumerate([2, 5, 8]):
-            frac = h / 8.0
+        # 3 lecturas por turno distribuidas uniformemente
+        for h in kpi_hours:
+            frac = h / (shift_hours * 1.0)
             ts   = start_dt + timedelta(hours=h)
             kpi_rows.append((
                 sid,
@@ -642,19 +712,19 @@ def seed_site(site_id: str, force: bool = False) -> None:
                 int(units_rej * frac),
                 round(dt_min * frac, 2),
                 round(speed * random.uniform(0.95, 1.05), 1),
-                9600,
+                target_units,
                 1200.0,
-                480.0,
+                planned_tmin,
             ))
 
-        # 3-5 comentarios por turno
-        num_c = random.randint(3, 5)
+        # 2-3 comentarios por turno
+        num_c = random.randint(2, 3)
         for _ in range(num_c):
             cat      = random.choice(categories)
             template = random.choice(cfg["comments"][cat])
             min_val  = random.randint(*cfg["co_range"])
             text     = template.format(min=min_val) if "{min}" in template else template
-            c_ts     = start_dt + timedelta(minutes=random.randint(15, 455))
+            c_ts     = start_dt + timedelta(minutes=random.randint(*comment_range))
             comment_rows.append((
                 sid, op_id, text,
                 c_ts.isoformat(sep=" ", timespec="seconds"),
@@ -738,86 +808,54 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
     PROBLEMS: dict[str, list[dict]] = {
         "alcobendas": [
             {
-                "line": 1, "cat": "equipment",
-                "desc": "Atasco frecuente en etiquetadora automática",
-                "freq": 4.5, "impact": 8, "status": "investigating",
-                "first": "2025-11-10", "last": "2026-03-24",
-                "root": "Desgaste de guías de papel y acumulación de adhesivo en rodillos de avance",
-                "counter": "Plan de limpieza cada 4 horas y sustitución preventiva de guías cada 2 meses",
+                "line": None, "cat": "equipment",
+                "desc": "Atasco recurrente en etiquetadora automática (todas las líneas)",
+                "freq": 5.2, "impact": 9, "status": "investigating",
+                "first": "2025-10-12", "last": "2026-04-15",
+                "root": "Acumulación de adhesivo en rodillos de avance y desgaste de guías de papel (intervalo de sustitución de 6 meses insuficiente — el desgaste real se produce en ~7 semanas)",
+                "counter": "Limpieza de rodillos cada 4 horas (nuevo SOP); sustitución preventiva de guías cada 7 semanas; alarma en HMI a las 3,5 h de funcionamiento continuo",
+            },
+            {
+                "line": None, "cat": "process",
+                "desc": "Cambios de formato lentos — tiempo medio 58 min (objetivo <40 min)",
+                "freq": 3.0, "impact": 7, "status": "investigating",
+                "first": "2025-09-01", "last": "2026-04-14",
+                "root": "Piezas de formato no identificadas ni preasignadas en carro; 40% de las actividades internas (máquina parada) son convertibles a externas",
+                "counter": "Proyecto SMED en curso: kits de cambio con código de color por formato, estandarización de secuencia SOP v2.0, objectivo <40 min",
             },
             {
                 "line": 2, "cat": "quality",
-                "desc": "Desviación de peso en llenadora: unidades fuera de ±2%",
-                "freq": 2.8, "impact": 9, "status": "investigating",
-                "first": "2025-12-05", "last": "2026-03-22",
-                "root": "Variación en densidad del producto granulado junto con desgaste de la bomba dosificadora",
-                "counter": "Recalibración diaria de la llenadora y sustitución del diafragma de la bomba",
-            },
-            {
-                "line": 3, "cat": "equipment",
-                "desc": "Fallo de sensor en módulo de serialización (lecturas erróneas)",
-                "freq": 3.2, "impact": 9, "status": "open",
-                "first": "2026-01-15", "last": "2026-03-25",
-                "root": "Degradación del sensor de cámara por condensación en cámara limpia",
-                "counter": "Instalación de purga de aire seco en el módulo y sustitución del sensor",
-            },
-            {
-                "line": 1, "cat": "process",
-                "desc": "Tiempo de cambio de formato elevado (>55 min) en línea 1",
-                "freq": 1.5, "impact": 6, "status": "resolved",
-                "first": "2025-10-01", "last": "2026-02-28",
-                "root": "Piezas de formato no identificadas y herramientas no preasignadas",
-                "counter": "SMED aplicado: kits de cambio con código de color, reducción a 38 min promedio",
-            },
-            {
-                "line": None, "cat": "material",
-                "desc": "Retrasos en suministro de material de acondicionamiento (cartón)",
-                "freq": 1.0, "impact": 5, "status": "open",
-                "first": "2026-02-01", "last": "2026-03-20",
-                "root": None,
-                "counter": None,
+                "desc": "Desviación de peso en viales: unidades fuera de ±2% de especificación",
+                "freq": 2.5, "impact": 8, "status": "open",
+                "first": "2025-12-10", "last": "2026-04-12",
+                "root": "Deriva térmica del sensor de la balanza después de 4 horas de funcionamiento continuo; variabilidad de densidad del granulado ±2,1% (especificación: ±1,5%)",
+                "counter": "Recalibración de balanza cada 2 horas; estudio para sustitución por balanza termocompensada; auditoría de proveedor de granulado",
             },
         ],
         "indianapolis": [
             {
+                "line": None, "cat": "equipment",
+                "desc": "Intermittent 2D camera read errors in serialization module (all lines)",
+                "freq": 3.8, "impact": 9, "status": "investigating",
+                "first": "2025-11-18", "last": "2026-04-15",
+                "root": "Adhesive aerosol from labeling station deposits on camera lens over ~5 hours of operation; no scheduled lens cleaning in original SOP; ISO 7 cleanroom humidity fluctuations compound the issue",
+                "counter": "Lens cleaning added to shift SOP every 4 hours; protective air curtain under evaluation; humidity sensor installed in serialization module",
+            },
+            {
                 "line": 1, "cat": "equipment",
-                "desc": "Film breakage in blister sealing machine during high-speed runs",
-                "freq": 2.5, "impact": 7, "status": "investigating",
-                "first": "2025-12-10", "last": "2026-03-23",
-                "root": "Forming station temperature variability causes film stress at >95% speed",
-                "counter": "Install closed-loop temperature control; reduce nominal speed to 92%",
-            },
-            {
-                "line": 2, "cat": "quality",
-                "desc": "Torque closure variability exceeding ±5% spec on capping station",
-                "freq": 3.8, "impact": 8, "status": "in_progress",
-                "first": "2026-01-08", "last": "2026-03-25",
-                "root": "Worn torque clutch coupling combined with ambient temperature variation",
-                "counter": "Replace clutch coupling Q1; implement torque SPC control chart",
-            },
-            {
-                "line": 3, "cat": "material",
-                "desc": "Line stoppages due to material shortage (labels and inserts)",
-                "freq": 1.8, "impact": 6, "status": "open",
-                "first": "2026-02-14", "last": "2026-03-24",
-                "root": None,
-                "counter": None,
+                "desc": "Film breakage in autoinjector blister sealer at >92% nominal speed",
+                "freq": 2.1, "impact": 7, "status": "open",
+                "first": "2026-01-22", "last": "2026-04-13",
+                "root": "Forming station temperature variability (±4°C) induces film stress cracks at high throughput; root cause under investigation",
+                "counter": "Nominal speed capped at 90% as interim measure; closed-loop temperature controller under procurement",
             },
             {
                 "line": 2, "cat": "process",
-                "desc": "Changeover time regression after operator rotation (Q4 2025)",
+                "desc": "Changeover time regression on L2 after Q4 2025 operator rotation",
                 "freq": 1.2, "impact": 5, "status": "resolved",
-                "first": "2025-10-15", "last": "2026-01-31",
-                "root": "New operators unfamiliar with color-coded SMED kit sequence",
-                "counter": "OJT retraining program completed; buddy system for first 10 changeovers",
-            },
-            {
-                "line": 1, "cat": "safety",
-                "desc": "Ergonomic risk at manual palletizing station (repetitive strain)",
-                "freq": 0.5, "impact": 7, "status": "investigating",
-                "first": "2026-01-20", "last": "2026-03-10",
-                "root": "High-frequency repetitive lifting above shoulder height",
-                "counter": "Semi-automatic palletizer investment under evaluation",
+                "first": "2025-10-10", "last": "2026-01-28",
+                "root": "New operators unfamiliar with color-coded SMED kit sequence after rotation; buddy system not activated during onboarding",
+                "counter": "OJT retraining completed; mandatory buddy pairing for first 10 changeovers; resolved January 2026",
             },
         ],
         "fegersheim": [
@@ -929,42 +967,46 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
     INITIATIVES: dict[str, list[dict]] = {
         "alcobendas": [
             {
-                "line": 1, "title": "Reducción de paradas por atasco en etiquetadora L1",
-                "desc": "Proyecto A3 para eliminar las paradas recurrentes causadas por atascos en la etiquetadora automática de la línea 1.",
+                "line": None,
+                "title": "A3: Eliminación de atascos en etiquetadora automática",
+                "desc": "Proyecto A3 para eliminar las paradas recurrentes por atasco en la etiquetadora automática en todas las líneas de Alcobendas. Problema principal de OEE de la planta.",
                 "method": "A3", "status": "completed", "owner": "Isabel Torres",
-                "start": "2025-11-15", "target": "2026-02-28", "completion": "2026-02-20",
-                "benefit_exp": "Reducción de paradas no planificadas un 80%, recuperando ~3h/semana de producción",
-                "benefit_act": "Paradas reducidas de 4,5/semana a 0,8/semana. Recuperadas 2,7 h/semana.",
+                "start": "2025-10-20", "target": "2026-02-28", "completion": "2026-02-18",
+                "benefit_exp": "Reducción de atascos un 85%, recuperando ≥4 h/semana de producción perdida",
+                "benefit_act": "Atascos reducidos de 5,2/semana a 0,9/semana. Recuperadas 3,8 h/semana de producción. OEE +1,2 pp.",
                 "linked_prob_idx": 0,
             },
             {
-                "line": None, "title": "Kaizen: Reducción de tiempo de limpieza entre lotes",
-                "desc": "Evento Kaizen de 3 días para reducir el tiempo de limpieza CIP/SIP entre lotes de diferente producto.",
-                "method": "Kaizen", "status": "planned", "owner": "Pedro García",
-                "start": "2026-04-07", "target": "2026-04-09", "completion": None,
-                "benefit_exp": "Reducción del 30% del tiempo de limpieza (de 4h a 2,8h por cambio de lote)",
+                "line": None,
+                "title": "SMED: Reducción del tiempo de cambio de formato (<40 min)",
+                "desc": "Proyecto SMED para reducir el tiempo de cambio de formato de 58 min a menos de 40 min en todas las líneas. Incluye kits de cambio con código de color y estandarización de secuencia.",
+                "method": "A3", "status": "in_progress", "owner": "Pedro García",
+                "start": "2026-02-03", "target": "2026-06-30", "completion": None,
+                "benefit_exp": "Reducción del tiempo de cambio de 58 a <40 min; recuperar ≥3 h/semana de capacidad productiva",
                 "benefit_act": None,
-                "linked_prob_idx": None,
+                "linked_prob_idx": 1,
             },
         ],
         "indianapolis": [
             {
-                "line": 2, "title": "DMAIC: Variabilidad en torque de cierre — Capping L2",
-                "desc": "Proyecto DMAIC para reducir la variabilidad en el torque de cierre de la línea 2 que genera rechazos y reclamaciones de cliente.",
-                "method": "DMAIC", "status": "in_progress", "owner": "Jennifer Taylor",
-                "start": "2026-01-15", "target": "2026-05-15", "completion": None,
-                "benefit_exp": "Reducir variabilidad de torque de ±8% a ±3%; eliminar rechazos por cierre defectuoso",
-                "benefit_act": None,
-                "linked_prob_idx": 1,
+                "line": None,
+                "title": "SMED: Changeover Standardization — Global Best Practice (45 min benchmark)",
+                "desc": "SMED project to reduce and standardize format changeover time across all 3 lines. Indianapolis established as the global benchmark site. Methodology transferable to all network plants.",
+                "method": "A3", "status": "completed", "owner": "Jennifer Taylor",
+                "start": "2025-06-01", "target": "2025-11-30", "completion": "2025-11-20",
+                "benefit_exp": "Reduce average changeover from 72 min to <50 min; establish transferable best practice for the global network",
+                "benefit_act": "Average changeover: 72 min → 45 min (38% reduction). Variability: 55–90 min → 38–55 min. Annual hours recovered: 210 h/year (3 lines). OEE +4.1 pp. Methodology deployed to Alcobendas Q1 2026.",
+                "linked_prob_idx": 2,
             },
             {
-                "line": None, "title": "Estandarización de cambio de formato (SMED Best Practice)",
-                "desc": "Documentación y estandarización del proceso SMED que posiciona a Indianapolis como benchmark global en tiempos de changeover.",
-                "method": "A3", "status": "completed", "owner": "Robert Brown",
-                "start": "2025-07-01", "target": "2025-11-30", "completion": "2025-11-15",
-                "benefit_exp": "Reducir changeover promedio de 45 min a <25 min en todas las líneas",
-                "benefit_act": "Changeover promedio 22 min. Ahorro estimado: 180 h/año de producción perdida.",
-                "linked_prob_idx": 3,
+                "line": None,
+                "title": "DMAIC: Elimination of Intermittent Serialization Camera Errors",
+                "desc": "DMAIC project to identify and permanently eliminate the root cause of intermittent 2D camera read errors in the serialization module, which is the primary OEE loss driver across all Indianapolis lines.",
+                "method": "DMAIC", "status": "in_progress", "owner": "Karen Martinez",
+                "start": "2026-01-20", "target": "2026-06-30", "completion": None,
+                "benefit_exp": "Reduce serialization stoppages from 3.8/week to <0.3/week; recover ~60 min/week of lost production; OEE +1.3 pp",
+                "benefit_act": None,
+                "linked_prob_idx": 0,
             },
         ],
         "fegersheim": [
@@ -1012,25 +1054,26 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
     # ── Documentos A3 completos ───────────────────────────────────────────────
     A3_DOCS: dict[str, list[str]] = {
         "alcobendas": [
-            # Doc 0: A3 completado — etiquetadora L1
+            # Doc 0: A3 completado — etiquetadora (todas las líneas)
             """<article class="a3-document">
-<h2>A3: Reducción de paradas por atasco en etiquetadora L1</h2>
-<p><strong>Autor:</strong> Isabel Torres &nbsp;|&nbsp; <strong>Planta:</strong> Alcobendas &nbsp;|&nbsp; <strong>Fecha:</strong> 2025-11-15</p>
+<h2>A3: Eliminación de atascos en etiquetadora automática — Alcobendas</h2>
+<p><strong>Autor:</strong> Isabel Torres &nbsp;|&nbsp; <strong>Planta:</strong> Alcobendas &nbsp;|&nbsp; <strong>Fecha inicio:</strong> 2025-10-20</p>
 <hr>
 <section><h3>1. Background / Contexto</h3>
-<p>La línea 1 de Alcobendas registra de forma recurrente atascos en la etiquetadora automática HERMA 500. Estos eventos generan paradas no planificadas de entre 8 y 22 minutos que impactan directamente en el OEE. Desde noviembre 2025 se registran una media de 4,5 atascos semanales.</p>
+<p>Las tres líneas de Alcobendas (L1-blísteres, L2-viales, L3-sobres) registran de forma recurrente atascos en la etiquetadora automática HERMA 500. Con una frecuencia media de 5,2 atascos semanales entre las tres líneas y una duración media de 18 minutos por evento, este problema representa la mayor pérdida de OEE de la planta. Los atascos se concentran tras 3-4 horas de funcionamiento continuo.</p>
 </section>
 <section><h3>2. Current Condition / Estado Actual</h3>
 <ul>
-<li>Frecuencia media: 4,5 paradas/semana por atasco en etiquetadora</li>
-<li>Duración media por evento: 12 minutos</li>
-<li>Producción perdida estimada: ~54 min/semana (~1.080 unidades/semana a velocidad nominal)</li>
-<li>OEE L1 impactado en ~1,1% por esta causa específica</li>
-<li>Las paradas ocurren principalmente tras 3-4 horas de funcionamiento continuo</li>
+<li>Frecuencia media: 5,2 paradas/semana por atasco en etiquetadora (todas las líneas)</li>
+<li>Duración media por evento: 18 minutos</li>
+<li>Producción perdida estimada: ~94 min/semana (~1.880 unidades/semana a velocidad nominal)</li>
+<li>OEE impactado en ~1,9% por esta causa específica</li>
+<li>Los atascos ocurren principalmente tras 3-4 horas de funcionamiento continuo</li>
+<li>Causa inmediata: etiquetas pegadas o dobladas al pasar por las guías de papel</li>
 </ul>
 </section>
 <section><h3>3. Goal / Objetivo</h3>
-<p>Reducir las paradas por atasco en etiquetadora de 4,5/semana a <strong>≤0,5/semana</strong> antes del 28 de febrero 2026, recuperando ≥2,5 horas de producción semanales.</p>
+<p>Reducir los atascos en etiquetadora de 5,2/semana a <strong>≤0,5/semana</strong> antes del 28 de febrero 2026, recuperando ≥4 horas semanales de producción y mejorando el OEE en al menos +1,5 pp.</p>
 </section>
 <section><h3>4. Root Cause Analysis — Diagrama 5 Por Qué</h3>
 <pre style="background:#f5f5f5;padding:1rem;border-radius:4px;font-size:0.85rem">
@@ -1042,240 +1085,260 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
           → Porque no existe un protocolo de limpieza durante la producción
             ¿Por qué no existe ese protocolo?
               → Porque el manual de operación original no lo contemplaba
-                → ROOT CAUSE: Ausencia de procedimiento de limpieza preventiva en producción
-  → Además: desgaste de guías de papel (guías con tolerancia >0,5mm)
-        ¿Por qué están desgastadas?
-          → Porque el intervalo de sustitución preventiva es de 6 meses pero el desgaste real ocurre a los 2 meses
-            → ROOT CAUSE SECUNDARIA: Frecuencia de sustitución de guías inadecuada
+                → ROOT CAUSE 1: Ausencia de procedimiento de limpieza preventiva en producción
+
+  → Además: desgaste de guías de papel (tolerancia >0,5 mm)
+      ¿Por qué están desgastadas?
+        → Porque el intervalo de sustitución preventiva es de 6 meses
+          pero el desgaste real ocurre en ~7 semanas (volumen real vs. diseño)
+            → ROOT CAUSE 2: Frecuencia de sustitución de guías inadecuada al volumen real de producción
 </pre>
 </section>
 <section><h3>5. Countermeasures / Contramedidas</h3>
 <table border="1" style="border-collapse:collapse;width:100%;font-size:0.85rem">
 <tr><th style="padding:0.4rem">Contramedida</th><th>Responsable</th><th>Fecha</th><th>Estado</th></tr>
-<tr><td style="padding:0.4rem">Implementar limpieza de rodillos cada 4 horas (incluir en SOP)</td><td>Pedro García</td><td>2025-12-01</td><td>✅ Completado</td></tr>
-<tr><td style="padding:0.4rem">Reducir intervalo de sustitución de guías de 6 a 2 meses</td><td>José Fernández</td><td>2025-12-15</td><td>✅ Completado</td></tr>
-<tr><td style="padding:0.4rem">Instalar alarma de aviso preventivo en HMI a las 3,5 h de funcionamiento</td><td>José Fernández</td><td>2026-01-20</td><td>✅ Completado</td></tr>
-<tr><td style="padding:0.4rem">Actualizar SOP-L1-ETQ-003 con nuevas frecuencias de mantenimiento</td><td>Ana Rodríguez</td><td>2026-01-31</td><td>✅ Completado</td></tr>
+<tr><td style="padding:0.4rem">Implementar limpieza de rodillos cada 4 horas (incluir en SOP-ETQ-003)</td><td>Pedro García</td><td>2025-11-10</td><td>✅ Completado</td></tr>
+<tr><td style="padding:0.4rem">Reducir intervalo de sustitución de guías de 6 meses a 7 semanas</td><td>José Fernández</td><td>2025-11-25</td><td>✅ Completado</td></tr>
+<tr><td style="padding:0.4rem">Instalar alarma preventiva en HMI a las 3,5 h de funcionamiento continuo</td><td>José Fernández</td><td>2026-01-15</td><td>✅ Completado</td></tr>
+<tr><td style="padding:0.4rem">Actualizar SOP-ETQ-003 con nuevas frecuencias de mantenimiento</td><td>Ana Rodríguez</td><td>2026-01-31</td><td>✅ Completado</td></tr>
+<tr><td style="padding:0.4rem">Crear stock de guías de recambio en línea (min. 2 juegos por línea)</td><td>José Fernández</td><td>2026-02-15</td><td>✅ Completado</td></tr>
 </table>
 </section>
 <section><h3>6. Implementation Plan</h3>
 <ul>
-<li><strong>Semana 1-2 (Nov 15-29):</strong> Diagnóstico detallado, medición de desgaste de guías, análisis de adhesivo</li>
-<li><strong>Semana 3-4 (Dic 1-15):</strong> Implantación de protocolo de limpieza + sustitución de guías</li>
-<li><strong>Semana 5-8 (Dic 16 - Ene 15):</strong> Seguimiento de métricas, ajuste de protocolo si necesario</li>
-<li><strong>Semana 9-12 (Ene 16 - Feb 15):</strong> Instalación de alarma preventiva en HMI</li>
-<li><strong>Semana 13-15 (Feb 16-28):</strong> Validación de resultados, actualización de SOP, cierre A3</li>
+<li><strong>Sem 1-2 (Oct 20 – Nov 3):</strong> Diagnóstico detallado, medición de desgaste, análisis de adhesivo residual</li>
+<li><strong>Sem 3-6 (Nov 4 – Nov 29):</strong> Implantación protocolo limpieza + sustitución anticipada de guías en las 3 líneas</li>
+<li><strong>Sem 7-12 (Dic – Ene):</strong> Seguimiento de métricas, ajuste de protocolo, instalación alarma HMI</li>
+<li><strong>Sem 13-17 (Feb):</strong> Validación de resultados, actualización de SOP, cierre A3</li>
 </ul>
 </section>
 <section><h3>7. Follow-up / Seguimiento</h3>
 <p>KPIs de seguimiento semanales:</p>
 <ul>
-<li>Número de atascos/semana (objetivo ≤0,5)</li>
-<li>Tiempo perdido por atascos/semana (objetivo ≤6 min)</li>
-<li>OEE L1 mensual (objetivo +1,1 pp vs baseline)</li>
+<li>Número de atascos/semana por línea (objetivo ≤0,5 total)</li>
+<li>Tiempo perdido por atascos/semana (objetivo ≤9 min)</li>
+<li>OEE mensual por línea (objetivo +1,5 pp vs. baseline)</li>
 </ul>
 </section>
 <section><h3>8. Results / Resultados</h3>
-<p style="background:#d4edda;padding:0.75rem;border-radius:4px">✅ <strong>Proyecto completado el 20 de febrero 2026.</strong></p>
+<p style="background:#d4edda;padding:0.75rem;border-radius:4px">✅ <strong>Proyecto completado el 18 de febrero 2026.</strong></p>
 <ul>
-<li>Atascos/semana: de 4,5 → <strong>0,8</strong> (reducción del 82%)</li>
-<li>Tiempo perdido/semana: de 54 min → <strong>9,6 min</strong></li>
-<li>Producción recuperada: <strong>2,7 h/semana (~3.240 unidades)</strong></li>
-<li>OEE L1: impacto positivo de +0,95 pp</li>
+<li>Atascos/semana: de 5,2 → <strong>0,9</strong> (reducción del 83%)</li>
+<li>Tiempo perdido/semana: de 94 min → <strong>16 min</strong></li>
+<li>Producción recuperada: <strong>3,8 h/semana (~4.560 unidades)</strong></li>
+<li>OEE: impacto positivo de <strong>+1,2 pp</strong></li>
 </ul>
 </section>
 </article>""",
-            # Doc 1: Kaizen limpieza (planned — sin resultados)
+            # Doc 1: SMED cambio formato (in_progress)
             """<article class="a3-document">
-<h2>Kaizen: Reducción de tiempo de limpieza entre lotes</h2>
-<p><strong>Autor:</strong> Pedro García &nbsp;|&nbsp; <strong>Planta:</strong> Alcobendas &nbsp;|&nbsp; <strong>Fecha:</strong> 2026-03-15</p>
+<h2>SMED: Reducción del tiempo de cambio de formato (&lt;40 min) — Alcobendas</h2>
+<p><strong>Autor:</strong> Pedro García &nbsp;|&nbsp; <strong>Planta:</strong> Alcobendas &nbsp;|&nbsp; <strong>Fecha inicio:</strong> 2026-02-03</p>
 <hr>
 <section><h3>1. Background / Contexto</h3>
-<p>El tiempo de limpieza CIP/SIP entre lotes de diferente producto en Alcobendas es actualmente de 4 horas. Este tiempo impacta significativamente en el OEE y en la capacidad productiva disponible, especialmente en semanas con alta rotación de productos.</p>
+<p>El tiempo de cambio de formato en Alcobendas es actualmente de 58 minutos de media, muy por encima del objetivo de 40 minutos y del benchmark interno de Indianapolis (22 minutos). Los cambios de formato son la segunda mayor causa de pérdida de OEE en la planta, con una frecuencia de ~3 cambios/semana por línea.</p>
 </section>
 <section><h3>2. Current Condition / Estado Actual</h3>
 <ul>
-<li>Tiempo de limpieza actual: 4 horas por cambio de lote</li>
-<li>Frecuencia media de cambios: 2,5 por semana</li>
-<li>Tiempo perdido total: ~10 h/semana de capacidad productiva</li>
-<li>Benchmark interno (Indianapolis): 2,2 horas de limpieza</li>
+<li>Tiempo medio de cambio de formato: 58 min (rango: 45–68 min)</li>
+<li>OEE pérdida por changeovers: ~2,8% anual</li>
+<li>~3 cambios/semana/línea = ~174 min/semana perdidos por línea</li>
+<li>Sin kits de cambio estandarizados — operarios buscan piezas durante el cambio (+20 min)</li>
+<li>Benchmark interno: Indianapolis 22 min (SMED consolidado)</li>
 </ul>
 </section>
 <section><h3>3. Goal / Objetivo</h3>
-<p>Reducir el tiempo de limpieza entre lotes un <strong>30%</strong> (de 4h a ≤2,8h) mediante un evento Kaizen de 3 días, sin comprometer los requisitos GMP de validación de limpieza.</p>
+<p>Reducir el tiempo medio de cambio de formato de 58 min a <strong>&lt;40 min</strong> antes del 30 de junio 2026, con variabilidad ≤8 min entre turnos y operarios.</p>
 </section>
 <section><h3>4. Root Cause Analysis</h3>
-<p>Análisis preliminar (a confirmar en el Kaizen):</p>
 <ul>
-<li>Secuencia de pasos no optimizada — algunos pasos en serie podrían hacerse en paralelo</li>
-<li>Tiempos de espera de validación analítica no aprovechados para preparación del siguiente lote</li>
-<li>Falta de estandarización del kit de limpieza (tiempo buscando materiales: ~20 min/limpieza)</li>
+<li>~55% del tiempo de cambio es interno (máquina parada) pero convertible a externo</li>
+<li>Sin kits de cambio preasignados — operarios buscan piezas durante el cambio (+20 min de media)</li>
+<li>Sin secuencia estandarizada — cada operario sigue su propia rutina</li>
+<li>Sin gestión visual del progreso del changeover en tiempo real</li>
+<li>Indianapolis ya resolvió este mismo problema: benchmark y transferencia de conocimiento planificada</li>
 </ul>
 </section>
-<section><h3>5. Countermeasures / Contramedidas (propuestas)</h3>
-<ul>
-<li>Paralelizar pasos independientes (enjuague y preparación de reactivos)</li>
-<li>Estandarizar kit de limpieza con carro de materiales preparado</li>
-<li>Revisar y simplificar el SOP de limpieza con equipo GMP</li>
-</ul>
+<section><h3>5. Countermeasures / Contramedidas</h3>
+<table border="1" style="border-collapse:collapse;width:100%;font-size:0.85rem">
+<tr><th style="padding:0.4rem">Contramedida</th><th>Responsable</th><th>Fecha</th><th>Estado</th></tr>
+<tr><td style="padding:0.4rem">Visita benchmark a Indianapolis — análisis kits SMED</td><td>Pedro García</td><td>2026-02-20</td><td>✅ Completado</td></tr>
+<tr><td style="padding:0.4rem">Crear kits de cambio con código de color por formato (9 formatos)</td><td>José Fernández</td><td>2026-04-15</td><td>🔄 En curso</td></tr>
+<tr><td style="padding:0.4rem">Convertir actividades internas a externas (análisis de vídeo)</td><td>Pedro García</td><td>2026-04-30</td><td>🔄 En curso</td></tr>
+<tr><td style="padding:0.4rem">Desarrollar SOP v2.0 con secuencia temporizada</td><td>Ana Rodríguez</td><td>2026-05-31</td><td>⏳ Pendiente</td></tr>
+<tr><td style="padding:0.4rem">Instalar temporizador digital en cada puesto de cambio</td><td>José Fernández</td><td>2026-06-15</td><td>⏳ Pendiente</td></tr>
+<tr><td style="padding:0.4rem">Formación y certificación de todos los operarios</td><td>Isabel Torres</td><td>2026-06-30</td><td>⏳ Pendiente</td></tr>
+</table>
 </section>
 <section><h3>6. Implementation Plan</h3>
 <ul>
-<li><strong>Día 1 (07 Abr):</strong> Mapeo del proceso actual (VSM limpieza), identificación de desperdicios</li>
-<li><strong>Día 2 (08 Abr):</strong> Diseño e implementación de contramedidas rápidas (Quick Wins)</li>
-<li><strong>Día 3 (09 Abr):</strong> Validación de nuevo proceso, medición de tiempo, plan de estandarización</li>
-<li><strong>Post-Kaizen:</strong> Actualización de SOP y formación del equipo</li>
+<li><strong>Feb 3–28:</strong> Benchmark Indianapolis, análisis de vídeo de cambios actuales, identificación de desperdicios</li>
+<li><strong>Mar–Abr 2026:</strong> Diseño y fabricación de kits de cambio, conversión de actividades internas a externas</li>
+<li><strong>May–Jun 2026:</strong> Implementación SOP v2.0, instalación de temporizadores, formación de operarios</li>
+<li><strong>Jul 2026:</strong> Medición de resultados, estandarización, transferencia a otras líneas si procede</li>
 </ul>
 </section>
 <section><h3>7. Follow-up / Seguimiento</h3>
 <ul>
-<li>Tiempo de limpieza por lote (objetivo ≤2,8h)</li>
-<li>Capacidad productiva recuperada (horas/semana)</li>
-<li>Verificación cumplimiento GMP (sin desviaciones de limpieza)</li>
+<li>Tiempo medio de changeover por línea (objetivo &lt;40 min)</li>
+<li>Desviación estándar del tiempo de changeover (objetivo ≤8 min)</li>
+<li>Mejora de OEE atribuida a reducción de changeovers</li>
 </ul>
 </section>
 <section><h3>8. Results / Resultados</h3>
-<p style="background:#fff3cd;padding:0.75rem;border-radius:4px">⏳ <strong>Evento Kaizen planificado para 7-9 de abril 2026. Pendiente de ejecución.</strong></p>
+<p style="background:#cce5ff;padding:0.75rem;border-radius:4px">🔄 <strong>En curso — Fase: análisis y diseño de kits (abril 2026).</strong> Visita benchmark a Indianapolis completada. Kits de cambio en fabricación. Conversión interna/externa en análisis. Resultados completos esperados junio 2026.</p>
 </section>
 </article>""",
         ],
 
         "indianapolis": [
-            # Doc 0: DMAIC torque (in_progress)
+            # Doc 0: SMED Changeover — COMPLETED global best practice
             """<article class="a3-document">
-<h2>DMAIC: Torque Closure Variability — Capping Station L2</h2>
-<p><strong>Author:</strong> Jennifer Taylor &nbsp;|&nbsp; <strong>Site:</strong> Indianapolis &nbsp;|&nbsp; <strong>Date:</strong> 2026-01-15</p>
+<h2>A3: SMED Changeover Standardization — Global Best Practice (Indianapolis Benchmark)</h2>
+<p><strong>Author:</strong> Jennifer Taylor &nbsp;|&nbsp; <strong>Site:</strong> Indianapolis &nbsp;|&nbsp; <strong>Start:</strong> 2025-06-01</p>
 <hr>
 <section><h3>1. Background</h3>
-<p>The capping station on Line 2 is generating torque closure readings outside the ±5% specification at a rate of 3.8 events per week. This has resulted in 2 customer complaints (Q4 2025) regarding loose closures, and is a recurring source of finished goods rejection.</p>
+<p>Indianapolis identified format changeover time as the single largest OEE loss driver in 2024 (contributing ~5.2% annual OEE loss). Average changeover across all 3 lines was 72 minutes, with high variability (55–90 min). A structured SMED project was launched with the dual goal of reducing changeover time and establishing Indianapolis as the global network benchmark and knowledge-transfer site.</p>
 </section>
 <section><h3>2. Current Condition</h3>
 <ul>
-<li>Torque variability: ±8% (spec: ±5%)</li>
-<li>Rejection rate from torque defects: 0.35% of L2 output</li>
-<li>Events per week: 3.8 (target: 0)</li>
-<li>Customer complaints linked to closure: 2 in Q4 2025</li>
-<li>Cpk torque: 0.72 (target: ≥1.33)</li>
+<li>Average changeover: 72 min (range: 55–90 min)</li>
+<li>OEE loss from changeovers: ~5.2% annually</li>
+<li>~3.5 changeovers/week/line = 252 min/week lost per line</li>
+<li>No standardized kit or sequence — each operator follows own routine</li>
+<li>Internal / external activity split: 68% internal (machine stopped), 32% external</li>
+<li>Benchmark target: Indianapolis to become global best practice site</li>
 </ul>
 </section>
 <section><h3>3. Goal</h3>
-<p>Reduce torque closure variability from ±8% to <strong>≤±3%</strong> by May 15, 2026. Achieve Cpk ≥1.33 and zero customer complaints related to closures.</p>
+<p>Reduce average changeover from 72 min to <strong>&lt;50 min</strong> with ≤8 min variability across all shifts and operators by November 30, 2025. Document methodology for global network deployment.</p>
+</section>
+<section><h3>4. Root Cause Analysis</h3>
+<ul>
+<li>68% of changeover time is internal (machine stopped) but 45% of it is convertible to external</li>
+<li>No pre-staged kits — operators source parts during changeover (+25 min average)</li>
+<li>No standardized sequence — significant variation between operators and shifts</li>
+<li>No visual management to track changeover progress or elapsed time in real time</li>
+<li>Format-specific tooling stored in central warehouse, not at line (&gt;12 min retrieval)</li>
+</ul>
+</section>
+<section><h3>5. Countermeasures</h3>
+<table border="1" style="border-collapse:collapse;width:100%;font-size:0.85rem">
+<tr><th style="padding:0.4rem">Action</th><th>Owner</th><th>Date</th><th>Status</th></tr>
+<tr><td style="padding:0.4rem">Video analysis of 12 changeovers across 3 shifts — waste mapping</td><td>Jennifer Taylor</td><td>2025-07-15</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Design color-coded changeover kits per format (14 formats)</td><td>Steven Anderson</td><td>2025-08-31</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Convert internal→external activities (pre-staging protocol)</td><td>Jennifer Taylor</td><td>2025-09-15</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Install dedicated kit storage trolley at each line position</td><td>Steven Anderson</td><td>2025-09-30</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Develop standardized SOP v2.3 with timed sequence and visual aids</td><td>Karen Martinez</td><td>2025-10-15</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Install digital countdown timer display at each changeover station</td><td>Steven Anderson</td><td>2025-10-31</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Train all 9 line operators — OJT sign-off required per SOP v2.3</td><td>Jennifer Taylor</td><td>2025-11-20</td><td>✅ Done</td></tr>
+</table>
+</section>
+<section><h3>6. Implementation Plan</h3>
+<ul>
+<li><strong>Jun–Jul 2025:</strong> SMED analysis, video recording, waste identification, activity mapping</li>
+<li><strong>Aug–Sep 2025:</strong> Kit design, fabrication, pre-staging conversion trials</li>
+<li><strong>Oct 2025:</strong> SOP v2.3 drafting, digital timer installation, pilot runs</li>
+<li><strong>Nov 2025:</strong> Full rollout across all 3 lines, operator certification, measurement</li>
+<li><strong>Dec 2025+:</strong> Network knowledge transfer — Alcobendas first deployment (Q1 2026)</li>
+</ul>
+</section>
+<section><h3>7. Follow-up KPIs</h3>
+<ul>
+<li>Average changeover time per line per week (target &lt;50 min)</li>
+<li>Changeover time standard deviation (target ≤8 min)</li>
+<li>OEE improvement attributed to changeover reduction</li>
+<li>Number of network sites deploying methodology</li>
+</ul>
+</section>
+<section><h3>8. Results — GLOBAL BEST PRACTICE</h3>
+<p style="background:#d4edda;padding:0.75rem;border-radius:4px">✅ <strong>Project completed November 20, 2025 — Established as Global Benchmark.</strong></p>
+<ul>
+<li>Average changeover: 72 min → <strong>45 min</strong> (38% reduction)</li>
+<li>Variability: 55–90 min → <strong>38–55 min</strong></li>
+<li>Annual hours recovered: <strong>210 h/year across 3 lines</strong></li>
+<li>OEE improvement: <strong>+4.1 pp</strong></li>
+<li>SOP v2.3 adopted as network standard — deployment to Alcobendas started Q1 2026</li>
+<li>Alcobendas benchmark visit completed February 2026</li>
+</ul>
+</section>
+</article>""",
+            # Doc 1: DMAIC serialization — IN PROGRESS
+            """<article class="a3-document">
+<h2>DMAIC: Elimination of Intermittent Serialization Camera Errors — Indianapolis</h2>
+<p><strong>Author:</strong> Karen Martinez &nbsp;|&nbsp; <strong>Site:</strong> Indianapolis &nbsp;|&nbsp; <strong>Start:</strong> 2026-01-20</p>
+<hr>
+<section><h3>1. Background</h3>
+<p>All three Indianapolis lines experience intermittent 2D camera read errors in the serialization (Track &amp; Trace) module. With a combined frequency of 3.8 stops per week and an average duration of 16 minutes per event (cleaning + restart + revalidation), this is currently the primary OEE loss driver on the site. The issue has been recurring since November 2025 and no permanent fix has been implemented.</p>
+</section>
+<section><h3>2. Current Condition</h3>
+<ul>
+<li>Frequency: 3.8 stops/week across all lines (L1: 1.5/w, L2: 1.3/w, L3: 1.0/w)</li>
+<li>Average stop duration: 16 min (cleaning + restart + revalidation sequence)</li>
+<li>Lost production: ~61 min/week (~1,220 units/week at nominal speed)</li>
+<li>OEE impact: -1.3 pp across the site</li>
+<li>Pattern: errors cluster 4–6 hours into the 12-hour shift</li>
+<li>Alcobendas reported a similar issue (condensation-related) — being cross-referenced</li>
+</ul>
+</section>
+<section><h3>3. Goal</h3>
+<p>Reduce serialization camera stops from 3.8/week to <strong>≤0.3/week</strong> by June 30, 2026. Recover ≥55 min/week of lost production and improve OEE by +1.3 pp.</p>
 </section>
 <section><h3>4. Root Cause Analysis — DMAIC Fishbone</h3>
 <pre style="background:#f5f5f5;padding:1rem;border-radius:4px;font-size:0.85rem">
-DEFINE: Torque closure out-of-spec on L2 capping station
-MEASURE: Cpk = 0.72 | Variability = ±8% | Root causes under investigation
+DEFINE: Intermittent 2D camera read errors in serialization — all Indianapolis lines
+MEASURE: 3.8 stops/week | Avg duration 16 min | Pattern: h4–h6 of 12h shift
 
-FISHBONE (Ishikawa):
+ANALYZE — Fishbone (Ishikawa):
   MACHINE:
-    → Worn torque clutch coupling (confirmed — 18 months in service, spec: 12 months)
-    → Spindle bearing play: 0.12mm (spec: <0.05mm)
+    → Camera lens contamination detected at each failure event
+    → Protective air flow absent in original module configuration
   METHOD:
-    → No torque SPC chart on the line — operators not alerted to drift
-    → Torque calibration: monthly (should be weekly per SOP v2.0)
+    → No scheduled lens cleaning in current SOP (only on failure)
+    → Serialization module SOP last updated 2023 — pre-expansion
   MATERIAL:
-    → Closure supplier change (Q3 2025) — new batch has ±1.5% wall thickness variation
+    → Adhesive aerosol from labeling station migrates to camera zone
+    → Aerosol concentration increases over shift duration (explains h4–h6 pattern)
   ENVIRONMENT:
-    → Ambient temperature variation (18-26°C in production area) affects lubricant viscosity
+    → ISO 7 cleanroom humidity: 45–65% RH (fluctuates with HVAC cycling)
+    → Humidity excursions may accelerate adhesive deposition on lens
   MAN:
-    → Operator judgment on torque "feel" inconsistent across shifts
+    → Operators not trained to recognize early signs of lens fouling
 
-PRIMARY ROOT CAUSE: Worn torque clutch coupling + absence of real-time SPC monitoring
-SECONDARY: New closure batch with higher dimensional variability
+PRIMARY ROOT CAUSE: Adhesive aerosol deposition on camera lens — no prevention protocol
+SECONDARY: Humidity fluctuations in cleanroom compounding contamination rate
+CROSS-REFERENCE: Alcobendas identified condensation as root cause on same camera model
 </pre>
 </section>
 <section><h3>5. Countermeasures</h3>
 <table border="1" style="border-collapse:collapse;width:100%;font-size:0.85rem">
 <tr><th style="padding:0.4rem">Action</th><th>Owner</th><th>Date</th><th>Status</th></tr>
-<tr><td style="padding:0.4rem">Replace torque clutch coupling (planned downtime)</td><td>Robert Brown</td><td>2026-02-28</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Replace spindle bearing</td><td>Robert Brown</td><td>2026-02-28</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Implement torque SPC control chart (X-bar/R)</td><td>Sarah Wilson</td><td>2026-03-31</td><td>🔄 In progress</td></tr>
-<tr><td style="padding:0.4rem">Change torque calibration frequency to weekly</td><td>Jennifer Taylor</td><td>2026-03-15</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Qualify new closure supplier batch — dimensional audit</td><td>Sarah Wilson</td><td>2026-04-30</td><td>⏳ Pending</td></tr>
-<tr><td style="padding:0.4rem">IMPROVE: Implement closed-loop torque feedback</td><td>Robert Brown</td><td>2026-05-15</td><td>⏳ Pending</td></tr>
+<tr><td style="padding:0.4rem">Add lens cleaning to shift SOP — every 4 hours (interim measure)</td><td>Karen Martinez</td><td>2026-02-10</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Install humidity/temperature sensor in serialization module</td><td>Steven Anderson</td><td>2026-03-15</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Design and install protective air curtain over camera lens</td><td>Steven Anderson</td><td>2026-04-30</td><td>🔄 In progress</td></tr>
+<tr><td style="padding:0.4rem">Cross-site learning call with Alcobendas — share root cause findings</td><td>Karen Martinez</td><td>2026-03-28</td><td>✅ Done</td></tr>
+<tr><td style="padding:0.4rem">Evaluate aerosol deflector between labeling and serialization stations</td><td>Steven Anderson</td><td>2026-05-15</td><td>⏳ Pending</td></tr>
+<tr><td style="padding:0.4rem">CONTROL: Update SOP and validate results over 8-week monitoring period</td><td>Karen Martinez</td><td>2026-06-30</td><td>⏳ Pending</td></tr>
 </table>
 </section>
 <section><h3>6. Implementation Plan</h3>
 <ul>
-<li><strong>Jan 15 – Feb 14:</strong> Define & Measure — data collection, Cpk baseline, fishbone</li>
-<li><strong>Feb 15 – Mar 14:</strong> Analyze — root cause confirmation, coupling replacement</li>
-<li><strong>Mar 15 – Apr 30:</strong> Improve — SPC implementation, supplier qualification</li>
-<li><strong>May 1 – May 15:</strong> Control — CONTROL plan, SOP update, handover to operations</li>
-</ul>
-</section>
-<section><h3>7. Follow-up / KPIs</h3>
-<ul>
-<li>Weekly Cpk torque (target ≥1.33)</li>
-<li>Torque OOC events/week (target 0)</li>
-<li>L2 rejection rate from torque (target <0.05%)</li>
-<li>Customer complaints (target 0)</li>
-</ul>
-</section>
-<section><h3>8. Results</h3>
-<p style="background:#cce5ff;padding:0.75rem;border-radius:4px">🔄 <strong>In progress — Phase: IMPROVE (as of March 2026).</strong> Coupling replaced; Cpk improved to 0.98 post-repair. SPC implementation in progress. Full results expected May 2026.</p>
-</section>
-</article>""",
-            # Doc 1: SMED Best Practice (completed)
-            """<article class="a3-document">
-<h2>A3: Changeover Standardization — SMED Best Practice (Global Benchmark)</h2>
-<p><strong>Author:</strong> Robert Brown &nbsp;|&nbsp; <strong>Site:</strong> Indianapolis &nbsp;|&nbsp; <strong>Date:</strong> 2025-07-01</p>
-<hr>
-<section><h3>1. Background</h3>
-<p>Indianapolis identified changeover time as the primary OEE loss driver in 2024. Average changeover was 45 minutes across all 3 lines, with high variability (28–68 min). A structured SMED project was launched to establish Indianapolis as the global benchmark for changeover excellence.</p>
-</section>
-<section><h3>2. Current Condition</h3>
-<ul>
-<li>Average changeover: 45 min (range: 28–68 min)</li>
-<li>OEE loss from changeovers: ~4.2% annually</li>
-<li>~3.5 changeovers/week per line = 157 min/week lost per line</li>
-<li>No standardized kit or sequence — each operator follows own routine</li>
-</ul>
-</section>
-<section><h3>3. Goal</h3>
-<p>Reduce average changeover to <strong>≤25 minutes</strong> with ≤5 min variability across all shifts and operators by November 30, 2025.</p>
-</section>
-<section><h3>4. Root Cause Analysis</h3>
-<ul>
-<li>60% of changeover time is internal (machine stopped) but convertible to external</li>
-<li>No pre-staged kits — operators source parts during changeover (+12 min average)</li>
-<li>No standardized sequence — significant variation between operators</li>
-<li>No visual management to track changeover progress in real-time</li>
-</ul>
-</section>
-<section><h3>5. Countermeasures</h3>
-<table border="1" style="border-collapse:collapse;width:100%;font-size:0.85rem">
-<tr><th style="padding:0.4rem">Action</th><th>Owner</th><th>Date</th><th>Status</th></tr>
-<tr><td style="padding:0.4rem">Create color-coded changeover kits per format (12 formats)</td><td>Robert Brown</td><td>2025-08-31</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Convert internal→external activities (video analysis)</td><td>Jennifer Taylor</td><td>2025-09-15</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Develop standardized SOP v2.3 with timed sequence</td><td>Sarah Wilson</td><td>2025-10-01</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Install digital timer display at each line changeover station</td><td>Michael Davis</td><td>2025-10-31</td><td>✅ Done</td></tr>
-<tr><td style="padding:0.4rem">Train all operators — OJT sign-off required</td><td>Jennifer Taylor</td><td>2025-11-15</td><td>✅ Done</td></tr>
-</table>
-</section>
-<section><h3>6. Implementation Plan</h3>
-<ul>
-<li><strong>Jul–Aug 2025:</strong> SMED analysis, video recording, waste identification</li>
-<li><strong>Sep 2025:</strong> Kit design and external conversion trials</li>
-<li><strong>Oct 2025:</strong> SOP drafting, digital timer installation</li>
-<li><strong>Nov 2025:</strong> Full rollout, operator training, measurement</li>
+<li><strong>Jan 20 – Feb 10:</strong> Define &amp; Measure — data collection, frequency baseline, pattern analysis</li>
+<li><strong>Feb 11 – Mar 15:</strong> Analyze — root cause confirmation, cross-site benchmark (Alcobendas)</li>
+<li><strong>Mar 16 – May 15:</strong> Improve — air curtain installation, aerosol deflector evaluation</li>
+<li><strong>May 16 – Jun 30:</strong> Control — SOP update, 8-week validation, closure</li>
 </ul>
 </section>
 <section><h3>7. Follow-up KPIs</h3>
 <ul>
-<li>Average changeover time per line per week</li>
-<li>Changeover time standard deviation (target ≤5 min)</li>
-<li>OEE improvement attributed to changeover reduction</li>
+<li>Serialization stops per week per line (target ≤0.1/line)</li>
+<li>Camera lens fouling interval (target: no fouling within 12h shift)</li>
+<li>OEE contribution from serialization losses (target: &lt;0.1 pp)</li>
+<li>Cleanroom RH within module (alert if &gt;60% RH)</li>
 </ul>
 </section>
 <section><h3>8. Results</h3>
-<p style="background:#d4edda;padding:0.75rem;border-radius:4px">✅ <strong>Project completed November 15, 2025 — GLOBAL BEST PRACTICE.</strong></p>
-<ul>
-<li>Average changeover: 45 min → <strong>22 min</strong> (51% reduction)</li>
-<li>Variability: 28–68 min → <strong>18–26 min</strong></li>
-<li>Annual hours recovered: <strong>180 h/year across 3 lines</strong></li>
-<li>OEE improvement: <strong>+3.8 pp</strong></li>
-<li>This methodology is now being deployed to Alcobendas (Q2 2026)</li>
-</ul>
+<p style="background:#cce5ff;padding:0.75rem;border-radius:4px">🔄 <strong>In progress — Phase: IMPROVE (as of April 2026).</strong> Lens cleaning SOP implemented — stops reduced from 3.8/week to 1.6/week. Humidity sensor installed. Air curtain installation in progress. Full results expected June 2026.</p>
 </section>
 </article>""",
         ],

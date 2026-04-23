@@ -110,7 +110,7 @@ def _build_user_message(
 
 # ── Llamada al gateway ────────────────────────────────────────
 
-def _call_gateway(user_message: str, api_key: str, system: Optional[str] = None) -> dict:
+def _call_gateway(user_message: str, api_key: str, system: Optional[str] = None, max_tokens: int = MAX_TOKENS) -> dict:
     """
     Llama al LLM Gateway usando la librería anthropic con base_url personalizada.
     Devuelve dict con 'text' y 'model'.
@@ -135,7 +135,7 @@ def _call_gateway(user_message: str, api_key: str, system: Optional[str] = None)
 
     message = client.messages.create(
         model=MODEL,
-        max_tokens=MAX_TOKENS,
+        max_tokens=max_tokens,
         system=system if system is not None else SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )

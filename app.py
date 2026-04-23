@@ -22,6 +22,7 @@ def create_app() -> Flask:
     from routes.comments import bp as comments_bp
     from routes.kpis import bp as kpis_bp
     from routes.assistant import bp as assistant_bp
+    from routes.agents import bp as agents_bp
     from routes.views import bp as views_bp
     from routes.admin import bp as admin_bp
     from routes.chart_builder import bp as chart_builder_bp
@@ -36,6 +37,7 @@ def create_app() -> Flask:
     app.register_blueprint(comments_bp)
     app.register_blueprint(kpis_bp)
     app.register_blueprint(assistant_bp)
+    app.register_blueprint(agents_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(chart_builder_bp)
     app.register_blueprint(vsm_bp)

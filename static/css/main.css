@@ -738,6 +738,223 @@
   border-color: #1a6faf;
   box-shadow: 0 0 0 3px rgba(26,111,175,0.2);
 }
+.ai-modal--wide { max-width: 560px; }
+
+/* ============================================================
+   Panel de Agentes IA — FAB + sidebar
+   ============================================================ */
+
+/* Botón flotante (FAB) */
+.agents-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a6faf, #0d4f80);
+  color: #fff;
+  border: none;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(13,79,128,0.45);
+  cursor: pointer;
+  z-index: 1040;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.agents-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(13,79,128,0.55); }
+@media (max-height: 600px) {
+  .agents-fab { bottom: 0.4rem; right: 0.75rem; width: 2.75rem; height: 2.75rem; font-size: 1.1rem; }
+  .agents-panel { bottom: 3.75rem; right: 0.75rem; max-height: calc(100vh - 5rem); }
+}
+.agents-fab__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Panel lateral */
+.agents-panel {
+  position: fixed;
+  bottom: 5.5rem;
+  right: 1.5rem;
+  width: 300px;
+  max-height: calc(100vh - 8rem);
+  background: #1a2535;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  z-index: 1039;
+  flex-direction: column;
+  overflow: hidden;
+}
+.agents-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #1a6faf22, #0d4f8022);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  font-weight: 600;
+  color: #cdd6e0;
+  font-size: 0.9rem;
+}
+.agents-panel__close {
+  background: none;
+  border: none;
+  color: #8a9bb0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 0.25rem;
+}
+.agents-panel__close:hover { color: #cdd6e0; }
+
+/* Kaizen strip */
+.agents-panel__kaizen {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.agents-panel__kaizen-status {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: #8a9bb0;
+}
+
+/* Lista de agentes */
+.agents-panel__list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.5rem 0;
+}
+.agents-panel__loading,
+.agents-panel__empty {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #8a9bb0;
+}
+
+/* Tarjeta de agente */
+.agent-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  transition: background 0.15s;
+  cursor: default;
+}
+.agent-card:hover { background: rgba(255,255,255,0.04); }
+.agent-card--active { background: rgba(26,111,175,0.12); }
+.agent-card--working { background: rgba(26,111,175,0.18); }
+.agent-card--disabled { opacity: 0.45; }
+.agent-card__icon { font-size: 1.1rem; flex-shrink: 0; width: 1.5rem; text-align: center; }
+.agent-card__info { flex: 1; min-width: 0; }
+.agent-card__name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #cdd6e0;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agent-card__status { font-size: 0.72rem; margin-top: 1px; }
+.agent-status--idle  { color: #4a5a6a; }
+.agent-status--working { color: #1a9faf; display: flex; align-items: center; gap: 0.35rem; }
+.agent-card__toggle { flex-shrink: 0; }
+.agent-card__toggle .form-check-input { cursor: pointer; }
+
+/* Última activación */
+.agents-panel__last-run {
+  padding: 0.6rem 0.85rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.agents-panel__last-run-title {
+  font-size: 0.72rem;
+  color: #8a9bb0;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.agent-used-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  border: 1px solid;
+  border-radius: 0.9rem;
+  padding: 0.1rem 0.5rem;
+  margin: 0.15rem 0.1rem;
+}
+
+/* Forzar agente */
+.agents-panel__force {
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.agents-panel__force-title {
+  font-size: 0.72rem;
+  color: #8a9bb0;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.agent-force-btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  margin: 0.15rem 0.1rem;
+  background: transparent;
+  border-radius: 0.9rem;
+  transition: background 0.12s;
+}
+.agent-force-btn:hover { background: rgba(255,255,255,0.07); }
+
+/* Chips en sugerencia */
+.ai-suggestion__agents {
+  font-size: 0.75rem;
+  color: #8a9bb0;
+  margin-top: 0.35rem;
+}
+.agent-used-chip {
+  display: inline-block;
+  background: rgba(26,111,175,0.15);
+  color: #5aadda;
+  border-radius: 0.75rem;
+  padding: 0.1rem 0.45rem;
+  margin: 0 0.1rem;
+  font-size: 0.72rem;
+}
+
+/* Kaizen report preview */
+.kaizen-report-preview {
+  background: rgba(25,135,84,0.12);
+  border: 1px solid rgba(25,135,84,0.25);
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.78rem;
+}
+.kaizen-report-preview__title {
+  color: #5cb85c;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.kaizen-report-preview__text { color: #adb5bd; margin-bottom: 0.3rem; }
+.kaizen-report-preview__opps {
+  color: #198754;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
 
 /* ============================================================
    Handover box (used on index page)
