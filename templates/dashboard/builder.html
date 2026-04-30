@@ -2,119 +2,117 @@
 {% block title %}{{ t('page_title_builder') }}{% endblock %}
 
 {% block content %}
-<div class="row g-4">
-
-  <!-- Sidebar: history -->
-  <div class="col-lg-3">
-    <div class="card border-0 shadow-sm position-sticky" style="top:70px;" id="sidebar">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="fw-bold mb-0">{{ t('my_charts') }}</h6>
-          <button class="btn btn-sm btn-outline-secondary" id="refreshHistory" title="{{ t('btn_view_history') }}">↻</button>
-        </div>
-
-        <!-- Predefined suggestions -->
-        <div class="mb-3">
-          <p class="text-uppercase small fw-bold text-muted mb-2" style="font-size:0.72rem;">{{ t('quick_suggestions') }}</p>
-          <div class="d-flex flex-column gap-1">
-            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ t('suggest_oee_24h') | replace('OEE ultimas 24h', 'OEE de las ultimas 24 horas por turno') if lang == 'es' else 'OEE for the last 24 hours by shift' }}">{{ t('suggest_oee_24h') }}</button>
-            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Top causas de parada de las ultimas 2 semanas' if lang == 'es' else 'Top stop causes for the last 2 weeks' }}">{{ t('suggest_stop_causes') }}</button>
-            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Produccion real vs objetivo semanal por linea' if lang == 'es' else 'Real vs target weekly production by line' }}">{{ t('suggest_prod_vs_target') }}</button>
-            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Tendencia de rechazos y tasa de rechazo de los ultimos 7 dias' if lang == 'es' else 'Reject trend and reject rate for the last 7 days' }}">{{ t('suggest_reject_trend') }}</button>
-            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Comparativa de rendimiento entre todas las lineas' if lang == 'es' else 'Performance comparison between all lines' }}">{{ t('suggest_line_compare') }}</button>
-            <button class="suggestion-chip btn btn-sm btn-outline-secondary text-start" data-prompt="{{ 'Distribucion de comentarios por categoria esta semana' if lang == 'es' else 'Comment distribution by category this week' }}">{{ t('suggest_comments_cat') }}</button>
-          </div>
-        </div>
-
-        <!-- Saved charts history -->
-        <div>
-          <p class="text-uppercase small fw-bold text-muted mb-2" style="font-size:0.72rem;">{{ t('saved_charts_label') }} <span class="badge bg-secondary" id="historyCount">0</span></p>
-          <div class="history-list overflow-auto" id="historyList" style="max-height:300px;">
-            <p class="text-muted small text-center py-2">{{ t('no_saved_charts') }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="pp-grid-2-1" style="align-items:start;">
 
   <!-- Main area -->
-  <div class="col-lg-9">
+  <div style="display:flex; flex-direction:column; gap:16px;">
 
     <!-- Header -->
-    <div class="mb-3">
-      <h1 class="h3 fw-bold mb-1">{{ t('builder_title') }} <span class="badge bg-primary">IA</span></h1>
-      <p class="text-muted mb-0 small">{{ t('builder_subtitle') }}</p>
+    <div class="pp-page-head" style="margin-bottom:0 !important;">
+      <div>
+        <div class="pp-crumbs"><span>Dashboard</span><span class="pp-crumb-sep">/</span><span>Builder</span></div>
+        <h1 class="pp-h1">{{ t('builder_title') }} <span class="pp-tag pp-tag-info" style="font-size:11px; vertical-align:2px;">IA</span></h1>
+        <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ t('builder_subtitle') }}</p>
+      </div>
     </div>
 
     <!-- Prompt form -->
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-body">
-        <div class="d-flex flex-column gap-2">
+    <div class="pp-card">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="pp-field" style="margin:0;">
+          <label class="pp-label">{{ t('prompt_placeholder') }}</label>
           <textarea
             id="promptInput"
-            class="form-control"
+            class="pp-textarea"
             rows="3"
             placeholder="{{ t('prompt_placeholder') }}"
             maxlength="500"
           ></textarea>
-          <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" id="voiceBtn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="flex-shrink:0">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
-              </svg>
-              {{ t('btn_record_voice') }}
-            </button>
-            <span class="small text-muted flex-grow-1" id="promptChars">0 / 500</span>
-            <button class="btn btn-primary d-flex align-items-center gap-2" id="generateBtn">
-              <span id="generateBtnText">{{ t('btn_generate') }}</span>
-              <span id="generateBtnSpinner" class="spinner-border spinner-border-sm" hidden></span>
-            </button>
-          </div>
         </div>
-        <!-- Voice status -->
-        <div id="voiceStatus" class="d-flex align-items-center gap-2 mt-2 small text-danger" style="display:none !important;">
-          <span class="voice-dot"></span> {{ t('voice_listening') }}
-          <button class="btn btn-sm btn-outline-secondary" id="stopVoiceBtn">{{ t('btn_stop_voice') }}</button>
+        <div class="d-flex align-items-center gap-2">
+          <button class="pp-btn pp-btn-sm d-flex align-items-center gap-1" id="voiceBtn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="flex-shrink:0">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/>
+            </svg>
+            {{ t('btn_record_voice') }}
+          </button>
+          <span class="pp-faint flex-grow-1" style="font-size:11px;" id="promptChars">0 / 500</span>
+          <button class="pp-btn pp-btn-primary d-flex align-items-center gap-2" id="generateBtn">
+            <span id="generateBtnText">{{ t('btn_generate') }}</span>
+            <span id="generateBtnSpinner" class="spinner-border spinner-border-sm" hidden></span>
+          </button>
         </div>
+      </div>
+      <!-- Voice status -->
+      <div id="voiceStatus" class="d-flex align-items-center gap-2 mt-2" style="display:none !important; font-size:12px; color:var(--pp-bad);">
+        <span class="voice-dot"></span> {{ t('voice_listening') }}
+        <button class="pp-btn pp-btn-sm" id="stopVoiceBtn">{{ t('btn_stop_voice') }}</button>
       </div>
     </div>
 
     <!-- Chart area -->
-    <div class="card border-0 shadow-sm mb-3" id="chartArea" hidden>
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <div class="d-flex align-items-center gap-2">
-            <span class="badge" id="chartSourceBadge"></span>
-            <span class="small text-muted" id="chartRowsInfo"></span>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" id="modifyBtn">{{ t('btn_modify_chart') }}</button>
-            <button class="btn btn-sm btn-primary" id="saveBtn">{{ t('btn_save_dashboard') }}</button>
-          </div>
+    <div class="pp-card" id="chartArea" hidden>
+      <div class="pp-card-head">
+        <div class="d-flex align-items-center gap-2">
+          <span class="pp-tag" id="chartSourceBadge"></span>
+          <span class="pp-faint" style="font-size:12px;" id="chartRowsInfo"></span>
         </div>
-        <div class="alert alert-warning" id="chartWarning" hidden></div>
-        <div id="echartsContainer" style="width:100%; height:420px;"></div>
+        <div class="d-flex gap-2">
+          <button class="pp-btn pp-btn-sm" id="modifyBtn">{{ t('btn_modify_chart') }}</button>
+          <button class="pp-btn pp-btn-sm pp-btn-primary" id="saveBtn">{{ t('btn_save_dashboard') }}</button>
+        </div>
       </div>
+      <div class="alert alert-warning" id="chartWarning" hidden></div>
+      <div id="echartsContainer" style="width:100%; height:420px;"></div>
     </div>
 
     <!-- Error state -->
-    <div class="card border-0 shadow-sm mb-3 text-center py-5" id="chartError" hidden>
-      <div class="card-body">
-        <p class="fs-1 mb-2">⚠</p>
-        <p class="text-muted" id="chartErrorMsg">{{ t('chart_error_msg') }}</p>
-        <button class="btn btn-outline-primary" id="retryBtn">{{ t('btn_retry') }}</button>
-      </div>
+    <div class="pp-card text-center py-5" id="chartError" hidden>
+      <p style="font-size:2.5rem; margin-bottom:8px;">⚠</p>
+      <p class="pp-faint" id="chartErrorMsg">{{ t('chart_error_msg') }}</p>
+      <button class="pp-btn mt-2" id="retryBtn">{{ t('btn_retry') }}</button>
     </div>
 
     <!-- Empty state -->
-    <div class="text-center py-5" id="builderEmpty">
-      <p class="display-4 mb-2">📊</p>
-      <p class="fs-5 fw-semibold text-muted">{{ t('chart_appears_here') }}</p>
-      <p class="small text-muted">{{ t('chart_hint') }}</p>
+    <div class="pp-empty" id="builderEmpty">
+      <i class="bi bi-bar-chart" style="font-size:2rem;"></i>
+      <p class="pp-empty-title">{{ t('chart_appears_here') }}</p>
+      <p class="pp-faint" style="font-size:12px; margin-top:4px;">{{ t('chart_hint') }}</p>
     </div>
 
   </div>
+
+  <!-- Sidebar: suggestions + history -->
+  <div class="pp-card" style="position:sticky; top:calc(var(--pp-topbar-height) + 16px);">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 style="font-weight:700; margin:0; font-size:13px;">{{ t('my_charts') }}</h6>
+      <button class="pp-btn pp-btn-sm" id="refreshHistory" title="{{ t('btn_view_history') }}">↻</button>
+    </div>
+
+    <!-- Predefined suggestions -->
+    <div class="mb-4">
+      <p class="pp-eyebrow pp-eyebrow-muted mb-2">{{ t('quick_suggestions') }}</p>
+      <div class="d-flex flex-column gap-1">
+        <button class="suggestion-chip pp-btn pp-btn-sm" style="text-align:left;" data-prompt="{{ t('suggest_oee_24h') | replace('OEE ultimas 24h', 'OEE de las ultimas 24 horas por turno') if lang == 'es' else 'OEE for the last 24 hours by shift' }}">{{ t('suggest_oee_24h') }}</button>
+        <button class="suggestion-chip pp-btn pp-btn-sm" style="text-align:left;" data-prompt="{{ 'Top causas de parada de las ultimas 2 semanas' if lang == 'es' else 'Top stop causes for the last 2 weeks' }}">{{ t('suggest_stop_causes') }}</button>
+        <button class="suggestion-chip pp-btn pp-btn-sm" style="text-align:left;" data-prompt="{{ 'Produccion real vs objetivo semanal por linea' if lang == 'es' else 'Real vs target weekly production by line' }}">{{ t('suggest_prod_vs_target') }}</button>
+        <button class="suggestion-chip pp-btn pp-btn-sm" style="text-align:left;" data-prompt="{{ 'Tendencia de rechazos y tasa de rechazo de los ultimos 7 dias' if lang == 'es' else 'Reject trend and reject rate for the last 7 days' }}">{{ t('suggest_reject_trend') }}</button>
+        <button class="suggestion-chip pp-btn pp-btn-sm" style="text-align:left;" data-prompt="{{ 'Comparativa de rendimiento entre todas las lineas' if lang == 'es' else 'Performance comparison between all lines' }}">{{ t('suggest_line_compare') }}</button>
+        <button class="suggestion-chip pp-btn pp-btn-sm" style="text-align:left;" data-prompt="{{ 'Distribucion de comentarios por categoria esta semana' if lang == 'es' else 'Comment distribution by category this week' }}">{{ t('suggest_comments_cat') }}</button>
+      </div>
+    </div>
+
+    <!-- Saved charts history -->
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted mb-2">{{ t('saved_charts_label') }} <span class="pp-tag pp-tag-neutral" id="historyCount">0</span></p>
+      <div class="history-list overflow-auto" id="historyList" style="max-height:280px;">
+        <p class="pp-faint" style="font-size:12px; text-align:center; padding:12px 0;">{{ t('no_saved_charts') }}</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ═══ Panel de Agentes IA ════════════════════════════════════════════════════ -->
@@ -181,7 +179,7 @@
   </div>
 </div>
 
-<!-- Save modal -->
+<!-- Save modal (Bootstrap modal — kept for functionality) -->
 <div class="modal fade" id="saveModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
@@ -203,21 +201,22 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
 <style>
-.voice-dot { width: 8px; height: 8px; background: var(--bs-danger); border-radius: 50%; animation: pulse-voice 1s infinite; }
+.voice-dot { width: 8px; height: 8px; background: var(--pp-bad); border-radius: 50%; animation: pulse-voice 1s infinite; display: inline-block; }
 @keyframes pulse-voice { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
 .chart-source-badge.gateway { background: #e8f5e9; color: #27ae60; }
 .chart-source-badge.mock { background: #fff3cd; color: #856404; }
 .history-item {
-  background: #f8f9fa; border-radius: 6px; padding: 0.5rem 0.65rem;
+  background: var(--pp-warm); border-radius: 6px; padding: 0.5rem 0.65rem;
   cursor: pointer; display: flex; align-items: flex-start; justify-content: space-between;
   gap: 0.4rem; transition: background .15s; margin-bottom: 0.3rem;
+  border: 1px solid var(--pp-line);
 }
-.history-item:hover { background: #e8f0fb; }
+.history-item:hover { background: #f0ece6; }
 .history-item__title { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-.history-item__date { font-size: 0.7rem; color: #6c757d; white-space: nowrap; }
-.history-item__del { font-size: 0.9rem; color: #6c757d; background: none; border: none; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0; }
-.history-item__del:hover { color: #dc3545; }
-.suggestion-chip:hover { background: #e8f0fb; border-color: #0d6efd; color: #0d6efd; }
+.history-item__date { font-size: 0.7rem; color: var(--pp-text-faint); white-space: nowrap; }
+.history-item__del { font-size: 0.9rem; color: var(--pp-text-faint); background: none; border: none; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+.history-item__del:hover { color: var(--pp-bad); }
+.suggestion-chip:hover { background: var(--pp-warm-dark, #f0ece6) !important; }
 </style>
 
 <script>
@@ -236,31 +235,31 @@
     saveError:     {{ t('js_save_error') | tojson }},
   };
 
-  const promptInput    = document.getElementById("promptInput");
-  const promptChars    = document.getElementById("promptChars");
-  const generateBtn    = document.getElementById("generateBtn");
-  const generateBtnText= document.getElementById("generateBtnText");
-  const generateBtnSpinner= document.getElementById("generateBtnSpinner");
-  const voiceBtn       = document.getElementById("voiceBtn");
-  const stopVoiceBtn   = document.getElementById("stopVoiceBtn");
-  const voiceStatus    = document.getElementById("voiceStatus");
-  const chartArea      = document.getElementById("chartArea");
-  const chartError     = document.getElementById("chartError");
-  const chartErrorMsg  = document.getElementById("chartErrorMsg");
-  const builderEmpty   = document.getElementById("builderEmpty");
-  const chartWarning   = document.getElementById("chartWarning");
-  const chartSourceBadge= document.getElementById("chartSourceBadge");
-  const chartRowsInfo  = document.getElementById("chartRowsInfo");
-  const modifyBtn      = document.getElementById("modifyBtn");
-  const saveBtn        = document.getElementById("saveBtn");
-  const retryBtn       = document.getElementById("retryBtn");
-  const refreshHistory = document.getElementById("refreshHistory");
-  const historyList    = document.getElementById("historyList");
-  const historyCount   = document.getElementById("historyCount");
-  const saveModalEl    = document.getElementById("saveModal");
-  const chartTitleInput= document.getElementById("chartTitleInput");
-  const cancelSaveBtn  = document.getElementById("cancelSaveBtn");
-  const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+  const promptInput      = document.getElementById("promptInput");
+  const promptChars      = document.getElementById("promptChars");
+  const generateBtn      = document.getElementById("generateBtn");
+  const generateBtnText  = document.getElementById("generateBtnText");
+  const generateBtnSpinner = document.getElementById("generateBtnSpinner");
+  const voiceBtn         = document.getElementById("voiceBtn");
+  const stopVoiceBtn     = document.getElementById("stopVoiceBtn");
+  const voiceStatus      = document.getElementById("voiceStatus");
+  const chartArea        = document.getElementById("chartArea");
+  const chartError       = document.getElementById("chartError");
+  const chartErrorMsg    = document.getElementById("chartErrorMsg");
+  const builderEmpty     = document.getElementById("builderEmpty");
+  const chartWarning     = document.getElementById("chartWarning");
+  const chartSourceBadge = document.getElementById("chartSourceBadge");
+  const chartRowsInfo    = document.getElementById("chartRowsInfo");
+  const modifyBtn        = document.getElementById("modifyBtn");
+  const saveBtn          = document.getElementById("saveBtn");
+  const retryBtn         = document.getElementById("retryBtn");
+  const refreshHistory   = document.getElementById("refreshHistory");
+  const historyList      = document.getElementById("historyList");
+  const historyCount     = document.getElementById("historyCount");
+  const saveModalEl      = document.getElementById("saveModal");
+  const chartTitleInput  = document.getElementById("chartTitleInput");
+  const cancelSaveBtn    = document.getElementById("cancelSaveBtn");
+  const confirmSaveBtn   = document.getElementById("confirmSaveBtn");
 
   let saveModalInstance = null;
   let currentOption = null;
@@ -283,7 +282,7 @@
     const defaults = {
       color: ["#0057a8","#27ae60","#e67e22","#c0392b","#8e44ad","#2980b9","#16a085"],
       backgroundColor: "transparent",
-      textStyle: { fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#3d4a58" },
+      textStyle: { fontFamily: "'Inter', system-ui, sans-serif", color: "#3d4a58" },
     };
     chart.setOption({ ...defaults, ...option });
     setTimeout(() => chart.resize(), 50);
@@ -308,7 +307,8 @@
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.onstart = () => {
-      voiceBtn.classList.add("btn-danger"); voiceBtn.classList.remove("btn-outline-secondary");
+      voiceBtn.style.background = "var(--pp-bad)";
+      voiceBtn.style.color = "#fff";
       voiceStatus.style.display = "flex";
     };
     recognition.onresult = (e) => {
@@ -318,12 +318,14 @@
       promptChars.textContent = `${transcript.length} / 500`;
     };
     recognition.onend = () => {
-      voiceBtn.classList.remove("btn-danger"); voiceBtn.classList.add("btn-outline-secondary");
+      voiceBtn.style.background = "";
+      voiceBtn.style.color = "";
       voiceStatus.style.display = "none";
       recognition = null;
     };
     recognition.onerror = () => {
-      voiceBtn.classList.remove("btn-danger"); voiceBtn.classList.add("btn-outline-secondary");
+      voiceBtn.style.background = "";
+      voiceBtn.style.color = "";
       voiceStatus.style.display = "none";
       recognition = null;
     };
@@ -332,7 +334,8 @@
 
   function stopVoice() {
     if (recognition) { recognition.stop(); recognition = null; }
-    voiceBtn.classList.remove("btn-danger"); voiceBtn.classList.add("btn-outline-secondary");
+    voiceBtn.style.background = "";
+    voiceBtn.style.color = "";
     voiceStatus.style.display = "none";
   }
 
@@ -370,14 +373,14 @@
       currentOption = data.option;
 
       if (data.error) {
-        chartWarning.textContent = "\u26A0 " + data.error;
+        chartWarning.textContent = "⚠ " + data.error;
         chartWarning.hidden = false;
       } else {
         chartWarning.hidden = true;
       }
 
       chartSourceBadge.textContent = data.source === "gateway" ? I18N.sourceGateway : I18N.sourceMock;
-      chartSourceBadge.className = "badge chart-source-badge " + (data.source === "gateway" ? "gateway" : "mock");
+      chartSourceBadge.className = "pp-tag chart-source-badge " + (data.source === "gateway" ? "gateway" : "mock");
       chartRowsInfo.textContent = data.data_rows ? `${data.data_rows} ${I18N.recordsLabel}` : "";
 
       chartArea.hidden = false;
@@ -445,7 +448,7 @@
       historyCount.textContent = items.length;
 
       if (!items.length) {
-        historyList.innerHTML = `<p class="text-muted small text-center py-2">${I18N.noSavedCharts}</p>`;
+        historyList.innerHTML = `<p class="pp-faint" style="font-size:12px; text-align:center; padding:12px 0;">${I18N.noSavedCharts}</p>`;
         return;
       }
 
@@ -455,7 +458,7 @@
             <div class="history-item__title" title="${escHtml(item.title)}">${escHtml(item.title)}</div>
             <div class="history-item__date">${formatDate(item.created_at)}</div>
           </div>
-          <button class="history-item__del" data-del="${item.id}" title="\u2715">\u2715</button>
+          <button class="history-item__del" data-del="${item.id}" title="✕">✕</button>
         </div>
       `).join("");
 
@@ -479,7 +482,7 @@
       });
 
     } catch (err) {
-      historyList.innerHTML = `<p class="text-muted small text-center py-2">${I18N.errorHistory}</p>`;
+      historyList.innerHTML = `<p class="pp-faint" style="font-size:12px; text-align:center; padding:12px 0;">${I18N.errorHistory}</p>`;
     }
   }
 

@@ -3,158 +3,121 @@
 
 {% block content %}
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<div class="pp-page-head">
   <div>
-    <h1 class="h3 fw-bold mb-1">{{ t('vsm_title') }} <span class="badge bg-primary">VSM</span></h1>
-    <p class="text-muted mb-0 small">{{ t('vsm_subtitle') }}</p>
+    <div class="pp-crumbs"><span>VSM</span></div>
+    <h1 class="pp-h1">{{ t('vsm_title') }} <span class="pp-tag pp-tag-info" style="font-size:11px; vertical-align:2px;">VSM</span></h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ t('vsm_subtitle') }}</p>
   </div>
-  <div class="d-flex align-items-center gap-2 flex-wrap">
-    <label class="form-label small fw-bold text-muted mb-0" for="lineSelect">{{ t('vsm_line_label') }}</label>
-    <select id="lineSelect" class="form-select form-select-sm" style="width:auto;">
+  <div class="pp-actions">
+    <label class="pp-faint" style="font-size:12px; font-weight:600;" for="lineSelect">{{ t('vsm_line_label') }}</label>
+    <select id="lineSelect" class="pp-select" style="width:auto; padding:6px 10px;">
       {% for l in lines %}
       <option value="{{ l }}" {% if l == selected_line %}selected{% endif %}>
         {{ t('line_label') }} {{ l }}
       </option>
       {% endfor %}
     </select>
-    <span class="badge bg-success" id="liveIndicator">● {{ t('badge_live') }}</span>
+    <span class="pp-tag pp-tag-ok" id="liveIndicator">● {{ t('badge_live') }}</span>
   </div>
 </div>
 
 <!-- VSM Canvas -->
-<section class="mb-4">
-  <div class="card border-0 shadow-sm">
-    <div class="card-body">
-      <div class="vsm-scroll-wrap" id="vsmScrollWrap">
-        <svg id="vsmSvg" class="vsm-svg" xmlns="http://www.w3.org/2000/svg">
-          <!-- Rendered dynamically by JavaScript -->
-        </svg>
-      </div>
-    </div>
+<div class="pp-card mb-4" style="margin-bottom:16px !important;">
+  <div class="vsm-scroll-wrap" id="vsmScrollWrap">
+    <svg id="vsmSvg" class="vsm-svg" xmlns="http://www.w3.org/2000/svg">
+      <!-- Rendered dynamically by JavaScript -->
+    </svg>
   </div>
-</section>
+</div>
 
 <!-- Summary metrics -->
-<section class="mb-4">
-  <div class="row g-3" id="vsmMetrics">
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-blue">
-        <div class="card-body d-flex align-items-center gap-3 p-3">
-          <span class="fs-4">⏱</span>
-          <div>
-            <div class="fs-5 fw-bold" id="mLeadTime">—</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_lead_time') }}</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-green">
-        <div class="card-body d-flex align-items-center gap-3 p-3">
-          <span class="fs-4">✅</span>
-          <div>
-            <div class="fs-5 fw-bold" id="mVaTime">—</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_va_time') }}</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-purple">
-        <div class="card-body d-flex align-items-center gap-3 p-3">
-          <span class="fs-4">📊</span>
-          <div>
-            <div class="fs-5 fw-bold" id="mVaRatio">—</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_va_ratio') }}</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-red">
-        <div class="card-body d-flex align-items-center gap-3 p-3">
-          <span class="fs-4">🚧</span>
-          <div>
-            <div class="fs-5 fw-bold" id="mBottleneck">—</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_bottleneck') }}</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-teal">
-        <div class="card-body d-flex align-items-center gap-3 p-3">
-          <span class="fs-4">📦</span>
-          <div>
-            <div class="fs-5 fw-bold" id="mWip">—</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_total_wip') }}</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-yellow">
-        <div class="card-body d-flex align-items-center gap-3 p-3">
-          <span class="fs-4">🎯</span>
-          <div>
-            <div class="fs-5 fw-bold" id="mOee">—</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size:0.68rem;">{{ t('vsm_oee') }}</small>
-          </div>
-        </div>
-      </div>
+<div style="display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px;">
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('vsm_lead_time') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="mLeadTime" style="font-size:22px;">—</span>
     </div>
   </div>
-</section>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('vsm_va_time') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="mVaTime" style="font-size:22px;">—</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('vsm_va_ratio') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="mVaRatio" style="font-size:22px;">—</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('vsm_bottleneck') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="mBottleneck" style="font-size:18px;">—</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('vsm_total_wip') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="mWip" style="font-size:22px;">—</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('vsm_oee') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="mOee" style="font-size:22px;">—</span>
+    </div>
+  </div>
+</div>
 
 <!-- Sección comparativa multi-planta -->
-<section class="mb-4" id="vsmCompareSection">
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
-      <div>
-        <h6 class="fw-bold mb-0">{{ t('vsm_compare_title') }}</h6>
-        <small class="text-muted">{{ t('vsm_compare_subtitle') }}</small>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <span class="text-muted small">{{ t('vsm_compare_line') }}</span>
-        <span class="badge bg-primary" id="compareLineLabel">—</span>
-        <button class="btn btn-sm btn-outline-primary" id="btnToggleCompare">
-          📊 {{ t('vsm_compare_toggle') }}
-        </button>
-      </div>
+<div class="pp-card mb-4" id="vsmCompareSection" style="margin-bottom:16px !important;">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('vsm_compare_subtitle') }}</p>
+      <h3 class="pp-card-title">{{ t('vsm_compare_title') }}</h3>
     </div>
-    <div id="vsmCompareBody" hidden>
-      <div class="card-body p-3">
-        <!-- Gráfico de barras C/T por paso y planta -->
-        <div id="compareChart" style="width:100%; height:360px;"></div>
-        <!-- Tabla resumen por planta -->
-        <div class="table-responsive mt-3">
-          <table class="table table-sm table-hover align-middle" id="compareTable">
-            <thead class="table-light">
-              <tr>
-                <th>{{ t('vsm_compare_site') }}</th>
-                <th>{{ t('vsm_compare_lead') }}</th>
-                <th>{{ t('vsm_compare_va') }}</th>
-                <th>{{ t('vsm_compare_ratio') }}</th>
-                <th>{{ t('vsm_compare_bottleneck') }}</th>
-                <th>{{ t('vsm_compare_oee') }}</th>
-              </tr>
-            </thead>
-            <tbody id="compareTableBody">
-              <tr><td colspan="6" class="text-center text-muted py-3">{{ t('vsm_compare_loading') }}</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <!-- Tabla detallada C/T por paso -->
-        <div class="table-responsive mt-2">
-          <table class="table table-sm table-bordered align-middle" id="compareDetailTable">
-            <thead class="table-light" id="compareDetailHead"></thead>
-            <tbody id="compareDetailBody"></tbody>
-          </table>
-        </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="pp-faint" style="font-size:12px;">{{ t('vsm_compare_line') }}</span>
+      <span class="pp-tag pp-tag-info" id="compareLineLabel">—</span>
+      <button class="pp-btn pp-btn-sm" id="btnToggleCompare">
+        📊 {{ t('vsm_compare_toggle') }}
+      </button>
+    </div>
+  </div>
+  <div id="vsmCompareBody" hidden>
+    <div style="padding:0 20px 16px;">
+      <!-- Gráfico de barras C/T por paso y planta -->
+      <div id="compareChart" style="width:100%; height:360px;"></div>
+      <!-- Tabla resumen por planta -->
+      <div class="pp-table-wrap mt-3">
+        <table class="pp-table" id="compareTable">
+          <thead>
+            <tr>
+              <th>{{ t('vsm_compare_site') }}</th>
+              <th>{{ t('vsm_compare_lead') }}</th>
+              <th>{{ t('vsm_compare_va') }}</th>
+              <th>{{ t('vsm_compare_ratio') }}</th>
+              <th>{{ t('vsm_compare_bottleneck') }}</th>
+              <th class="right">{{ t('vsm_compare_oee') }}</th>
+            </tr>
+          </thead>
+          <tbody id="compareTableBody">
+            <tr><td colspan="6" class="pp-faint" style="text-align:center; padding:20px;">{{ t('vsm_compare_loading') }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Tabla detallada C/T por paso -->
+      <div class="table-responsive mt-2">
+        <table class="table table-sm table-bordered align-middle" id="compareDetailTable">
+          <thead class="table-light" id="compareDetailHead"></thead>
+          <tbody id="compareDetailBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
-</section>
+</div>
 
 <!-- Detail panel overlay -->
 <div class="vsm-detail-overlay" id="detailOverlay" hidden>
@@ -173,7 +136,7 @@
       <div id="detailStops"></div>
     </div>
     <div class="vsm-detail-section">
-      <button class="btn btn-primary w-100" id="detailAiBtn">
+      <button class="pp-btn pp-btn-primary" style="width:100%;" id="detailAiBtn">
         🤖 {{ t('vsm_ask_ai') }}
       </button>
     </div>
@@ -194,7 +157,7 @@
   overflow-x: auto;
   background: #f0f4f8;
   border-radius: 8px;
-  border: 1px solid var(--color-gray-200, #e8ecf0);
+  border: 1px solid var(--pp-line);
   padding: 1rem 0.5rem;
   min-height: 320px;
 }
@@ -208,7 +171,7 @@
 .vsm-detail-overlay:not([hidden]) { pointer-events: auto; }
 
 .vsm-detail-panel {
-  position: fixed; top: 56px; right: 0; bottom: 0;
+  position: fixed; top: var(--pp-topbar-height); right: 0; bottom: 0;
   width: 340px; background: #fff;
   box-shadow: -4px 0 24px rgba(0,0,0,0.15);
   display: flex; flex-direction: column; gap: 0;
@@ -222,12 +185,12 @@
 
 .vsm-detail-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--pp-line);
   background: #fff; position: sticky; top: 0; z-index: 1;
 }
 .vsm-detail-header h3 { font-size: 1rem; font-weight: 700; margin: 0; }
 
-.vsm-detail-section { padding: 1rem 1.25rem; border-bottom: 1px solid #f0f4f8; }
+.vsm-detail-section { padding: 1rem 1.25rem; border-bottom: 1px solid var(--pp-line); }
 .vsm-detail-section-title {
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.04em; color: #718096; margin-bottom: 0.6rem;
@@ -236,14 +199,14 @@
 .vsm-detail-kpis {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem; padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #f0f4f8;
+  border-bottom: 1px solid var(--pp-line);
 }
 .vsm-kpi-chip {
-  background: #f7fafc; border-radius: 8px; padding: 0.5rem 0.4rem;
+  background: var(--pp-warm); border-radius: 8px; padding: 0.5rem 0.4rem;
   text-align: center;
 }
 .vsm-kpi-chip__val {
-  font-size: 1.1rem; font-weight: 800; color: #2d3748;
+  font-size: 1.1rem; font-weight: 800; color: var(--pp-text);
   display: block; line-height: 1.1;
 }
 .vsm-kpi-chip__lbl {
@@ -254,7 +217,7 @@
 .vsm-stop-item {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.35rem 0; font-size: 0.8rem; color: #4a5568;
-  border-bottom: 1px solid #f7fafc;
+  border-bottom: 1px solid var(--pp-warm);
 }
 .vsm-stop-badge {
   padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.7rem;
@@ -265,7 +228,7 @@
 .vsm-stop-badge--waiting    { background: #f0f4f8; color: #718096; }
 
 .vsm-ai-response {
-  background: #f7fafc; border-radius: 8px; padding: 0.75rem;
+  background: var(--pp-warm); border-radius: 8px; padding: 0.75rem;
   font-size: 0.82rem; color: #4a5568; line-height: 1.55;
   min-height: 60px;
 }
@@ -353,11 +316,11 @@
   }
 
   function truncate(s, maxLen = 14) {
-    return s.length > maxLen ? s.slice(0, maxLen - 1) + "\u2026" : s;
+    return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
   }
 
   function fmtCT(s) {
-    if (!s) return "\u2014";
+    if (!s) return "—";
     return s >= 60 ? `${Math.round(s / 60)}m${Math.round(s % 60)}s` : `${Number(s).toFixed(1)}s`;
   }
 
@@ -375,9 +338,9 @@
       x: 0, y: 0, width: totalW, height: SVG_H, fill: "#f0f4f8", rx: 10,
     }));
 
-    drawActorIcon(vsmSvg, 10, STEP_Y, I18N.supplier, "\uD83D\uDCE6");
+    drawActorIcon(vsmSvg, 10, STEP_Y, I18N.supplier, "📦");
     const lastX = startX + (n - 1) * (STEP_W + STEP_GAP);
-    drawActorIcon(vsmSvg, lastX + STEP_W + 10, STEP_Y, I18N.customer, "\uD83C\uDFED");
+    drawActorIcon(vsmSvg, lastX + STEP_W + 10, STEP_Y, I18N.customer, "🏭");
 
     const tlX1 = startX, tlX2 = lastX + STEP_W;
     vsmSvg.appendChild(svgEl("line", {
@@ -417,7 +380,7 @@
       }
     }
 
-    vsmSvg.appendChild(svgText("\u2190 VA / NVA \u2192", (tlX1 + tlX2) / 2, TL_Y + 38, {
+    vsmSvg.appendChild(svgText("← VA / NVA →", (tlX1 + tlX2) / 2, TL_Y + 38, {
       "font-size": "9", fill: "#718096", "font-style": "italic",
     }));
   }
@@ -461,8 +424,8 @@
     });
 
     const ctVal = fmtCT(step.actual_cycle_time);
-    const coVal = step.nom_co ? `${step.nom_co}m` : "\u2014";
-    const wipVal = step.units_in_wip != null ? step.units_in_wip : "\u2014";
+    const coVal = step.nom_co ? `${step.nom_co}m` : "—";
+    const wipVal = step.units_in_wip != null ? step.units_in_wip : "—";
 
     const kyStart = y + 44;
     [
@@ -475,8 +438,8 @@
       }));
     });
 
-    const statusLabel = { running: "\u25B6 RUN", stopped: "\u25A0 STOP", changeover: "\u27F3 C/O", waiting: "\u25CC WAIT" };
-    g.appendChild(svgText(statusLabel[step.status] || "\u25CC WAIT", x + STEP_W / 2, y + STEP_H - 3, {
+    const statusLabel = { running: "▶ RUN", stopped: "■ STOP", changeover: "⟳ C/O", waiting: "◌ WAIT" };
+    g.appendChild(svgText(statusLabel[step.status] || "◌ WAIT", x + STEP_W / 2, y + STEP_H - 3, {
       "font-size": "8.5", fill: "#fff", "font-weight": "700",
     }));
 
@@ -540,7 +503,7 @@
     setVal("mLeadTime", fmtCT(s));
     setVal("mVaTime",   fmtCT(va));
     setVal("mVaRatio",  (m.va_ratio_pct || 0) + "%");
-    setVal("mBottleneck", m.bottleneck || "\u2014");
+    setVal("mBottleneck", m.bottleneck || "—");
     setVal("mWip",      (m.total_wip || 0) + " uds");
     setVal("mOee",      (m.oee_pct || 0) + "%");
   }
@@ -573,7 +536,7 @@
     activeStepId = stepId;
     detailOverlay.hidden = false;
     detailAiSection.hidden = true;
-    detailTitle.textContent = "\u2026";
+    detailTitle.textContent = "…";
     detailKpis.innerHTML = "";
     detailStops.innerHTML = "";
 
@@ -589,8 +552,8 @@
       const latest = history[history.length - 1];
       const chips = [
         { val: fmtCT(latest?.actual_cycle_time), lbl: "C/T actual" },
-        { val: (latest?.units_in_wip ?? "\u2014"), lbl: "WIP" },
-        { val: (latest?.defect_count ?? "\u2014"), lbl: "Defectos" },
+        { val: (latest?.units_in_wip ?? "—"), lbl: "WIP" },
+        { val: (latest?.defect_count ?? "—"), lbl: "Defectos" },
       ];
       detailKpis.innerHTML = chips.map(c => `
         <div class="vsm-kpi-chip">
@@ -651,16 +614,16 @@
   detailAiBtn.addEventListener("click", async () => {
     if (!activeStepId) return;
     detailAiSection.hidden = false;
-    detailAiResp.innerHTML = `<span class="vsm-spinner">\u23F3</span> ${I18N.aiLoading}`;
+    detailAiResp.innerHTML = `<span class="vsm-spinner">⏳</span> ${I18N.aiLoading}`;
 
     const step = stepsData.find(s => s.step_id === activeStepId);
     if (!step) { detailAiResp.textContent = I18N.aiError; return; }
 
-    const prompt = `Analiza el paso de proceso "${step.step_name}" en la l\u00EDnea ${currentLine}.
+    const prompt = `Analiza el paso de proceso "${step.step_name}" en la línea ${currentLine}.
 Cycle time actual: ${fmtCT(step.actual_cycle_time)} (nominal: ${fmtCT(step.nom_ct)}).
 Estado: ${step.status}. WIP: ${step.units_in_wip} unidades.
 Tipo: ${step.step_type}.
-\u00BFCu\u00E1les son las causas m\u00E1s probables de desviaci\u00F3n y qu\u00E9 mejoras Lean/VSM recomiendas?`;
+¿Cuáles son las causas más probables de desviación y qué mejoras Lean/VSM recomiendas?`;
 
     try {
       const res = await fetch("/api/assistant/suggest", {
@@ -760,9 +723,9 @@ Tipo: ${step.step_type}.
         <td>${dot}${site.flag} <strong>${site.site_name}</strong></td>
         <td>${fmtCTcmp(m.lead_time_s)}</td>
         <td>${fmtCTcmp(m.va_time_s)}</td>
-        <td><span class="badge ${m.va_ratio_pct >= 60 ? 'bg-success' : m.va_ratio_pct >= 40 ? 'bg-warning text-dark' : 'bg-danger'}">${m.va_ratio_pct || 0}%</span></td>
-        <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle">${m.bottleneck || '—'}</span></td>
-        <td><strong>${m.oee_pct || 0}%</strong></td>
+        <td><span class="pp-tag ${m.va_ratio_pct >= 60 ? 'pp-tag-ok' : m.va_ratio_pct >= 40 ? 'pp-tag-warn' : 'pp-tag-bad'}">${m.va_ratio_pct || 0}%</span></td>
+        <td><span class="pp-tag pp-tag-bad">${m.bottleneck || '—'}</span></td>
+        <td style="text-align:right;"><strong>${m.oee_pct || 0}%</strong></td>
       </tr>`;
     }).join("");
   }
@@ -776,9 +739,7 @@ Tipo: ${step.step_type}.
       window.addEventListener("resize", () => compareChartInst && compareChartInst.resize());
     }
 
-    // Series: una por planta (C/T real) + una de nominal (común)
     const series = [];
-    // Nominal (primer site — todos tienen los mismos nominales)
     const firstSite = data.sites[0];
     if (firstSite) {
       series.push({
@@ -800,7 +761,6 @@ Tipo: ${step.step_type}.
         data: site.data.map(s => {
           const val = +(s.actual_cycle_time || s.nom_ct || 0).toFixed(2);
           const ratio = s.ratio || 1;
-          // Color dinámico por ratio
           const itemColor = ratio > 1.25 ? "#c0392b" : ratio > 1.10 ? "#e6a817" : color;
           return { value: val, itemStyle: { color: itemColor } };
         }),
@@ -854,7 +814,6 @@ Tipo: ${step.step_type}.
     if (!data.sites || !data.sites.length) return;
     const steps = data.steps || [];
 
-    // Cabecera: Paso | Nominal | Planta1 (ratio) | Planta2 (ratio) | ...
     compareDetHead.innerHTML = `<tr>
       <th style="min-width:120px">Paso</th>
       <th>Nominal</th>
@@ -864,7 +823,6 @@ Tipo: ${step.step_type}.
       }).join("")}
     </tr>`;
 
-    // Filas: una por paso
     compareDetBody.innerHTML = steps.map((stepName, idx) => {
       const nomCT = (data.sites[0]?.data[idx]?.nom_ct || 0);
       const cells = data.sites.map(site => {
@@ -886,14 +844,13 @@ Tipo: ${step.step_type}.
   btnToggle.addEventListener("click", () => {
     const hidden = compareBody.hidden;
     compareBody.hidden = !hidden;
-    if (!hidden) return; // cerrar
+    if (!hidden) return;
     if (!compareLoaded) {
       compareLoaded = true;
       loadCompare();
     }
   });
 
-  // Recargar comparativa cuando cambie la línea (si ya está abierta)
   lineSelect.addEventListener("change", () => {
     if (!compareBody.hidden) {
       compareLoaded = false;

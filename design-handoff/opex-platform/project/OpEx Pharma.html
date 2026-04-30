@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpEx Platform · Pharma Premium</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="opex-pharma.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+
+<!-- Demo banner -->
+<div class="pp-banner">
+  <span><strong>OPEX · PHARMA PREMIUM</strong> &nbsp;·&nbsp; PoC con dirección visual brand-led Lilly · datos de ejemplo</span>
+  <span style="opacity:0.6">v2.0 — Eli Lilly &amp; Co.</span>
+</div>
+
+<!-- ============================================================
+     TOPBAR
+     ============================================================ -->
+<header class="pp-top">
+  <div class="pp-brand">
+    <span class="pp-brand-dot"></span>
+    <span class="pp-brand-mark">LILLY</span>
+    <span class="pp-brand-sep"></span>
+    <span class="pp-brand-product">Operational Excellence</span>
+  </div>
+
+  <div class="pp-top-tools">
+    <button class="pp-pill" title="Turno activo">
+      <span class="pp-pulse"></span>
+      L2 · Carlos
+    </button>
+    <button class="pp-pill" title="Turno activo">
+      <span class="pp-pulse"></span>
+      L4 · María
+    </button>
+    <button class="pp-pill"><i class="bi bi-geo-alt"></i> Madrid · Planta 2</button>
+    <button class="pp-pill">ES <span class="pp-faint">/ EN / 日本語</span></button>
+    <button class="pp-icon-btn" title="Notificaciones">
+      <i class="bi bi-bell"></i>
+      <span class="pp-badge">3</span>
+    </button>
+    <div class="pp-avatar">SR</div>
+  </div>
+</header>
+
+<!-- ============================================================
+     SHELL
+     ============================================================ -->
+<div class="pp-shell">
+
+  <aside class="pp-side">
+    <div class="pp-side-section">
+      <button class="pp-side-item active" data-go="index"><i class="bi bi-house"></i>Inicio</button>
+      <button class="pp-side-item" data-go="dashboard"><i class="bi bi-speedometer2"></i>Dashboard</button>
+      <button class="pp-side-item" data-go="global"><i class="bi bi-globe"></i>Global</button>
+      <button class="pp-side-item" data-go="vsm"><i class="bi bi-diagram-3"></i>VSM</button>
+      <button class="pp-side-item" data-go="sqdcp"><i class="bi bi-grid-3x3-gap"></i>SQDCP</button>
+    </div>
+    <div class="pp-side-section">
+      <p class="pp-side-label">Turnos</p>
+      <button class="pp-side-item" data-go="start"><i class="bi bi-play-circle"></i>Nuevo turno</button>
+      <button class="pp-side-item" data-go="active"><i class="bi bi-activity"></i>Turno activo</button>
+      <button class="pp-side-item" data-go="end"><i class="bi bi-stop-circle"></i>Cierre</button>
+      <button class="pp-side-item" data-go="summary"><i class="bi bi-file-text"></i>Reporte</button>
+      <button class="pp-side-item" data-go="history"><i class="bi bi-clock-history"></i>Historial</button>
+    </div>
+    <div class="pp-side-section">
+      <p class="pp-side-label">Mejora</p>
+      <button class="pp-side-item" data-go="problems"><i class="bi bi-exclamation-triangle"></i>Problemas <span class="pp-side-count">7</span></button>
+      <button class="pp-side-item" data-go="initiatives"><i class="bi bi-rocket"></i>Iniciativas</button>
+      <button class="pp-side-item" data-go="builder"><i class="bi bi-robot"></i>IA Charts</button>
+    </div>
+  </aside>
+
+  <main class="pp-main">
+
+    <!-- ====================================================== INDEX -->
+    <section class="pp-screen active" data-screen="index" data-screen-label="01 Inicio">
+      <div class="pp-page-head">
+        <div>
+          <p class="pp-eyebrow">Resumen del día · Martes 15 oct</p>
+          <h1 class="pp-h1">Buenos días, Sara.</h1>
+          <p class="pp-dim" style="margin:8px 0 0">3 líneas en marcha · 1 alerta activa · próximo cambio de turno en 02:14</p>
+        </div>
+        <div class="pp-actions">
+          <button class="pp-btn"><i class="bi bi-download"></i> Exportar</button>
+          <button class="pp-btn pp-btn-primary" data-go="start"><i class="bi bi-play-fill"></i> Iniciar turno</button>
+        </div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">OEE Global</p><div class="pp-kpi-value"><span class="pp-kpi-num">84.2</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +2.1</span><span class="pp-faint">Obj. 85.0</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Producción</p><div class="pp-kpi-value"><span class="pp-kpi-num">142.8</span><span class="pp-kpi-unit">k u</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +5.4%</span><span class="pp-faint">Obj. 150 k</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Calidad (FPY)</p><div class="pp-kpi-value"><span class="pp-kpi-num">98.7</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +0.3</span><span class="pp-faint">Obj. 99.0</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Seguridad</p><div class="pp-kpi-value"><span class="pp-kpi-num">47</span><span class="pp-kpi-unit">días</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-flat">— sin LTI</span><span class="pp-faint">YTD</span></div></div>
+      </div>
+
+      <div class="pp-grid-3-2">
+        <div class="pp-card">
+          <div class="pp-card-head">
+            <div><p class="pp-eyebrow pp-eyebrow-muted">Tendencia · 24h</p><h3 class="pp-card-title">OEE por hora</h3></div>
+            <div class="pp-tabs"><button class="pp-tab active">24h</button><button class="pp-tab">7d</button><button class="pp-tab">30d</button></div>
+          </div>
+          <div data-chart="oee-24h" style="width:100%; height:280px"></div>
+        </div>
+
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Estado actual</p><h3 class="pp-card-title">Líneas activas</h3></div></div>
+          <ul class="pp-list">
+            <li class="pp-list-row"><span class="pp-dot pp-dot-ok"></span><div><div style="font-weight:600">Línea 1 — Solid Dose</div><div class="pp-faint" style="font-size:11px">Mañana · Carlos R.</div></div><span class="pp-num" style="font-size:22px">88<span class="pp-dim" style="font-size:13px">%</span></span></li>
+            <li class="pp-list-row"><span class="pp-dot pp-dot-ok"></span><div><div style="font-weight:600">Línea 2 — Solid Dose</div><div class="pp-faint" style="font-size:11px">Mañana · Carlos R.</div></div><span class="pp-num" style="font-size:22px">82<span class="pp-dim" style="font-size:13px">%</span></span></li>
+            <li class="pp-list-row"><span class="pp-dot pp-dot-warn"></span><div><div style="font-weight:600">Línea 3 — Liquids</div><div class="pp-faint" style="font-size:11px">Mañana · Ana G.</div></div><span class="pp-num" style="font-size:22px">71<span class="pp-dim" style="font-size:13px">%</span></span></li>
+            <li class="pp-list-row"><span class="pp-dot pp-dot-ok"></span><div><div style="font-weight:600">Línea 4 — Packaging</div><div class="pp-faint" style="font-size:11px">Mañana · María L.</div></div><span class="pp-num" style="font-size:22px">91<span class="pp-dim" style="font-size:13px">%</span></span></li>
+            <li class="pp-list-row"><span class="pp-dot pp-dot-bad"></span><div><div style="font-weight:600">Línea 5 — Packaging</div><div class="pp-faint" style="font-size:11px">Parada · 12 min</div></div><span class="pp-num" style="font-size:22px">64<span class="pp-dim" style="font-size:13px">%</span></span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== DASHBOARD -->
+    <section class="pp-screen" data-screen="dashboard" data-screen-label="02 Dashboard">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>OpEx</span><span class="pp-crumb-sep">/</span><span>Dashboard</span></div>
+          <h1 class="pp-h1">Dashboard operativo</h1>
+        </div>
+        <div class="pp-actions">
+          <div class="pp-tabs"><button class="pp-tab">Hoy</button><button class="pp-tab active">7d</button><button class="pp-tab">30d</button></div>
+          <button class="pp-btn"><i class="bi bi-download"></i> Exportar</button>
+        </div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">OEE</p><div class="pp-kpi-value"><span class="pp-kpi-num">83.1</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +1.4</span><span class="pp-faint">Obj. 85.0</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Disponibilidad</p><div class="pp-kpi-value"><span class="pp-kpi-num">91.4</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +0.8</span><span class="pp-faint">Obj. 92.0</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Rendimiento</p><div class="pp-kpi-value"><span class="pp-kpi-num">94.2</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-down">▼ -0.6</span><span class="pp-faint">Obj. 95.0</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Calidad</p><div class="pp-kpi-value"><span class="pp-kpi-num">96.8</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +0.2</span><span class="pp-faint">Obj. 97.0</span></div></div>
+      </div>
+
+      <div class="pp-grid-2-1" style="margin-bottom:16px">
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Producción semanal</p><h3 class="pp-card-title">Real vs objetivo</h3></div></div>
+          <div data-chart="prod-7d" style="width:100%; height:280px"></div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Categorías de paro</p><h3 class="pp-card-title">Distribución</h3></div></div>
+          <div data-chart="downtime-cat" style="width:100%; height:280px"></div>
+        </div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Línea</th><th>Producto</th><th class="right">OEE</th><th class="right">Producción</th><th class="right">Disp.</th><th class="right">Calidad</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><strong>L1</strong></td><td>Solid Dose</td><td class="right num">88%</td><td class="right num">28.4k</td><td class="right num">94%</td><td class="right num">98%</td><td><span class="pp-tag pp-tag-ok">En marcha</span></td></tr>
+            <tr><td><strong>L2</strong></td><td>Solid Dose</td><td class="right num">82%</td><td class="right num">25.1k</td><td class="right num">90%</td><td class="right num">97%</td><td><span class="pp-tag pp-tag-ok">En marcha</span></td></tr>
+            <tr><td><strong>L3</strong></td><td>Liquids</td><td class="right num">71%</td><td class="right num">18.6k</td><td class="right num">82%</td><td class="right num">95%</td><td><span class="pp-tag pp-tag-warn">Bajo objetivo</span></td></tr>
+            <tr><td><strong>L4</strong></td><td>Packaging</td><td class="right num">91%</td><td class="right num">34.2k</td><td class="right num">96%</td><td class="right num">98%</td><td><span class="pp-tag pp-tag-ok">En marcha</span></td></tr>
+            <tr><td><strong>L5</strong></td><td>Packaging</td><td class="right num">64%</td><td class="right num">14.1k</td><td class="right num">71%</td><td class="right num">94%</td><td><span class="pp-tag pp-tag-bad">Parada</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================== GLOBAL -->
+    <section class="pp-screen" data-screen="global" data-screen-label="03 Global">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>OpEx</span><span class="pp-crumb-sep">/</span><span>Global</span></div>
+          <h1 class="pp-h1">Vista global · Multi-planta</h1>
+        </div>
+        <div class="pp-actions"><button class="pp-btn"><i class="bi bi-download"></i> Exportar</button></div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">OEE Promedio</p><div class="pp-kpi-value"><span class="pp-kpi-num">81.4</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +1.2</span><span class="pp-faint">vs Q3</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Plantas</p><div class="pp-kpi-value"><span class="pp-kpi-num">6</span><span class="pp-kpi-unit">activas</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-flat">— igual</span><span class="pp-faint">global</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Líneas</p><div class="pp-kpi-value"><span class="pp-kpi-num">38</span><span class="pp-kpi-unit">total</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-flat">— igual</span><span class="pp-faint">global</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Iniciativas</p><div class="pp-kpi-value"><span class="pp-kpi-num">€1.24</span><span class="pp-kpi-unit">M YTD</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +18%</span><span class="pp-faint">vs plan</span></div></div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Planta</th><th>País</th><th class="right">Líneas</th><th class="right">OEE</th><th class="right">Producción</th><th class="right">Iniciativas</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Madrid · P2</strong></td><td>🇪🇸 España</td><td class="right num">5</td><td class="right num">84.2%</td><td class="right num">142.8k</td><td class="right num">8</td><td><span class="pp-tag pp-tag-ok">Operativa</span></td></tr>
+            <tr><td><strong>Cork</strong></td><td>🇮🇪 Irlanda</td><td class="right num">7</td><td class="right num">86.1%</td><td class="right num">198.4k</td><td class="right num">12</td><td><span class="pp-tag pp-tag-ok">Operativa</span></td></tr>
+            <tr><td><strong>Indianapolis</strong></td><td>🇺🇸 EE.UU.</td><td class="right num">12</td><td class="right num">79.8%</td><td class="right num">312.2k</td><td class="right num">18</td><td><span class="pp-tag pp-tag-warn">Bajo objetivo</span></td></tr>
+            <tr><td><strong>Kobe</strong></td><td>🇯🇵 Japón</td><td class="right num">6</td><td class="right num">82.4%</td><td class="right num">156.7k</td><td class="right num">9</td><td><span class="pp-tag pp-tag-ok">Operativa</span></td></tr>
+            <tr><td><strong>Sesto · P1</strong></td><td>🇮🇹 Italia</td><td class="right num">4</td><td class="right num">78.6%</td><td class="right num">98.4k</td><td class="right num">5</td><td><span class="pp-tag pp-tag-warn">Bajo objetivo</span></td></tr>
+            <tr><td><strong>Fegersheim</strong></td><td>🇫🇷 Francia</td><td class="right num">4</td><td class="right num">85.3%</td><td class="right num">112.1k</td><td class="right num">7</td><td><span class="pp-tag pp-tag-ok">Operativa</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================== VSM -->
+    <section class="pp-screen" data-screen="vsm" data-screen-label="04 VSM">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>OpEx</span><span class="pp-crumb-sep">/</span><span>VSM</span></div>
+          <h1 class="pp-h1">Value Stream Map · Solid Dose</h1>
+          <p class="pp-dim" style="margin:8px 0 0">Lead time total: <strong style="color:var(--pp-text)">14.2 días</strong> · Tiempo de valor añadido: <strong style="color:var(--pp-text)">38 min</strong> · Eficiencia: <strong style="color:var(--pp-red)">0.19%</strong></p>
+        </div>
+        <div class="pp-actions">
+          <button class="pp-btn"><i class="bi bi-pencil"></i> Editar</button>
+          <button class="pp-btn pp-btn-primary"><i class="bi bi-plus-lg"></i> Nuevo VSM</button>
+        </div>
+      </div>
+
+      <div class="pp-card">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; padding:24px 0">
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Recepción</p><div class="pp-vsm-num">2.1d</div><div class="pp-faint" style="font-size:11px">stock</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Pesada</p><div class="pp-vsm-num">8min</div><div class="pp-faint" style="font-size:11px">VA</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Granulación</p><div class="pp-vsm-num">12min</div><div class="pp-faint" style="font-size:11px">VA</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node" style="border-color:var(--pp-warn); background:var(--pp-warn-soft)"><p class="pp-vsm-name">Espera</p><div class="pp-vsm-num">3.4d</div><div class="pp-faint" style="font-size:11px">cuello</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Compresión</p><div class="pp-vsm-num">6min</div><div class="pp-faint" style="font-size:11px">VA</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">QC</p><div class="pp-vsm-num">2.8d</div><div class="pp-faint" style="font-size:11px">batch</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Recubrimiento</p><div class="pp-vsm-num">12min</div><div class="pp-faint" style="font-size:11px">VA</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Empaque</p><div class="pp-vsm-num">3.5d</div><div class="pp-faint" style="font-size:11px">cola</div></div>
+          <i class="bi bi-arrow-right" style="font-size:18px; color:var(--pp-text-faint)"></i>
+          <div class="pp-vsm-node"><p class="pp-vsm-name">Liberación</p><div class="pp-vsm-num">2.4d</div><div class="pp-faint" style="font-size:11px">QA</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== SQDCP -->
+    <section class="pp-screen" data-screen="sqdcp" data-screen-label="05 SQDCP">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>OpEx</span><span class="pp-crumb-sep">/</span><span>SQDCP</span></div>
+          <h1 class="pp-h1">SQDCP · Tablero de turno</h1>
+          <p class="pp-dim" style="margin:8px 0 0">Línea 2 · Solid Dose · Turno mañana · 15 oct</p>
+        </div>
+        <div class="pp-actions"><button class="pp-btn"><i class="bi bi-pencil"></i> Editar</button></div>
+      </div>
+
+      <div class="pp-sqdcp">
+        <div class="pp-sqdcp-card">
+          <div class="pp-sqdcp-letter pp-sqdcp-S">S</div>
+          <h3 class="pp-h3">Safety</h3>
+          <p class="pp-num" style="font-size:32px; color:var(--pp-good)">47</p>
+          <p class="pp-faint" style="font-size:11px; margin:0">días sin LTI</p>
+          <div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-ok" style="width:94%"></div></div>
+        </div>
+        <div class="pp-sqdcp-card">
+          <div class="pp-sqdcp-letter pp-sqdcp-Q">Q</div>
+          <h3 class="pp-h3">Quality</h3>
+          <p class="pp-num" style="font-size:32px">98.7<span style="font-size:14px; color:var(--pp-text-dim)">%</span></p>
+          <p class="pp-faint" style="font-size:11px; margin:0">FPY · obj 99%</p>
+          <div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-ok" style="width:98%"></div></div>
+        </div>
+        <div class="pp-sqdcp-card">
+          <div class="pp-sqdcp-letter pp-sqdcp-D">D</div>
+          <h3 class="pp-h3">Delivery</h3>
+          <p class="pp-num" style="font-size:32px">94<span style="font-size:14px; color:var(--pp-text-dim)">%</span></p>
+          <p class="pp-faint" style="font-size:11px; margin:0">on-time</p>
+          <div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-warn" style="width:94%"></div></div>
+        </div>
+        <div class="pp-sqdcp-card">
+          <div class="pp-sqdcp-letter pp-sqdcp-C">C</div>
+          <h3 class="pp-h3">Cost</h3>
+          <p class="pp-num" style="font-size:32px">€2.84</p>
+          <p class="pp-faint" style="font-size:11px; margin:0">/u · obj €2.80</p>
+          <div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-warn" style="width:71%"></div></div>
+        </div>
+        <div class="pp-sqdcp-card">
+          <div class="pp-sqdcp-letter pp-sqdcp-P">P</div>
+          <h3 class="pp-h3">People</h3>
+          <p class="pp-num" style="font-size:32px">12<span style="font-size:14px; color:var(--pp-text-dim)">/12</span></p>
+          <p class="pp-faint" style="font-size:11px; margin:0">presencia</p>
+          <div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-ok" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <h2 class="pp-h2" style="margin:32px 0 16px">Acciones del día</h2>
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Letra</th><th>Acción</th><th>Responsable</th><th>Plazo</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pp-tag pp-tag-ok">S</span></td><td>Revisar EPI en zona granulación</td><td>Pedro M.</td><td>Hoy 14:00</td><td><span class="pp-tag pp-tag-ok">Hecho</span></td></tr>
+            <tr><td><span class="pp-tag pp-tag-info">Q</span></td><td>Calibración balanza B-04</td><td>Ana G.</td><td>Hoy 16:00</td><td><span class="pp-tag pp-tag-warn">En curso</span></td></tr>
+            <tr><td><span class="pp-tag pp-tag-warn">D</span></td><td>Acelerar lote LB-2240</td><td>Carlos R.</td><td>Mañana</td><td><span class="pp-tag pp-tag-neutral">Pendiente</span></td></tr>
+            <tr><td><span class="pp-tag pp-tag-bad">P</span></td><td>Cobertura turno noche viernes</td><td>María L.</td><td>Vie 22:00</td><td><span class="pp-tag pp-tag-bad">Bloqueado</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================== SHIFT START -->
+    <section class="pp-screen" data-screen="start" data-screen-label="06 Nuevo turno">
+      <div class="pp-page-head">
+        <div>
+          <p class="pp-eyebrow">Nuevo turno · Pre-arranque</p>
+          <h1 class="pp-h1">Inicia tu turno</h1>
+          <p class="pp-dim" style="margin:8px 0 0">Completa el checklist y registra cualquier observación antes de comenzar.</p>
+        </div>
+      </div>
+
+      <div class="pp-grid-2-1">
+        <div class="pp-card">
+          <h3 class="pp-card-title" style="margin-bottom:18px">Datos del turno</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+            <div class="pp-field"><label class="pp-label">Línea</label><select class="pp-select"><option>Línea 1 — Solid Dose</option><option selected>Línea 2 — Solid Dose</option><option>Línea 3 — Liquids</option><option>Línea 4 — Packaging</option><option>Línea 5 — Packaging</option></select></div>
+            <div class="pp-field"><label class="pp-label">Turno</label><select class="pp-select"><option selected>Mañana (06:00 – 14:00)</option><option>Tarde (14:00 – 22:00)</option><option>Noche (22:00 – 06:00)</option></select></div>
+            <div class="pp-field"><label class="pp-label">Supervisor</label><input class="pp-input" value="Carlos Rodríguez"/></div>
+            <div class="pp-field"><label class="pp-label">Operarios</label><input class="pp-input" value="6 asignados"/></div>
+            <div class="pp-field" style="grid-column:1/-1"><label class="pp-label">Producto / lote</label><input class="pp-input" value="MTX-500 · LB-2240" /></div>
+            <div class="pp-field" style="grid-column:1/-1"><label class="pp-label">Observaciones de turno anterior</label><textarea class="pp-textarea">Línea funcionando dentro de objetivo. Última inspección de calidad pasada sin desvíos.</textarea></div>
+          </div>
+        </div>
+
+        <div class="pp-card">
+          <h3 class="pp-card-title" style="margin-bottom:18px">Checklist de arranque</h3>
+          <ul class="pp-list">
+            <li class="pp-list-row"><i class="bi bi-check-circle-fill" style="color:var(--pp-good); font-size:18px"></i><span>EPI completos y en buen estado</span><span class="pp-faint" style="font-size:11px">06:02</span></li>
+            <li class="pp-list-row"><i class="bi bi-check-circle-fill" style="color:var(--pp-good); font-size:18px"></i><span>Limpieza de línea verificada</span><span class="pp-faint" style="font-size:11px">06:04</span></li>
+            <li class="pp-list-row"><i class="bi bi-check-circle-fill" style="color:var(--pp-good); font-size:18px"></i><span>Materia prima disponible</span><span class="pp-faint" style="font-size:11px">06:08</span></li>
+            <li class="pp-list-row"><i class="bi bi-circle" style="color:var(--pp-text-faint); font-size:18px"></i><span>Calibración de balanzas</span><span class="pp-faint" style="font-size:11px">—</span></li>
+            <li class="pp-list-row"><i class="bi bi-circle" style="color:var(--pp-text-faint); font-size:18px"></i><span>Test de arranque (3 unidades)</span><span class="pp-faint" style="font-size:11px">—</span></li>
+            <li class="pp-list-row"><i class="bi bi-exclamation-circle-fill" style="color:var(--pp-warn); font-size:18px"></i><span>Revisión de mantenimiento pendiente</span><span class="pp-faint" style="font-size:11px">!</span></li>
+          </ul>
+          <div style="margin-top:18px; display:flex; gap:8px">
+            <button class="pp-btn pp-btn-ghost" data-go="index">Cancelar</button>
+            <button class="pp-btn pp-btn-primary" style="margin-left:auto" data-go="active"><i class="bi bi-play-fill"></i> Iniciar turno</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== SHIFT ACTIVE -->
+    <section class="pp-screen" data-screen="active" data-screen-label="07 Turno activo">
+      <div class="pp-page-head">
+        <div>
+          <p class="pp-eyebrow"><span class="pp-pulse" style="vertical-align:-1px; margin-right:6px"></span>En curso · Turno mañana · L2</p>
+          <h1 class="pp-h1">Turno activo</h1>
+          <p class="pp-dim" style="margin:8px 0 0">Carlos Rodríguez · MTX-500 · LB-2240 · iniciado 06:00 · transcurrido <strong style="color:var(--pp-text)">05:43</strong></p>
+        </div>
+        <div class="pp-actions">
+          <button class="pp-btn"><i class="bi bi-pause-fill"></i> Registrar paro</button>
+          <button class="pp-btn pp-btn-dark" data-go="end"><i class="bi bi-stop-fill"></i> Cerrar turno</button>
+        </div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">OEE actual</p><div class="pp-kpi-value"><span class="pp-kpi-num">82.4</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +1.8 vs plan</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Producido</p><div class="pp-kpi-value"><span class="pp-kpi-num">18.4</span><span class="pp-kpi-unit">k u</span></div><div class="pp-kpi-foot"><span class="pp-faint">de 24 k objetivo</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Paros acumulados</p><div class="pp-kpi-value"><span class="pp-kpi-num">22</span><span class="pp-kpi-unit">min</span></div><div class="pp-kpi-foot"><span class="pp-faint">3 eventos</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Defectos</p><div class="pp-kpi-value"><span class="pp-kpi-num">0.34</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ mejor que plan</span></div></div>
+      </div>
+
+      <div class="pp-grid-2-1">
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Producción · últimos 60 min</p><h3 class="pp-card-title">Velocidad de línea</h3></div></div>
+          <div data-chart="live" style="width:100%; height:280px"></div>
+        </div>
+        <div class="pp-card">
+          <h3 class="pp-card-title" style="margin-bottom:14px">Eventos del turno</h3>
+          <ul class="pp-list">
+            <li class="pp-list-row"><span class="pp-tag pp-tag-bad">Paro</span><div><div style="font-weight:600">Cambio formato</div><div class="pp-faint" style="font-size:11px">12 min · 09:24</div></div><span class="pp-mono pp-faint" style="font-size:11px">#031</span></li>
+            <li class="pp-list-row"><span class="pp-tag pp-tag-warn">Calidad</span><div><div style="font-weight:600">Desvío peso</div><div class="pp-faint" style="font-size:11px">descarte 12 u · 10:48</div></div><span class="pp-mono pp-faint" style="font-size:11px">#032</span></li>
+            <li class="pp-list-row"><span class="pp-tag pp-tag-info">Info</span><div><div style="font-weight:600">Calibración OK</div><div class="pp-faint" style="font-size:11px">balanza B-04 · 11:12</div></div><span class="pp-mono pp-faint" style="font-size:11px">#033</span></li>
+            <li class="pp-list-row"><span class="pp-tag pp-tag-bad">Paro</span><div><div style="font-weight:600">Atasco transporte</div><div class="pp-faint" style="font-size:11px">10 min · 11:35</div></div><span class="pp-mono pp-faint" style="font-size:11px">#034</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== SHIFT END -->
+    <section class="pp-screen" data-screen="end" data-screen-label="08 Cierre">
+      <div class="pp-page-head">
+        <div>
+          <p class="pp-eyebrow">Cierre de turno · L2 · Mañana</p>
+          <h1 class="pp-h1">Cerrar turno</h1>
+          <p class="pp-dim" style="margin:8px 0 0">Revisa los resultados, deja constancia y firma para entregar al siguiente turno.</p>
+        </div>
+      </div>
+
+      <div class="pp-grid-2-1">
+        <div class="pp-card">
+          <h3 class="pp-card-title" style="margin-bottom:18px">Resumen</h3>
+          <div class="pp-grid-3">
+            <div class="pp-stat"><span class="pp-stat-label">OEE final</span><span class="pp-stat-value">82.4%</span></div>
+            <div class="pp-stat"><span class="pp-stat-label">Producido</span><span class="pp-stat-value">22.8k u</span></div>
+            <div class="pp-stat"><span class="pp-stat-label">Defectos</span><span class="pp-stat-value">0.34%</span></div>
+            <div class="pp-stat"><span class="pp-stat-label">Paros</span><span class="pp-stat-value">38 min</span></div>
+            <div class="pp-stat"><span class="pp-stat-label">Eventos</span><span class="pp-stat-value">5</span></div>
+            <div class="pp-stat"><span class="pp-stat-label">Cumplimiento</span><span class="pp-stat-value">95%</span></div>
+          </div>
+          <hr style="border:none; border-top:1px solid var(--pp-line); margin:24px 0">
+          <div class="pp-field"><label class="pp-label">Notas para el siguiente turno</label><textarea class="pp-textarea" rows="5">Línea estable. Atención al ajuste de la prensa P-02, hubo dos atascos por la mañana. Lote LB-2240 finalizando, próximo será LB-2241.</textarea></div>
+          <div class="pp-field" style="margin-top:14px"><label class="pp-label">Problemas a escalar</label><textarea class="pp-textarea" rows="3">Mantenimiento ha solicitado 4h para revisión preventiva en P-02. Coordinar con turno noche.</textarea></div>
+        </div>
+
+        <div class="pp-card">
+          <h3 class="pp-card-title" style="margin-bottom:14px">Firma de entrega</h3>
+          <div class="pp-field" style="margin-bottom:14px"><label class="pp-label">Saliente</label><input class="pp-input" value="Carlos Rodríguez"/></div>
+          <div class="pp-field" style="margin-bottom:18px"><label class="pp-label">Entrante</label><input class="pp-input" placeholder="Nombre del próximo supervisor"/></div>
+          <div style="background:var(--pp-paper); border:1px dashed var(--pp-divider); border-radius:8px; padding:32px 16px; text-align:center; color:var(--pp-text-faint); margin-bottom:14px">
+            <i class="bi bi-pencil" style="font-size:22px"></i>
+            <p style="margin:8px 0 0; font-size:12px">Firma aquí</p>
+          </div>
+          <div style="display:flex; gap:8px">
+            <button class="pp-btn pp-btn-ghost" data-go="active">Volver</button>
+            <button class="pp-btn pp-btn-primary" data-go="summary" style="margin-left:auto">Cerrar y generar reporte →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== SUMMARY -->
+    <section class="pp-screen" data-screen="summary" data-screen-label="09 Reporte">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>Turnos</span><span class="pp-crumb-sep">/</span><span>Reporte</span></div>
+          <h1 class="pp-h1">Reporte de turno · L2 — Mañana</h1>
+          <p class="pp-dim" style="margin:8px 0 0">15 oct 2025 · 06:00 – 14:00 · Carlos Rodríguez · MTX-500 · LB-2240</p>
+        </div>
+        <div class="pp-actions">
+          <button class="pp-btn"><i class="bi bi-printer"></i> Imprimir</button>
+          <button class="pp-btn"><i class="bi bi-download"></i> PDF</button>
+          <button class="pp-btn pp-btn-primary"><i class="bi bi-send"></i> Enviar</button>
+        </div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">OEE final</p><div class="pp-kpi-value"><span class="pp-kpi-num">82.4</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +1.8</span><span class="pp-faint">vs objetivo</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Producción</p><div class="pp-kpi-value"><span class="pp-kpi-num">22.8</span><span class="pp-kpi-unit">k u</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +5%</span><span class="pp-faint">de 21.8 k</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">FPY</p><div class="pp-kpi-value"><span class="pp-kpi-num">99.66</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +0.66</span><span class="pp-faint">obj 99%</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Paros</p><div class="pp-kpi-value"><span class="pp-kpi-num">38</span><span class="pp-kpi-unit">min</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-down">▼ -12</span><span class="pp-faint">vs plan 50</span></div></div>
+      </div>
+
+      <div class="pp-grid-2-1" style="margin-bottom:16px">
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Análisis</p><h3 class="pp-card-title">Pareto de paros</h3></div></div>
+          <div data-chart="pareto" style="width:100%; height:280px"></div>
+        </div>
+        <div class="pp-card">
+          <h3 class="pp-card-title" style="margin-bottom:14px">Notas de turno</h3>
+          <p style="font-size:13px; color:var(--pp-text-mid); line-height:1.6">Línea estable. Atención al ajuste de la prensa P-02, hubo dos atascos por la mañana. Lote LB-2240 finalizando, próximo será LB-2241.</p>
+          <p class="pp-eyebrow pp-eyebrow-muted" style="margin:18px 0 8px">Escalado</p>
+          <p style="font-size:13px; color:var(--pp-text-mid); line-height:1.6">Mantenimiento ha solicitado 4h para revisión preventiva en P-02.</p>
+        </div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Hora</th><th>Tipo</th><th>Descripción</th><th class="right">Duración</th><th>Categoría</th></tr></thead>
+          <tbody>
+            <tr><td>09:24</td><td><span class="pp-tag pp-tag-bad">Paro</span></td><td>Cambio de formato programado</td><td class="right num">12 min</td><td>Cambio formato</td></tr>
+            <tr><td>10:48</td><td><span class="pp-tag pp-tag-warn">Calidad</span></td><td>Desvío de peso · descarte 12 u</td><td class="right num">4 min</td><td>Calidad</td></tr>
+            <tr><td>11:12</td><td><span class="pp-tag pp-tag-info">Info</span></td><td>Calibración balanza B-04</td><td class="right num">—</td><td>Mantenimiento</td></tr>
+            <tr><td>11:35</td><td><span class="pp-tag pp-tag-bad">Paro</span></td><td>Atasco transporte sección 3</td><td class="right num">10 min</td><td>Mecánica</td></tr>
+            <tr><td>13:08</td><td><span class="pp-tag pp-tag-bad">Paro</span></td><td>Recarga de tolva</td><td class="right num">8 min</td><td>Suministro</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================== HISTORY -->
+    <section class="pp-screen" data-screen="history" data-screen-label="10 Historial">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>Turnos</span><span class="pp-crumb-sep">/</span><span>Historial</span></div>
+          <h1 class="pp-h1">Historial de turnos</h1>
+        </div>
+        <div class="pp-actions">
+          <select class="pp-select" style="width:auto"><option>Todas las líneas</option><option>L1 · Solid Dose</option><option>L2 · Solid Dose</option></select>
+          <select class="pp-select" style="width:auto"><option>Últimos 14 días</option><option>30 días</option><option>90 días</option></select>
+          <button class="pp-btn"><i class="bi bi-download"></i> Exportar</button>
+        </div>
+      </div>
+
+      <div class="pp-card" style="margin-bottom:16px">
+        <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Tendencia · 14 días</p><h3 class="pp-card-title">OEE diario</h3></div></div>
+        <div data-chart="hist-trend" style="width:100%; height:240px"></div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Fecha</th><th>Turno</th><th>Línea</th><th>Supervisor</th><th class="right">OEE</th><th class="right">Producción</th><th class="right">Paros</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>15 oct</td><td>Mañana</td><td>L2</td><td>Carlos R.</td><td class="right num">82.4%</td><td class="right num">22.8k</td><td class="right num">38 min</td><td><span class="pp-tag pp-tag-ok">Cerrado</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+            <tr><td>15 oct</td><td>Mañana</td><td>L4</td><td>María L.</td><td class="right num">91.0%</td><td class="right num">34.2k</td><td class="right num">18 min</td><td><span class="pp-tag pp-tag-ok">Cerrado</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+            <tr><td>14 oct</td><td>Noche</td><td>L1</td><td>Pedro M.</td><td class="right num">78.2%</td><td class="right num">19.4k</td><td class="right num">62 min</td><td><span class="pp-tag pp-tag-warn">Bajo objetivo</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+            <tr><td>14 oct</td><td>Tarde</td><td>L3</td><td>Ana G.</td><td class="right num">71.6%</td><td class="right num">17.8k</td><td class="right num">94 min</td><td><span class="pp-tag pp-tag-bad">Crítico</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+            <tr><td>14 oct</td><td>Mañana</td><td>L2</td><td>Carlos R.</td><td class="right num">85.7%</td><td class="right num">23.6k</td><td class="right num">28 min</td><td><span class="pp-tag pp-tag-ok">Cerrado</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+            <tr><td>13 oct</td><td>Mañana</td><td>L5</td><td>Laura B.</td><td class="right num">88.4%</td><td class="right num">28.1k</td><td class="right num">22 min</td><td><span class="pp-tag pp-tag-ok">Cerrado</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+            <tr><td>13 oct</td><td>Tarde</td><td>L4</td><td>Diego F.</td><td class="right num">86.1%</td><td class="right num">31.4k</td><td class="right num">26 min</td><td><span class="pp-tag pp-tag-ok">Cerrado</span></td><td><button class="pp-btn pp-btn-sm" data-go="summary">Ver</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================== PROBLEMS -->
+    <section class="pp-screen" data-screen="problems" data-screen-label="11 Problemas">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>Mejora</span><span class="pp-crumb-sep">/</span><span>Problemas</span></div>
+          <h1 class="pp-h1">Problemas abiertos</h1>
+        </div>
+        <div class="pp-actions"><button class="pp-btn pp-btn-primary"><i class="bi bi-plus-lg"></i> Nuevo problema</button></div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">Abiertos</p><div class="pp-kpi-value"><span class="pp-kpi-num">12</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +2</span><span class="pp-faint">esta semana</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">En análisis</p><div class="pp-kpi-value"><span class="pp-kpi-num">5</span></div><div class="pp-kpi-foot"><span class="pp-faint">A3 / 5W</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Lead time</p><div class="pp-kpi-value"><span class="pp-kpi-num">8.4</span><span class="pp-kpi-unit">días</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-down">▼ -1.2</span><span class="pp-faint">vs Q3</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Cerrados</p><div class="pp-kpi-value"><span class="pp-kpi-num">28</span></div><div class="pp-kpi-foot"><span class="pp-faint">este mes</span></div></div>
+      </div>
+
+      <div class="pp-kanban">
+        <div class="pp-kanban-col">
+          <div class="pp-kanban-head"><span class="pp-kanban-title">Nuevo</span><span class="pp-kanban-count">3</span></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Atasco recurrente prensa P-02</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P1">P1</span><span>L2</span><span>·</span><span>Carlos R.</span></div></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Desvío peso lote LB-2238</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P2">P2</span><span>L2</span><span>·</span><span>Ana G.</span></div></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Vibración anómala compresor</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P3">P3</span><span>L4</span><span>·</span><span>Mant.</span></div></div>
+        </div>
+        <div class="pp-kanban-col">
+          <div class="pp-kanban-head"><span class="pp-kanban-title">Análisis</span><span class="pp-kanban-count">5</span></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Tiempo cambio formato &gt; 30 min</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P1">P1</span><span>L1</span><span>·</span><span>Pedro M.</span></div><div class="pp-progress" style="margin-top:8px"><div class="pp-progress-fill" style="width:35%"></div></div></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Defectos blister L4 — turno tarde</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P2">P2</span><span>L4</span><span>·</span><span>María L.</span></div><div class="pp-progress" style="margin-top:8px"><div class="pp-progress-fill" style="width:60%"></div></div></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Suministro irregular tolva 3</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P2">P2</span><span>L2</span><span>·</span><span>Carlos R.</span></div><div class="pp-progress" style="margin-top:8px"><div class="pp-progress-fill" style="width:45%"></div></div></div>
+        </div>
+        <div class="pp-kanban-col">
+          <div class="pp-kanban-head"><span class="pp-kanban-title">En curso</span><span class="pp-kanban-count">4</span></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Plan SMED prensa P-02</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P1">P1</span><span>L2</span><span>·</span><span>Pedro M.</span></div><div class="pp-progress" style="margin-top:8px"><div class="pp-progress-fill pp-progress-fill-warn" style="width:75%"></div></div></div>
+          <div class="pp-kanban-card"><h4 class="pp-kanban-card-title">Recalibración balanza B-04</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P3">P3</span><span>L2</span><span>·</span><span>Mant.</span></div><div class="pp-progress" style="margin-top:8px"><div class="pp-progress-fill pp-progress-fill-ok" style="width:90%"></div></div></div>
+        </div>
+        <div class="pp-kanban-col">
+          <div class="pp-kanban-head"><span class="pp-kanban-title">Cerrado</span><span class="pp-kanban-count">28</span></div>
+          <div class="pp-kanban-card" style="opacity:0.7"><h4 class="pp-kanban-card-title">Mejora aspirador L4</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P3">P3</span><span>L4</span><span>·</span><span>—12 oct</span></div></div>
+          <div class="pp-kanban-card" style="opacity:0.7"><h4 class="pp-kanban-card-title">Cambio sello L1 prensa P-01</h4><div class="pp-kanban-card-meta"><span class="pp-prio pp-prio-P2">P2</span><span>L1</span><span>·</span><span>—10 oct</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== INITIATIVES -->
+    <section class="pp-screen" data-screen="initiatives" data-screen-label="12 Iniciativas">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>Mejora</span><span class="pp-crumb-sep">/</span><span>Iniciativas</span></div>
+          <h1 class="pp-h1">Iniciativas de mejora</h1>
+        </div>
+        <div class="pp-actions"><button class="pp-btn pp-btn-primary"><i class="bi bi-plus-lg"></i> Nueva iniciativa</button></div>
+      </div>
+
+      <div class="pp-grid-4" style="margin-bottom:16px">
+        <div class="pp-kpi"><p class="pp-kpi-label">Activas</p><div class="pp-kpi-value"><span class="pp-kpi-num">22</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +4</span><span class="pp-faint">vs Q3</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Ahorro YTD</p><div class="pp-kpi-value"><span class="pp-kpi-num">€1.24</span><span class="pp-kpi-unit">M</span></div><div class="pp-kpi-foot"><span class="pp-delta pp-delta-up">▲ +18%</span><span class="pp-faint">vs plan</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Hit rate</p><div class="pp-kpi-value"><span class="pp-kpi-num">76</span><span class="pp-kpi-unit">%</span></div><div class="pp-kpi-foot"><span class="pp-faint">cumplen plazo</span></div></div>
+        <div class="pp-kpi"><p class="pp-kpi-label">Implicación</p><div class="pp-kpi-value"><span class="pp-kpi-num">68</span><span class="pp-kpi-unit">/82</span></div><div class="pp-kpi-foot"><span class="pp-faint">operarios</span></div></div>
+      </div>
+
+      <div class="pp-grid-2-1" style="margin-bottom:16px">
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Trayectoria YTD</p><h3 class="pp-card-title">Ahorro acumulado · real vs plan</h3></div></div>
+          <div data-chart="savings" style="width:100%; height:280px"></div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Reparto</p><h3 class="pp-card-title">Por tipo</h3></div></div>
+          <div data-chart="ini-type" style="width:100%; height:280px"></div>
+        </div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Iniciativa</th><th>Tipo</th><th>Líder</th><th>Línea</th><th class="right">Avance</th><th class="right">Ahorro €/año</th><th>Estado</th><th>Fin previsto</th></tr></thead>
+          <tbody>
+            <tr><td><strong>SMED prensa P-02</strong><div class="pp-faint" style="font-size:11px">Reducir cambio de 28 a 12 min</div></td><td><span class="pp-tag pp-tag-info">SMED</span></td><td>Pedro M.</td><td>L2</td><td class="right" style="width:160px"><div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-warn" style="width:75%"></div></div><span class="pp-mono pp-faint" style="font-size:11px">75%</span></td><td class="right num">€186k</td><td><span class="pp-tag pp-tag-ok">En curso</span></td><td>30 nov</td></tr>
+            <tr><td><strong>TPM Línea 4</strong></td><td><span class="pp-tag pp-tag-info">TPM</span></td><td>María L.</td><td>L4</td><td class="right"><div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-ok" style="width:92%"></div></div><span class="pp-mono pp-faint" style="font-size:11px">92%</span></td><td class="right num">€242k</td><td><span class="pp-tag pp-tag-ok">En curso</span></td><td>15 nov</td></tr>
+            <tr><td><strong>5S taller mantenimiento</strong></td><td><span class="pp-tag pp-tag-ok">5S</span></td><td>Diego F.</td><td>—</td><td class="right"><div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-ok" style="width:100%"></div></div><span class="pp-mono pp-faint" style="font-size:11px">100%</span></td><td class="right num">€38k</td><td><span class="pp-tag pp-tag-ok">Cerrada</span></td><td>—</td></tr>
+            <tr><td><strong>Kaizen rendimiento L1</strong></td><td><span class="pp-tag pp-tag-warn">Kaizen</span></td><td>Carlos R.</td><td>L1</td><td class="right"><div class="pp-progress"><div class="pp-progress-fill" style="width:42%"></div></div><span class="pp-mono pp-faint" style="font-size:11px">42%</span></td><td class="right num">€124k</td><td><span class="pp-tag pp-tag-warn">Riesgo</span></td><td>20 dic</td></tr>
+            <tr><td><strong>SMED L4 — formato A</strong></td><td><span class="pp-tag pp-tag-info">SMED</span></td><td>Laura B.</td><td>L4</td><td class="right"><div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-ok" style="width:88%"></div></div><span class="pp-mono pp-faint" style="font-size:11px">88%</span></td><td class="right num">€164k</td><td><span class="pp-tag pp-tag-ok">En curso</span></td><td>10 nov</td></tr>
+            <tr><td><strong>Reducción scrap L3</strong></td><td><span class="pp-tag pp-tag-warn">Kaizen</span></td><td>Ana G.</td><td>L3</td><td class="right"><div class="pp-progress"><div class="pp-progress-fill pp-progress-fill-bad" style="width:18%"></div></div><span class="pp-mono pp-faint" style="font-size:11px">18%</span></td><td class="right num">€98k</td><td><span class="pp-tag pp-tag-bad">Atrasada</span></td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================== BUILDER -->
+    <section class="pp-screen" data-screen="builder" data-screen-label="13 IA Charts">
+      <div class="pp-page-head">
+        <div>
+          <div class="pp-crumbs"><span>Mejora</span><span class="pp-crumb-sep">/</span><span>IA Charts</span></div>
+          <h1 class="pp-h1">Generador de gráficos · IA</h1>
+          <p class="pp-dim" style="margin:8px 0 0">Describe lo que quieres analizar y la IA propondrá la visualización más adecuada.</p>
+        </div>
+      </div>
+
+      <div class="pp-grid-2-1">
+        <div class="pp-card" style="display:flex; flex-direction:column; gap:18px">
+          <div class="pp-field">
+            <label class="pp-label">Pregunta o métrica</label>
+            <textarea class="pp-textarea" rows="3">Compara el OEE de las líneas L1 a L5 durante los últimos 30 días, agrupado por turno.</textarea>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+            <div class="pp-field"><label class="pp-label">Origen de datos</label><select class="pp-select"><option>OpEx · Producción</option><option>SAP MES</option><option>LIMS · Calidad</option></select></div>
+            <div class="pp-field"><label class="pp-label">Rango temporal</label><select class="pp-select"><option>Últimos 7 días</option><option selected>Últimos 30 días</option><option>Trimestre</option></select></div>
+          </div>
+          <div>
+            <p class="pp-eyebrow pp-eyebrow-muted" style="margin-bottom:8px">Sugerencias</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px">
+              <button class="pp-pill">¿Qué línea tiene más paros?</button>
+              <button class="pp-pill">Comparar turnos por OEE</button>
+              <button class="pp-pill">Pareto de defectos por categoría</button>
+              <button class="pp-pill">Evolución FPY últimas 12 semanas</button>
+            </div>
+          </div>
+          <div style="margin-top:auto; display:flex; gap:8px">
+            <button class="pp-btn">Borrar</button>
+            <button class="pp-btn pp-btn-primary" style="margin-left:auto"><i class="bi bi-magic"></i> Generar</button>
+          </div>
+        </div>
+
+        <div class="pp-card">
+          <div class="pp-card-head"><div><p class="pp-eyebrow pp-eyebrow-muted">Resultado sugerido</p><h3 class="pp-card-title">Heatmap OEE · línea × turno</h3></div></div>
+          <div class="pp-empty" style="padding:48px 16px; border:1px dashed var(--pp-divider); background:var(--pp-paper)">
+            <i class="bi bi-bar-chart"></i>
+            <p class="pp-empty-title">Vista previa</p>
+            <p style="margin:0; font-size:12px">Pulsa "Generar" para que la IA construya el gráfico recomendado.</p>
+          </div>
+          <div style="margin-top:14px; display:flex; gap:8px">
+            <button class="pp-btn pp-btn-sm">Heatmap</button>
+            <button class="pp-btn pp-btn-sm">Líneas</button>
+            <button class="pp-btn pp-btn-sm">Barras apiladas</button>
+            <button class="pp-btn pp-btn-sm">Pareto</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="opex-pharma.js"></script>
+</body>
+</html>

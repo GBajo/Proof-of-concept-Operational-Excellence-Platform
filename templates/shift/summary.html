@@ -3,289 +3,292 @@
 
 {% block content %}
 
-<!-- Actions (hidden on print) -->
-<div class="no-print d-flex justify-content-end gap-2 mb-3">
-  <a href="{{ url_for('views.index') }}" class="btn btn-outline-secondary">{{ t('btn_back_home') }}</a>
-  <button class="btn btn-outline-secondary" onclick="window.print()">
-    <i class="bi bi-printer me-1"></i>{{ t('btn_print') }}
-  </button>
+<!-- Actions -->
+<div class="pp-page-head">
+  <div>
+    <div class="pp-crumbs">
+      <span>Turnos</span><span class="pp-crumb-sep">/</span><span>Reporte</span>
+    </div>
+    <h1 class="pp-h1">{{ t('shift_label') }} #{{ shift.id }} · {{ t('line_label') }} {{ shift.line_number }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">
+      {{ shift.start_time[:10] | replace('-', '/') }} · {{ shift.operator_name }} ·
+      {% if shift.shift_type == 'morning' %}{{ t('shift_morning') }}
+      {% elif shift.shift_type == 'afternoon' %}{{ t('shift_afternoon') }}
+      {% else %}{{ t('shift_night') }}{% endif %}
+    </p>
+  </div>
+  <div class="pp-actions no-print">
+    <a href="{{ url_for('views.index') }}" class="pp-btn pp-btn-ghost">{{ t('btn_back_home') }}</a>
+    <button class="pp-btn" onclick="window.print()">
+      <i class="bi bi-printer"></i>{{ t('btn_print') }}
+    </button>
+  </div>
 </div>
 
-<div class="report" id="shift-report">
-
-  <!-- Report header -->
-  <div class="report-header">
-    <div class="report-header__brand">
-      <span class="report-header__logo"><i class="bi bi-lightning-charge fs-3"></i></span>
-      <div>
-        <div class="report-header__company">Proof of Concept - OpEx Platform</div>
-        <div class="report-header__subtitle">{{ t('report_subtitle') }}</div>
-      </div>
+<!-- KPI top row -->
+<div class="pp-grid-4 mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">OEE</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" style="color:{% if kpi.oee >= 85 %}var(--pp-good){% elif kpi.oee >= 60 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ kpi.oee }}</span>
+      <span class="pp-kpi-unit">%</span>
     </div>
-    <div class="report-header__meta">
-      <div class="report-header__id">{{ t('shift_label') }} #{{ shift.id }}</div>
-      <div class="report-header__date">{{ shift.start_time[:10] | replace('-', '/') }}</div>
-      <div class="report-header__status
-        {% if shift.status == 'completed' %}report-header__status--ok
-        {% elif shift.status == 'interrupted' %}report-header__status--warn
-        {% else %}report-header__status--active{% endif %}">
-        {% if shift.status == 'completed' %}{{ t('status_completed') }}
-        {% elif shift.status == 'interrupted' %}{{ t('status_interrupted') }}
-        {% else %}{{ t('status_active') }}{% endif %}
+    <div class="pp-kpi-foot">
+      <span class="pp-faint">D {{ kpi.availability }}% · R {{ kpi.performance }}% · C {{ kpi.quality }}%</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('kpi_units_produced') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num">{{ "{:,}".format(kpi.total_units_produced).replace(",", ".") }}</span>
+    </div>
+    <div class="pp-kpi-foot">
+      {% if kpi.target_units > 0 %}
+      {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
+      <span class="pp-tag {% if pct >= 95 %}pp-tag-ok{% elif pct >= 80 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">{{ pct }}%</span>
+      <span class="pp-faint">Obj. {{ "{:,}".format(kpi.target_units).replace(",", ".") }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('rft_full') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num">{{ kpi.right_first_time_pct }}</span>
+      <span class="pp-kpi-unit">%</span>
+    </div>
+    <div class="pp-kpi-foot">
+      <span class="pp-faint">{{ kpi.good_units }} {{ t('good_units') }}</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('kpi_downtime_accum') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num">{{ kpi.total_downtime_minutes | int }}</span>
+      <span class="pp-kpi-unit">min</span>
+    </div>
+    <div class="pp-kpi-foot">
+      <span class="pp-faint">{{ t('availability_label') }} {{ kpi.availability }}%</span>
+    </div>
+  </div>
+</div>
+
+<!-- OEE breakdown + shift info -->
+<div class="pp-grid-2-1 mb-4" style="margin-bottom:16px !important;">
+
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('kpi_section_title') }}</p>
+        <h3 class="pp-card-title">{{ t('oee_label') }} — Desglose</h3>
       </div>
+      <span class="pp-tag {% if kpi.oee >= 85 %}pp-tag-ok{% elif kpi.oee >= 60 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}" style="font-size:14px; padding:4px 12px;">
+        {{ kpi.oee }}%
+      </span>
+    </div>
+
+    <div class="pp-table-wrap">
+      <table class="pp-table">
+        <thead>
+          <tr>
+            <th>{{ t('kpi_table_indicator') }}</th>
+            <th class="right">{{ t('kpi_table_value') }}</th>
+            <th>{{ t('kpi_table_reference') }}</th>
+            <th>{{ t('kpi_table_status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ t('kpi_units_produced') }}</td>
+            <td class="right num"><strong>{{ kpi.total_units_produced | int }}</strong></td>
+            <td class="pp-faint">{{ t('obj_label') }} {{ kpi.target_units | int }}</td>
+            <td>
+              {% if kpi.target_units > 0 %}
+              {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
+              <span class="pp-tag {% if pct >= 95 %}pp-tag-ok{% elif pct >= 80 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">{{ pct }}%</span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>{{ t('kpi_good_units') }}</td>
+            <td class="right num"><strong>{{ kpi.good_units | int }}</strong></td>
+            <td class="pp-faint">{{ t('of_label') }} {{ kpi.total_units_produced | int }}</td>
+            <td>
+              <span class="pp-tag {% if kpi.right_first_time_pct >= 99 %}pp-tag-ok{% elif kpi.right_first_time_pct >= 97 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">
+                RFT {{ kpi.right_first_time_pct }}%
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td>{{ t('kpi_rejected_units') }}</td>
+            <td class="right num"><strong>{{ kpi.total_units_rejected | int }}</strong></td>
+            <td class="pp-faint">{{ t('rate_label') }} {{ kpi.reject_rate_pct }}%</td>
+            <td>
+              <span class="pp-tag {% if kpi.reject_rate_pct <= 1 %}pp-tag-ok{% elif kpi.reject_rate_pct <= 3 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">
+                {% if kpi.reject_rate_pct <= 1 %}{{ t('status_optimal') }}
+                {% elif kpi.reject_rate_pct <= 3 %}{{ t('status_acceptable') }}
+                {% else %}{{ t('status_high') }}{% endif %}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td>{{ t('kpi_downtime_accum') }}</td>
+            <td class="right num"><strong>{{ kpi.total_downtime_minutes | int }} min</strong></td>
+            <td class="pp-faint">{{ t('disp_label') }} {{ kpi.availability }}%</td>
+            <td>
+              <span class="pp-tag {% if kpi.total_downtime_minutes <= 30 %}pp-tag-ok{% elif kpi.total_downtime_minutes <= 60 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">
+                {% if kpi.total_downtime_minutes <= 30 %}{{ t('status_normal_val') }}
+                {% elif kpi.total_downtime_minutes <= 60 %}{{ t('status_moderate') }}
+                {% else %}{{ t('status_high') }}{% endif %}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Shift data -->
-  <section class="report-section">
-    <h2 class="report-section__title">{{ t('shift_data_title') }}</h2>
-    <div class="row g-2">
-      <div class="col-md-4">
-        <div class="bg-light rounded p-3">
-          <small class="text-uppercase fw-bold text-muted d-block" style="font-size:0.7rem;">{{ t('operator_info') }}</small>
-          <span class="fw-semibold">{{ shift.operator_name }}</span>
-        </div>
+  <!-- Shift metadata -->
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('shift_data_title') }}</p>
+        <h3 class="pp-card-title">Información del turno</h3>
       </div>
-      <div class="col-md-4">
-        <div class="bg-light rounded p-3">
-          <small class="text-uppercase fw-bold text-muted d-block" style="font-size:0.7rem;">{{ t('line_info') }}</small>
-          <span class="fw-semibold">{{ t('line_label') }} {{ shift.line_number }}</span>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="bg-light rounded p-3">
-          <small class="text-uppercase fw-bold text-muted d-block" style="font-size:0.7rem;">{{ t('shift_type_info') }}</small>
-          <span class="fw-semibold">
-            {% if shift.shift_type == 'morning' %}☀ {{ t('shift_morning') }} (06:00–14:00)
-            {% elif shift.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }} (14:00–22:00)
-            {% else %}🌙 {{ t('shift_night') }} (22:00–06:00){% endif %}
-          </span>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="bg-light rounded p-3">
-          <small class="text-uppercase fw-bold text-muted d-block" style="font-size:0.7rem;">{{ t('start_info') }}</small>
-          <span class="fw-semibold">{{ shift.start_time | replace('T',' ') }}</span>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="bg-light rounded p-3">
-          <small class="text-uppercase fw-bold text-muted d-block" style="font-size:0.7rem;">{{ t('end_info') }}</small>
-          <span class="fw-semibold">{{ shift.end_time | replace('T',' ') if shift.end_time else '—' }}</span>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="bg-light rounded p-3">
-          <small class="text-uppercase fw-bold text-muted d-block" style="font-size:0.7rem;">{{ t('duration_info') }}</small>
-          <span class="fw-semibold text-primary">{{ duration_h }}h {{ duration_m }}m</span>
-        </div>
-      </div>
+      <span class="pp-tag {% if shift.status == 'completed' %}pp-tag-ok{% elif shift.status == 'interrupted' %}pp-tag-warn{% else %}pp-tag-info{% endif %}">
+        {% if shift.status == 'completed' %}{{ t('status_completed') }}
+        {% elif shift.status == 'interrupted' %}{{ t('status_interrupted') }}
+        {% else %}{{ t('status_active') }}{% endif %}
+      </span>
     </div>
-  </section>
+    <dl style="display:grid; grid-template-columns:auto 1fr; gap:10px 16px; font-size:13px; margin:0;">
+      <dt class="pp-faint">{{ t('operator_info') }}</dt>
+      <dd style="margin:0; font-weight:600;">{{ shift.operator_name }}</dd>
+      <dt class="pp-faint">{{ t('line_info') }}</dt>
+      <dd style="margin:0; font-weight:600;">{{ t('line_label') }} {{ shift.line_number }}</dd>
+      <dt class="pp-faint">{{ t('shift_type_info') }}</dt>
+      <dd style="margin:0; font-weight:600;">
+        {% if shift.shift_type == 'morning' %}☀ {{ t('shift_morning') }} (06:00–14:00)
+        {% elif shift.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }} (14:00–22:00)
+        {% else %}🌙 {{ t('shift_night') }} (22:00–06:00){% endif %}
+      </dd>
+      <dt class="pp-faint">{{ t('start_info') }}</dt>
+      <dd style="margin:0; font-weight:600; font-variant-numeric:tabular-nums;">{{ shift.start_time | replace('T',' ') }}</dd>
+      <dt class="pp-faint">{{ t('end_info') }}</dt>
+      <dd style="margin:0; font-weight:600;">{{ shift.end_time | replace('T',' ') if shift.end_time else '—' }}</dd>
+      <dt class="pp-faint">{{ t('duration_info') }}</dt>
+      <dd style="margin:0; font-weight:700; color:var(--pp-red);">{{ duration_h }}h {{ duration_m }}m</dd>
+    </dl>
+  </div>
 
-  <!-- KPIs -->
-  <section class="report-section">
-    <h2 class="report-section__title">{{ t('kpi_section_title') }}</h2>
+</div>
 
-    <!-- OEE banner -->
-    <div class="report-oee-banner
-      {% if kpi.oee >= 85 %}report-oee-banner--good
-      {% elif kpi.oee >= 60 %}report-oee-banner--warn
-      {% else %}report-oee-banner--bad{% endif %}">
-      <div class="report-oee-banner__main">
-        <span class="report-oee-banner__value">{{ kpi.oee }}%</span>
-        <span class="report-oee-banner__label">OEE</span>
-      </div>
-      <div class="report-oee-banner__breakdown">
-        <div class="report-oee-factor">
-          <span class="report-oee-factor__name">{{ t('oee_availability') }}</span>
-          <span class="report-oee-factor__value">{{ kpi.availability }}%</span>
-          <div class="progress" style="height:6px;">
-            {% set w = kpi.availability if kpi.availability <= 100 else 100 %}
-            <div class="progress-bar bg-secondary" style="width:{{ w }}%"></div>
-          </div>
-        </div>
-        <div class="report-oee-factor">
-          <span class="report-oee-factor__name">{{ t('oee_performance') }}</span>
-          <span class="report-oee-factor__value">{{ kpi.performance }}%</span>
-          <div class="progress" style="height:6px;">
-            {% set w = kpi.performance if kpi.performance <= 100 else 100 %}
-            <div class="progress-bar bg-secondary" style="width:{{ w }}%"></div>
-          </div>
-        </div>
-        <div class="report-oee-factor">
-          <span class="report-oee-factor__name">{{ t('oee_quality') }}</span>
-          <span class="report-oee-factor__value">{{ kpi.quality }}%</span>
-          <div class="progress" style="height:6px;">
-            {% set w = kpi.quality if kpi.quality <= 100 else 100 %}
-            <div class="progress-bar bg-secondary" style="width:{{ w }}%"></div>
-          </div>
-        </div>
-      </div>
+<!-- Comments -->
+<div class="pp-card mb-4">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('comments_section_title') }}</p>
+      <h3 class="pp-card-title">Comentarios del turno</h3>
     </div>
+    <span class="pp-tag pp-tag-neutral">{{ comments | length }}</span>
+  </div>
 
-    <!-- KPI table -->
-    <table class="table table-hover table-sm">
-      <thead class="table-light">
-        <tr>
-          <th>{{ t('kpi_table_indicator') }}</th>
-          <th>{{ t('kpi_table_value') }}</th>
-          <th>{{ t('kpi_table_reference') }}</th>
-          <th>{{ t('kpi_table_status') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ t('kpi_units_produced') }}</td>
-          <td><strong>{{ kpi.total_units_produced | int }}</strong></td>
-          <td>{{ t('obj_label') }} {{ kpi.target_units | int }}</td>
-          <td>
-            {% if kpi.target_units > 0 %}
-              {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
-              <span class="badge {% if pct >= 95 %}bg-success{% elif pct >= 80 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ pct }}%</span>
-            {% else %}—{% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td>{{ t('kpi_good_units') }}</td>
-          <td><strong>{{ kpi.good_units | int }}</strong></td>
-          <td>{{ t('of_label') }} {{ kpi.total_units_produced | int }}</td>
-          <td>
-            <span class="badge {% if kpi.right_first_time_pct >= 99 %}bg-success{% elif kpi.right_first_time_pct >= 97 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-              RFT {{ kpi.right_first_time_pct }}%
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td>{{ t('kpi_rejected_units') }}</td>
-          <td><strong>{{ kpi.total_units_rejected | int }}</strong></td>
-          <td>{{ t('rate_label') }} {{ kpi.reject_rate_pct }}%</td>
-          <td>
-            <span class="badge {% if kpi.reject_rate_pct <= 1 %}bg-success{% elif kpi.reject_rate_pct <= 3 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-              {% if kpi.reject_rate_pct <= 1 %}{{ t('status_optimal') }}
-              {% elif kpi.reject_rate_pct <= 3 %}{{ t('status_acceptable') }}
-              {% else %}{{ t('status_high') }}{% endif %}
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td>{{ t('kpi_downtime_accum') }}</td>
-          <td><strong>{{ kpi.total_downtime_minutes | int }} min</strong></td>
-          <td>{{ t('disp_label') }} {{ kpi.availability }}%</td>
-          <td>
-            <span class="badge {% if kpi.total_downtime_minutes <= 30 %}bg-success{% elif kpi.total_downtime_minutes <= 60 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-              {% if kpi.total_downtime_minutes <= 30 %}{{ t('status_normal_val') }}
-              {% elif kpi.total_downtime_minutes <= 60 %}{{ t('status_moderate') }}
-              {% else %}{{ t('status_high') }}{% endif %}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  {% set cat_meta = {
+    'safety':      (t('cat_safety'),      'pp-tag-bad'),
+    'quality':     (t('cat_quality'),     'pp-tag-warn'),
+    'production':  (t('cat_production'),  'pp-tag-info'),
+    'maintenance': (t('cat_maintenance'), 'pp-tag-neutral'),
+  } %}
 
-  <!-- Comments -->
-  <section class="report-section">
-    <h2 class="report-section__title">
-      {{ t('comments_section_title') }}
-      <span class="badge bg-secondary ms-1">{{ comments | length }}</span>
-    </h2>
-
-    {% set cat_meta = {
-      'safety':      (t('cat_safety'),      'report-cat--red'),
-      'quality':     (t('cat_quality'),     'report-cat--orange'),
-      'production':  (t('cat_production'),  'report-cat--blue'),
-      'maintenance': (t('cat_maintenance'), 'report-cat--gray'),
-    } %}
-
-    {% if comments | length == 0 %}
-      <p class="text-muted fst-italic">{{ t('no_comments_report') }}</p>
-    {% else %}
-      {% for cat_key in ['safety', 'quality', 'production', 'maintenance'] %}
-        {% if by_category.get(cat_key) %}
-        <div class="report-cat-block mb-3">
-          <div class="report-cat-header {{ cat_meta[cat_key][1] }}">
-            {{ cat_meta[cat_key][0] }}
-            <span class="report-cat-count">{{ by_category[cat_key] | length }}</span>
-          </div>
-          <table class="table table-sm table-bordered mb-0">
-            <thead class="table-light">
+  {% if comments | length == 0 %}
+    <p class="pp-faint" style="font-style:italic; font-size:13px;">{{ t('no_comments_report') }}</p>
+  {% else %}
+    {% for cat_key in ['safety', 'quality', 'production', 'maintenance'] %}
+      {% if by_category.get(cat_key) %}
+      <div class="mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="pp-tag {{ cat_meta[cat_key][1] }}">{{ cat_meta[cat_key][0] }}</span>
+          <span class="pp-faint" style="font-size:12px;">{{ by_category[cat_key] | length }}</span>
+        </div>
+        <div class="pp-table-wrap">
+          <table class="pp-table">
+            <thead>
               <tr>
-                <th style="width:70px">{{ t('hour_col') }}</th>
+                <th style="width:60px">{{ t('hour_col') }}</th>
                 <th>{{ t('comment_col') }}</th>
-                <th style="width:70px">{{ t('source_col') }}</th>
+                <th style="width:60px">{{ t('source_col') }}</th>
               </tr>
             </thead>
             <tbody>
               {% for c in by_category[cat_key] | sort(attribute='timestamp') %}
               <tr>
-                <td class="font-monospace text-muted">{{ c.timestamp[11:16] }}</td>
+                <td class="pp-mono pp-faint" style="font-size:12px;">{{ c.timestamp[11:16] }}</td>
                 <td>{{ c.text }}</td>
-                <td class="text-muted small">{{ t('source_voice') if c.source == 'voice' else t('source_text') }}</td>
+                <td class="pp-faint" style="font-size:11px;">{{ t('source_voice') if c.source == 'voice' else t('source_text') }}</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-  </section>
-
-  <!-- AI Suggestions -->
-  <section class="report-section">
-    <h2 class="report-section__title">
-      {{ t('ai_suggestions_title') }}
-      <span class="badge bg-secondary ms-1">{{ suggestions | length }}</span>
-    </h2>
-
-    {% if suggestions %}
-      {% for s in suggestions %}
-      <div class="report-ai-card {% if s.source == 'mock' %}report-ai-card--mock{% endif %}">
-        <div class="report-ai-card__header">
-          <span class="report-ai-card__icon">🤖</span>
-          <span class="report-ai-card__label">
-            {{ t('assistant_demo') if s.source == 'mock' else t('assistant_ai') }}
-          </span>
-          <span class="report-ai-card__time">{{ s.created_at[11:16] }}</span>
-          {% if s.feedback == 'useful' %}
-            <span class="badge bg-success ms-auto">{{ t('feedback_useful') }}</span>
-          {% elif s.feedback == 'not_useful' %}
-            <span class="badge bg-danger ms-auto">{{ t('feedback_not_useful') }}</span>
-          {% endif %}
-        </div>
-        <div class="report-ai-card__query">
-          <strong>{{ t('query_label') }}</strong> {{ s.query_text }}
-        </div>
-        <div class="report-ai-card__response">{{ s.response_text }}</div>
-        {% if s.context_sources %}
-        <div class="report-ai-card__sources">
-          {{ t('sources_label') }} {{ s.context_sources | join(', ') }}
-        </div>
-        {% endif %}
       </div>
-      {% endfor %}
-    {% else %}
-      <p class="text-muted fst-italic">{{ t('no_ai_suggestions') }}</p>
-    {% endif %}
-  </section>
-
-  <!-- Handover notes -->
-  <section class="report-section">
-    <h2 class="report-section__title">{{ t('handover_section_title') }}</h2>
-    {% if shift.handover_notes %}
-    <div class="report-handover">{{ shift.handover_notes }}</div>
-    {% else %}
-    <p class="text-muted fst-italic">{{ t('no_handover') }}</p>
-    {% endif %}
-  </section>
-
-  <!-- Footer -->
-  <div class="report-footer">
-    <span>{{ t('generated_on') }} {{ generation_date }}</span>
-    <span>Proof of Concept - OpEx Platform</span>
-    <span>{{ t('shift_label') }} #{{ shift.id }} · {{ t('line_label') }} {{ shift.line_number }}</span>
-  </div>
-
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 </div>
+
+<!-- AI Suggestions -->
+{% if suggestions %}
+<div class="pp-card mb-4">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('ai_suggestions_title') }}</p>
+      <h3 class="pp-card-title">Sugerencias del asistente IA</h3>
+    </div>
+    <span class="pp-tag pp-tag-neutral">{{ suggestions | length }}</span>
+  </div>
+  {% for s in suggestions %}
+  <div class="report-ai-card {% if s.source == 'mock' %}report-ai-card--mock{% endif %} mb-3">
+    <div class="report-ai-card__header">
+      <span class="report-ai-card__icon">🤖</span>
+      <span class="report-ai-card__label">
+        {{ t('assistant_demo') if s.source == 'mock' else t('assistant_ai') }}
+      </span>
+      <span class="report-ai-card__time">{{ s.created_at[11:16] }}</span>
+      {% if s.feedback == 'useful' %}
+        <span class="pp-tag pp-tag-ok ms-auto">{{ t('feedback_useful') }}</span>
+      {% elif s.feedback == 'not_useful' %}
+        <span class="pp-tag pp-tag-bad ms-auto">{{ t('feedback_not_useful') }}</span>
+      {% endif %}
+    </div>
+    <div class="report-ai-card__query"><strong>{{ t('query_label') }}</strong> {{ s.query_text }}</div>
+    <div class="report-ai-card__response">{{ s.response_text }}</div>
+    {% if s.context_sources %}
+    <div class="report-ai-card__sources">{{ t('sources_label') }} {{ s.context_sources | join(', ') }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Handover notes -->
+<div class="pp-card mb-4">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('handover_section_title') }}</p>
+      <h3 class="pp-card-title">Notas de traspaso</h3>
+    </div>
+  </div>
+  {% if shift.handover_notes %}
+  <div style="background:var(--pp-warn-soft); border:1px solid rgba(214,137,16,0.2); border-left:3px solid var(--pp-warn); border-radius:var(--pp-r); padding:16px 20px; font-size:13px; line-height:1.7; white-space:pre-wrap; color:var(--pp-text);">{{ shift.handover_notes }}</div>
+  {% else %}
+  <p class="pp-faint" style="font-style:italic; font-size:13px;">{{ t('no_handover') }}</p>
+  {% endif %}
+</div>
+
+<!-- Report footer -->
+<div class="d-flex justify-content-between py-3 px-4" style="background:var(--pp-warm); border-radius:var(--pp-r); font-size:11px; color:var(--pp-text-faint);">
+  <span>{{ t('generated_on') }} {{ generation_date }}</span>
+  <span>Proof of Concept — OpEx Platform</span>
+  <span>{{ t('shift_label') }} #{{ shift.id }} · {{ t('line_label') }} {{ shift.line_number }}</span>
+</div>
+
 {% endblock %}

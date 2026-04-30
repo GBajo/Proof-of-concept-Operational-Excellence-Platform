@@ -3,157 +3,166 @@
 
 {% block content %}
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+<div class="pp-page-head">
   <div>
-    <h1 class="h3 fw-bold mb-1">⚠ Top Problemas</h1>
-    <p class="text-muted mb-0 small">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Analisis de problemas recurrentes</p>
+    <div class="pp-crumbs"><span>Mejora Continua</span><span class="pp-crumb-sep">/</span><span>Problemas</span></div>
+    <h1 class="pp-h1">⚠ Top Problemas</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Analisis de problemas recurrentes</p>
   </div>
-  <form method="get" class="d-flex align-items-center gap-2 flex-wrap" id="filterForm">
-    <label class="form-label small fw-bold text-muted mb-0">Periodo:</label>
-    <select name="period" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
-      <option value="week"    {% if current_period=='week'    %}selected{% endif %}>Ultima semana</option>
-      <option value="month"   {% if current_period=='month'   %}selected{% endif %}>Ultimo mes</option>
-      <option value="quarter" {% if current_period=='quarter' %}selected{% endif %}>Ultimo trimestre</option>
-    </select>
-    <label class="form-label small fw-bold text-muted mb-0">Linea:</label>
-    <select name="line" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
-      <option value="">Todas</option>
-      {% for l in site_lines %}
-      <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
-      {% endfor %}
-    </select>
-  </form>
+  <div class="pp-actions">
+    <form method="get" class="d-flex align-items-center gap-2 flex-wrap" id="filterForm">
+      <label class="pp-faint" style="font-size:12px; font-weight:600;">Periodo:</label>
+      <select name="period" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
+        <option value="week"    {% if current_period=='week'    %}selected{% endif %}>Ultima semana</option>
+        <option value="month"   {% if current_period=='month'   %}selected{% endif %}>Ultimo mes</option>
+        <option value="quarter" {% if current_period=='quarter' %}selected{% endif %}>Ultimo trimestre</option>
+      </select>
+      <label class="pp-faint" style="font-size:12px; font-weight:600;">Linea:</label>
+      <select name="line" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
+        <option value="">Todas</option>
+        {% for l in site_lines %}
+        <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
 </div>
 
 <!-- TOP 3 BY SITE -->
-<section class="mb-4">
-  <h2 class="h5 text-primary fw-bold mb-3">🏭 Top 3 Problemas del Site</h2>
+<div class="mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card-head mb-3" style="margin-bottom:12px !important;">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">Site</p>
+      <h3 class="pp-card-title">🏭 Top 3 Problemas del Site</h3>
+    </div>
+  </div>
   {% if top_site %}
-  <div class="row g-3">
+  <div class="pp-grid-3">
     {% for p in top_site %}
-    <div class="col-md-6 col-xl-4">
-      <div class="card border-0 shadow-sm h-100 problem-card problem-card--{{ p.status }}" data-id="{{ p.id }}" onclick="toggleDetail(this)" style="cursor:pointer;">
-        <div class="card-body">
-          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-            <span class="badge problem-badge--{{ p.category }}">{{ p.category }}</span>
-            <span class="ms-auto small fw-semibold problem-status--{{ p.status }}">
-              {% if p.status == 'open' %}● Abierto
-              {% elif p.status == 'investigating' %}◑ Investigando
-              {% else %}✓ Resuelto{% endif %}
-            </span>
-            {% if p.line_number %}<span class="badge bg-light text-dark">L{{ p.line_number }}</span>{% endif %}
-          </div>
-          <p class="fw-semibold mb-2">{{ p.problem_description }}</p>
-          <div class="d-flex gap-2 flex-wrap mb-2">
-            <span class="badge bg-light text-muted">📊 {{ p.frequency }}/sem</span>
-            <span class="badge bg-light text-muted metric-chip--impact" data-impact="{{ p.impact_score }}">⚡ Impacto {{ p.impact_score }}/10</span>
-          </div>
-          {% if p.initiative_id %}
-          <div class="mb-2">
-            <a href="/initiatives?highlight={{ p.initiative_id }}" class="text-decoration-none small fw-semibold text-primary" onclick="event.stopPropagation()">
-              📋 Ver iniciativa de mejora
-            </a>
-          </div>
-          {% endif %}
-          <!-- Expandable detail -->
-          <div class="problem-detail" style="display:none">
-            <hr>
-            {% if p.root_cause %}
-            <div class="mb-2">
-              <strong class="small">🔍 Causa raiz:</strong>
-              <p class="small text-muted mb-0">{{ p.root_cause }}</p>
-            </div>
-            {% endif %}
-            {% if p.countermeasure %}
-            <div class="mb-2">
-              <strong class="small">🛡 Contramedida:</strong>
-              <p class="small text-muted mb-0">{{ p.countermeasure }}</p>
-            </div>
-            {% endif %}
-            <div class="d-flex gap-3 flex-wrap small text-muted mb-2">
-              <span>📅 Detectado: {{ p.first_detected }}</span>
-              <span>🔁 Ultimo: {{ p.last_occurrence }}</span>
-            </div>
-            <button class="btn btn-outline-primary btn-sm"
-                    onclick="event.stopPropagation(); askAI('{{ p.problem_description|replace("'","\\'")|replace('"','&quot;') }}')">
-              ✦ Pedir analisis al asistente
-            </button>
-          </div>
+    <div class="pp-card problem-card problem-card--{{ p.status }}" data-id="{{ p.id }}" onclick="toggleDetail(this)" style="cursor:pointer;">
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+        <span class="pp-tag problem-badge--{{ p.category }}">{{ p.category }}</span>
+        <span class="ms-auto problem-status--{{ p.status }}" style="font-size:12px; font-weight:600;">
+          {% if p.status == 'open' %}● Abierto
+          {% elif p.status == 'investigating' %}◑ Investigando
+          {% else %}✓ Resuelto{% endif %}
+        </span>
+        {% if p.line_number %}<span class="pp-tag pp-tag-neutral">L{{ p.line_number }}</span>{% endif %}
+      </div>
+      <p style="font-weight:600; font-size:13px; margin-bottom:8px;">{{ p.problem_description }}</p>
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        <span class="pp-tag pp-tag-neutral" style="font-size:11px;">📊 {{ p.frequency }}/sem</span>
+        <span class="pp-tag metric-chip--impact" data-impact="{{ p.impact_score }}" style="font-size:11px;">⚡ Impacto {{ p.impact_score }}/10</span>
+      </div>
+      {% if p.initiative_id %}
+      <div class="mb-2">
+        <a href="/initiatives?highlight={{ p.initiative_id }}" class="pp-faint" style="font-size:12px; font-weight:600; text-decoration:none; color:var(--pp-red);" onclick="event.stopPropagation()">
+          📋 Ver iniciativa de mejora
+        </a>
+      </div>
+      {% endif %}
+      <div class="problem-detail" style="display:none">
+        <div style="height:1px; background:var(--pp-line); margin:12px 0;"></div>
+        {% if p.root_cause %}
+        <div class="mb-2">
+          <strong style="font-size:12px;">🔍 Causa raiz:</strong>
+          <p class="pp-faint" style="font-size:12px; margin:2px 0 0;">{{ p.root_cause }}</p>
         </div>
+        {% endif %}
+        {% if p.countermeasure %}
+        <div class="mb-2">
+          <strong style="font-size:12px;">🛡 Contramedida:</strong>
+          <p class="pp-faint" style="font-size:12px; margin:2px 0 0;">{{ p.countermeasure }}</p>
+        </div>
+        {% endif %}
+        <div class="d-flex gap-3 flex-wrap pp-faint" style="font-size:11px; margin-bottom:8px;">
+          <span>📅 Detectado: {{ p.first_detected }}</span>
+          <span>🔁 Ultimo: {{ p.last_occurrence }}</span>
+        </div>
+        <button class="pp-btn pp-btn-sm"
+                onclick="event.stopPropagation(); askAI('{{ p.problem_description|replace("'","\\'")|replace('"','&quot;') }}')">
+          ✦ Pedir analisis al asistente
+        </button>
       </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <p class="text-muted fst-italic">No hay problemas registrados para el periodo seleccionado.</p>
+  <div class="pp-empty">
+    <p class="pp-empty-title">No hay problemas registrados para el periodo seleccionado.</p>
+  </div>
   {% endif %}
-</section>
+</div>
 
 <!-- TOP 3 BY LINE -->
-<section class="mb-4">
-  <h2 class="h5 text-primary fw-bold mb-3">📊 Top 3 por Linea</h2>
-  <div class="row g-3">
+<div class="mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card-head mb-3" style="margin-bottom:12px !important;">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">Por línea</p>
+      <h3 class="pp-card-title">📊 Top 3 por Linea</h3>
+    </div>
+  </div>
+  <div class="pp-grid-3">
     {% for line_num in site_lines %}
-    <div class="col-md-6 col-xl-4">
-      <h6 class="fw-bold text-muted border-bottom border-primary border-2 pb-2 mb-3">Linea {{ line_num }}</h6>
+    <div>
+      <div style="font-size:13px; font-weight:700; border-bottom:2px solid var(--pp-red); padding-bottom:6px; margin-bottom:12px; color:var(--pp-text-mid);">Linea {{ line_num }}</div>
       {% set line_probs = by_line.get(line_num, []) %}
       {% if line_probs %}
         {% for p in line_probs %}
-        <div class="card border-0 shadow-sm mb-2 problem-card problem-card--{{ p.status }}" data-id="{{ p.id }}" onclick="toggleDetail(this)" style="cursor:pointer;">
-          <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-              <span class="badge problem-badge--{{ p.category }}">{{ p.category }}</span>
-              <span class="ms-auto small fw-semibold problem-status--{{ p.status }}">
-                {% if p.status == 'open' %}● Abierto
-                {% elif p.status == 'investigating' %}◑ Investigando
-                {% else %}✓ Resuelto{% endif %}
-              </span>
+        <div class="pp-card mb-2 problem-card problem-card--{{ p.status }}" data-id="{{ p.id }}" onclick="toggleDetail(this)" style="cursor:pointer; padding:12px 14px;">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <span class="pp-tag problem-badge--{{ p.category }}">{{ p.category }}</span>
+            <span class="ms-auto problem-status--{{ p.status }}" style="font-size:11px; font-weight:600;">
+              {% if p.status == 'open' %}● Abierto
+              {% elif p.status == 'investigating' %}◑ Investigando
+              {% else %}✓ Resuelto{% endif %}
+            </span>
+          </div>
+          <p style="font-size:12px; font-weight:600; margin-bottom:6px;">{{ p.problem_description }}</p>
+          <div class="d-flex gap-2 flex-wrap mb-1">
+            <span class="pp-tag pp-tag-neutral" style="font-size:10px;">📊 {{ p.frequency }}/sem</span>
+            <span class="pp-tag metric-chip--impact" data-impact="{{ p.impact_score }}" style="font-size:10px;">⚡ {{ p.impact_score }}/10</span>
+          </div>
+          {% if p.initiative_id %}
+          <a href="/initiatives?highlight={{ p.initiative_id }}" class="pp-faint" style="font-size:11px; font-weight:600; text-decoration:none; color:var(--pp-red);" onclick="event.stopPropagation()">
+            📋 Ver iniciativa
+          </a>
+          {% endif %}
+          <div class="problem-detail" style="display:none">
+            <div style="height:1px; background:var(--pp-line); margin:10px 0;"></div>
+            {% if p.root_cause %}<div class="mb-2"><strong style="font-size:11px;">🔍 Causa raiz:</strong><p class="pp-faint" style="font-size:11px; margin:2px 0 0;">{{ p.root_cause }}</p></div>{% endif %}
+            {% if p.countermeasure %}<div class="mb-2"><strong style="font-size:11px;">🛡 Contramedida:</strong><p class="pp-faint" style="font-size:11px; margin:2px 0 0;">{{ p.countermeasure }}</p></div>{% endif %}
+            <div class="d-flex gap-3 flex-wrap pp-faint" style="font-size:10px; margin-bottom:8px;">
+              <span>📅 {{ p.first_detected }}</span>
+              <span>🔁 {{ p.last_occurrence }}</span>
             </div>
-            <p class="small fw-semibold mb-2">{{ p.problem_description }}</p>
-            <div class="d-flex gap-2 flex-wrap mb-1">
-              <span class="badge bg-light text-muted" style="font-size:0.75rem;">📊 {{ p.frequency }}/sem</span>
-              <span class="badge bg-light text-muted metric-chip--impact" data-impact="{{ p.impact_score }}" style="font-size:0.75rem;">⚡ {{ p.impact_score }}/10</span>
-            </div>
-            {% if p.initiative_id %}
-            <a href="/initiatives?highlight={{ p.initiative_id }}" class="text-decoration-none small fw-semibold text-primary" onclick="event.stopPropagation()">
-              📋 Ver iniciativa
-            </a>
-            {% endif %}
-            <div class="problem-detail" style="display:none">
-              <hr>
-              {% if p.root_cause %}<div class="mb-2"><strong class="small">🔍 Causa raiz:</strong><p class="small text-muted mb-0">{{ p.root_cause }}</p></div>{% endif %}
-              {% if p.countermeasure %}<div class="mb-2"><strong class="small">🛡 Contramedida:</strong><p class="small text-muted mb-0">{{ p.countermeasure }}</p></div>{% endif %}
-              <div class="d-flex gap-3 flex-wrap small text-muted mb-2">
-                <span>📅 {{ p.first_detected }}</span>
-                <span>🔁 {{ p.last_occurrence }}</span>
-              </div>
-              <button class="btn btn-outline-primary btn-sm"
-                      onclick="event.stopPropagation(); askAI('{{ p.problem_description|replace("'","\\'")|replace('"','&quot;') }}')">
-                ✦ Pedir analisis al asistente
-              </button>
-            </div>
+            <button class="pp-btn pp-btn-sm"
+                    onclick="event.stopPropagation(); askAI('{{ p.problem_description|replace("'","\\'")|replace('"','&quot;') }}')">
+              ✦ Analizar
+            </button>
           </div>
         </div>
         {% endfor %}
       {% else %}
-      <p class="text-muted fst-italic small">Sin problemas registrados</p>
+      <p class="pp-faint" style="font-style:italic; font-size:12px;">Sin problemas registrados</p>
       {% endif %}
     </div>
     {% endfor %}
   </div>
-</section>
+</div>
 
 <!-- PARETO CHART -->
-<section class="mb-4">
-  <h2 class="h5 text-primary fw-bold mb-3">📈 Grafico Pareto — Frecuencia de Problemas</h2>
-  <div class="card border-0 shadow-sm">
-    <div class="card-body">
-      <div id="paretoChart" style="width:100%;height:380px"></div>
+<div class="pp-card mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">Análisis</p>
+      <h3 class="pp-card-title">📈 Grafico Pareto — Frecuencia de Problemas</h3>
     </div>
   </div>
-</section>
+  <div id="paretoChart" style="width:100%;height:380px"></div>
+</div>
 
-<!-- AI MODAL -->
+<!-- AI MODAL (Bootstrap modal — kept for functionality) -->
 <div id="aiModal" class="modal fade" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -172,16 +181,15 @@
 </div>
 
 <style>
-/* Problem cards */
-.problem-card { border-left: 4px solid #dee2e6 !important; transition: box-shadow .15s, transform .1s; }
-.problem-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.10) !important; transform: translateY(-1px); }
-.problem-card--open         { border-left-color: #dc3545 !important; }
-.problem-card--investigating { border-left-color: #ffc107 !important; }
-.problem-card--resolved      { border-left-color: #198754 !important; }
+.problem-card { transition: box-shadow .15s, transform .1s; }
+.problem-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08) !important; transform: translateY(-1px); }
+.problem-card--open         { border-left: 3px solid var(--pp-bad) !important; }
+.problem-card--investigating { border-left: 3px solid var(--pp-warn) !important; }
+.problem-card--resolved      { border-left: 3px solid var(--pp-good) !important; }
 
-.problem-status--open         { color: #dc3545; }
-.problem-status--investigating { color: #ffc107; }
-.problem-status--resolved      { color: #198754; }
+.problem-status--open         { color: var(--pp-bad); }
+.problem-status--investigating { color: var(--pp-warn); }
+.problem-status--resolved      { color: var(--pp-good); }
 
 .problem-badge--quality    { background: #bee3f8; color: #2c5282; }
 .problem-badge--equipment  { background: #fed7aa; color: #7c2d12; }
@@ -215,7 +223,7 @@ let aiModalInstance = null;
     xAxis: {
       type: "category", data: d.names, axisLabel: {
         rotate: 35, fontSize: 11, interval: 0,
-        formatter: v => v.length > 28 ? v.slice(0, 28) + "\u2026" : v,
+        formatter: v => v.length > 28 ? v.slice(0, 28) + "…" : v,
       }
     },
     yAxis: [

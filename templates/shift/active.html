@@ -14,285 +14,276 @@
 {% endblock %}
 
 {% block content %}
+
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<div class="pp-page-head">
   <div>
-    <h1 class="h3 mb-1">{{ t('line_label') }} {{ shift.line_number }} — {{ t('active_shift_title') }}</h1>
-    <p class="text-muted mb-0 small">{{ shift.operator_name }} · {{ t('shift_start_at') }} {{ shift.start_time[11:16] }}</p>
+    <p class="pp-eyebrow">
+      <span class="pp-pulse" style="vertical-align:-1px; margin-right:6px;"></span>
+      En curso · {{ t('line_label') }} {{ shift.line_number }}
+    </p>
+    <h1 class="pp-h1">{{ t('active_shift_title') }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">
+      {{ shift.operator_name }} · {{ t('shift_start_at') }} {{ shift.start_time[11:16] }}
+    </p>
   </div>
-  <div class="d-flex gap-2">
-    <button class="btn btn-outline-secondary" onclick="toggleKpiForm()">
-      <i class="bi bi-bar-chart me-1"></i>{{ t('btn_register_kpi') }}
+  <div class="pp-actions">
+    <button class="pp-btn" onclick="toggleKpiForm()">
+      <i class="bi bi-bar-chart"></i>{{ t('btn_register_kpi') }}
     </button>
-    <button class="btn btn-danger" onclick="endShift()">{{ t('btn_end_shift') }}</button>
+    <button class="pp-btn pp-btn-dark" onclick="endShift()">
+      <i class="bi bi-stop-fill"></i>{{ t('btn_end_shift') }}
+    </button>
   </div>
 </div>
 
 <!-- Top row: Gauge + Units + Speed -->
-<section class="mb-4">
-  <div class="row g-3">
-    <!-- OEE Gauge -->
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-success">
-        <div class="card-body text-center">
-          <div id="oee-gauge" style="width:100%; height:200px;"></div>
-          <div class="d-flex justify-content-center gap-3 small text-muted mt-2">
-            <span title="{{ t('availability') }}">D <strong id="kpi-availability">—</strong>%</span>
-            <span title="{{ t('performance') }}">R <strong id="kpi-performance">—</strong>%</span>
-            <span title="{{ t('quality_kpi') }}">C <strong id="kpi-quality-val">—</strong>%</span>
-          </div>
-          <small class="text-muted">↻ 30 s · <span id="kpi-last-update">—</span></small>
-        </div>
-      </div>
+<div class="pp-grid-3 mb-4" style="margin-bottom:16px !important;">
+  <!-- OEE Gauge -->
+  <div class="pp-card text-center" style="border-left:3px solid var(--pp-good);">
+    <div id="oee-gauge" style="width:100%; height:200px;"></div>
+    <div class="d-flex justify-content-center gap-3 mt-2" style="font-size:12px; color:var(--pp-text-dim);">
+      <span title="{{ t('availability') }}">D <strong id="kpi-availability">—</strong>%</span>
+      <span title="{{ t('performance') }}">R <strong id="kpi-performance">—</strong>%</span>
+      <span title="{{ t('quality_kpi') }}">C <strong id="kpi-quality-val">—</strong>%</span>
     </div>
+    <small class="pp-faint">↻ 30 s · <span id="kpi-last-update">—</span></small>
+  </div>
 
-    <!-- Units produced -->
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-blue">
-        <div class="card-body">
-          <small class="text-uppercase fw-bold text-muted">{{ t('units_produced') }}</small>
-          <h2 class="fw-bold mt-2 mb-3" id="kpi-units">—</h2>
-          <div class="progress mb-2" style="height:10px;">
-            <div class="progress-bar bg-success" id="units-bar-fill" style="width:0%"></div>
-          </div>
-          <div class="d-flex justify-content-between small text-muted">
-            <span id="units-pct-label">0%</span>
-            <span>{{ t('target_label') }} <strong id="kpi-units-target">—</strong></span>
-          </div>
-          <div class="d-flex gap-3 small text-muted mt-3">
-            <span>{{ t('rejected_units') }} <strong id="kpi-rejected-count">—</strong></span>
-            <span>{{ t('rft_label') }} <strong id="kpi-rft">—</strong>%</span>
-          </div>
-        </div>
-      </div>
+  <!-- Units produced -->
+  <div class="pp-card" style="border-left:3px solid var(--pp-info);">
+    <p class="pp-kpi-label">{{ t('units_produced') }}</p>
+    <h2 style="font-weight:900; font-size:32px; margin:8px 0 12px; font-variant-numeric:tabular-nums;" id="kpi-units">—</h2>
+    <div class="pp-progress mb-2">
+      <div class="pp-progress-fill pp-progress-fill-ok" id="units-bar-fill" style="width:0%"></div>
     </div>
-
-    <!-- Line speed -->
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-purple">
-        <div class="card-body">
-          <small class="text-uppercase fw-bold text-muted">{{ t('line_speed') }}</small>
-          <h2 class="fw-bold mt-2 mb-1" id="kpi-speed">—</h2>
-          <small class="text-muted">{{ t('units_per_hour') }}</small>
-          <div class="progress mt-3 mb-2" style="height:10px;">
-            <div class="progress-bar bg-primary" id="speed-bar-fill" style="width:0%"></div>
-          </div>
-          <div class="d-flex justify-content-between small text-muted">
-            <span>0</span>
-            <span>{{ t('nominal_label') }} <strong id="kpi-nominal">—</strong></span>
-          </div>
-          <div id="speed-indicator" class="mt-2"></div>
-        </div>
-      </div>
+    <div class="d-flex justify-content-between" style="font-size:12px; color:var(--pp-text-dim);">
+      <span id="units-pct-label">0%</span>
+      <span>{{ t('target_label') }} <strong id="kpi-units-target">—</strong></span>
+    </div>
+    <div class="d-flex gap-3 mt-3" style="font-size:12px; color:var(--pp-text-dim);">
+      <span>{{ t('rejected_units') }} <strong id="kpi-rejected-count">—</strong></span>
+      <span>{{ t('rft_label') }} <strong id="kpi-rft">—</strong>%</span>
     </div>
   </div>
-</section>
+
+  <!-- Line speed -->
+  <div class="pp-card" style="border-left:3px solid var(--pp-warn);">
+    <p class="pp-kpi-label">{{ t('line_speed') }}</p>
+    <h2 style="font-weight:900; font-size:32px; margin:8px 0 4px; font-variant-numeric:tabular-nums;" id="kpi-speed">—</h2>
+    <small class="pp-faint">{{ t('units_per_hour') }}</small>
+    <div class="pp-progress mt-3 mb-2">
+      <div class="pp-progress-fill" id="speed-bar-fill" style="width:0%"></div>
+    </div>
+    <div class="d-flex justify-content-between" style="font-size:12px; color:var(--pp-text-dim);">
+      <span>0</span>
+      <span>{{ t('nominal_label') }} <strong id="kpi-nominal">—</strong></span>
+    </div>
+    <div id="speed-indicator" class="mt-2"></div>
+  </div>
+</div>
 
 <!-- Secondary KPIs -->
-<section class="mb-4">
-  <div class="row g-3">
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center kpi-card-border-red" id="card-reject">
-        <div class="card-body p-3">
-          <small class="text-uppercase fw-bold text-muted">{{ t('reject_rate') }}</small>
-          <h3 class="fw-bold mt-1 mb-0" id="kpi-reject">—</h3>
-          <small class="text-muted">%</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center kpi-card-border-blue">
-        <div class="card-body p-3">
-          <small class="text-uppercase fw-bold text-muted">{{ t('downtime') }}</small>
-          <h3 class="fw-bold mt-1 mb-0" id="kpi-downtime">—</h3>
-          <small class="text-muted">min</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center kpi-card-border-green">
-        <div class="card-body p-3">
-          <small class="text-uppercase fw-bold text-muted">{{ t('availability') }}</small>
-          <h3 class="fw-bold mt-1 mb-0" id="kpi-avail-card">—</h3>
-          <small class="text-muted">%</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center kpi-card-border-teal">
-        <div class="card-body p-3">
-          <small class="text-uppercase fw-bold text-muted">{{ t('performance') }}</small>
-          <h3 class="fw-bold mt-1 mb-0" id="kpi-perf-card">—</h3>
-          <small class="text-muted">%</small>
-        </div>
-      </div>
+<div class="pp-grid-4 mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-kpi" id="card-reject">
+    <p class="pp-kpi-label">{{ t('reject_rate') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="kpi-reject">—</span>
+      <span class="pp-kpi-unit">%</span>
     </div>
   </div>
-</section>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('downtime') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="kpi-downtime">—</span>
+      <span class="pp-kpi-unit">min</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('availability') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="kpi-avail-card">—</span>
+      <span class="pp-kpi-unit">%</span>
+    </div>
+  </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('performance') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="kpi-perf-card">—</span>
+      <span class="pp-kpi-unit">%</span>
+    </div>
+  </div>
+</div>
 
 <!-- OEE Chart + Voice panel -->
-<section class="mb-4">
-  <div class="row g-3">
-    <!-- Chart -->
-    <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <h6 class="text-uppercase small fw-bold text-muted mb-2">{{ t('oee_evolution') }}</h6>
-          <div id="oee-chart" style="width:100%; height:260px;"></div>
-        </div>
+<div class="pp-grid-2-1 mb-4" style="margin-bottom:16px !important;">
+  <!-- Chart -->
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">En tiempo real</p>
+        <h3 class="pp-card-title">{{ t('oee_evolution') }}</h3>
       </div>
     </div>
+    <div id="oee-chart" style="width:100%; height:260px;"></div>
+  </div>
 
-    <!-- Voice panel -->
-    <div class="col-lg-6">
-      <div class="voice-panel card border-0 shadow-sm">
-        <div class="card-body d-flex flex-column" style="max-height:550px; overflow:hidden;">
+  <!-- Voice panel -->
+  <div class="voice-panel pp-card">
+    <div class="card-body d-flex flex-column" style="max-height:550px; overflow:hidden; padding:0 !important;">
 
-          <div class="voice-panel__header d-flex align-items-center justify-content-between mb-3">
-            <h6 class="mb-0 fw-bold">
-              {{ t('comments_title') }}
-              <span class="badge bg-primary ms-1" id="comments-count">0</span>
-            </h6>
-            <div class="d-flex gap-2 align-items-center">
-              <button class="btn btn-sm btn-outline-primary" onclick="openAssistantModal()"
-                      title="{{ t('btn_ask_assistant') }}">
-                <i class="bi bi-robot me-1"></i>{{ t('btn_ask_assistant') }}
-              </button>
-              <select id="filter-category" class="form-select form-select-sm" style="width:auto;"
-                      onchange="filterComments(this.value)" title="{{ t('cat_production') }}">
-                <option value="">{{ t('filter_all_cats') }}</option>
-                <option value="production">{{ t('cat_production') }}</option>
-                <option value="quality">{{ t('cat_quality') }}</option>
-                <option value="safety">{{ t('cat_safety') }}</option>
-                <option value="maintenance">{{ t('cat_maintenance') }}</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="voice-recorder" id="voice-recorder">
-            <div id="recorder-idle">
-              <button class="voice-btn" onclick="startRecording()">
-                <span class="voice-btn__mic" aria-hidden="true">🎤</span>
-                <span class="voice-btn__label">{{ t('btn_record_voice') }}</span>
-              </button>
-              <button class="voice-btn voice-btn--secondary" onclick="openManualEntry()">
-                <span class="voice-btn__mic" aria-hidden="true">✏️</span>
-                <span class="voice-btn__label">{{ t('btn_write_comment') }}</span>
-              </button>
-            </div>
-
-            <div id="recorder-active" style="display:none">
-              <div class="rec-status">
-                <span class="rec-dot"></span>
-                <span id="rec-label">{{ t('listening_label') }}</span>
-              </div>
-              <div class="rec-interim" id="transcript-interim">
-                <em>{{ t('say_comment') }}</em>
-              </div>
-              <button class="voice-btn voice-btn--stop" onclick="stopRecording()">
-                <span class="voice-btn__mic" aria-hidden="true">⏹</span>
-                <span class="voice-btn__label">{{ t('btn_stop_recording') }}</span>
-              </button>
-            </div>
-
-            <div id="recorder-confirm" style="display:none">
-              <div class="rec-done-header">
-                <span class="rec-dot rec-dot--done"></span>
-                <span>{{ t('transcript_ready') }}</span>
-                <button class="btn-rerecord" onclick="startRecording()">{{ t('btn_retry_recording') }}</button>
-              </div>
-              <textarea id="transcript-text" class="form-control voice-transcript-area" rows="3"
-                placeholder="{{ t('comment_placeholder') }}"></textarea>
-              <div class="cat-picker" id="cat-picker">
-                <button type="button" class="cat-btn cat-btn--production cat-btn--active"
-                        data-cat="production" onclick="selectCategory(this)">{{ t('cat_production') }}</button>
-                <button type="button" class="cat-btn cat-btn--quality"
-                        data-cat="quality" onclick="selectCategory(this)">{{ t('cat_quality') }}</button>
-                <button type="button" class="cat-btn cat-btn--safety"
-                        data-cat="safety" onclick="selectCategory(this)">{{ t('cat_safety') }}</button>
-                <button type="button" class="cat-btn cat-btn--maintenance"
-                        data-cat="maintenance" onclick="selectCategory(this)">{{ t('cat_maintenance') }}</button>
-              </div>
-              <div class="d-flex justify-content-end gap-2 mt-2">
-                <button class="btn btn-secondary btn-sm" onclick="cancelComment()">{{ t('btn_cancel_comment') }}</button>
-                <button class="btn btn-primary btn-sm" id="btn-save" onclick="submitComment()">
-                  {{ t('btn_save_comment') }}
-                </button>
-              </div>
-            </div>
-
-            <div id="recorder-error" style="display:none">
-              <div class="rec-error">
-                <span class="rec-error__icon">⚠️</span>
-                <span id="recorder-error-msg">{{ t('mic_error') }}</span>
-                <button class="btn btn-secondary btn-sm" onclick="dismissError()">{{ t('btn_close') }}</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="comments-scroll flex-grow-1 overflow-auto" id="comments-list">
-            <div class="comments-empty" id="comments-empty">
-              <span>{{ t('no_comments') }}</span>
-              <small>{{ t('no_comments_hint') }}</small>
-            </div>
-          </div>
-
+      <div class="voice-panel__header d-flex align-items-center justify-content-between mb-3">
+        <h3 class="pp-card-title mb-0">
+          {{ t('comments_title') }}
+          <span class="pp-tag pp-tag-info ms-1" id="comments-count" style="font-size:10px;">0</span>
+        </h3>
+        <div class="d-flex gap-2 align-items-center">
+          <button class="pp-btn pp-btn-sm" onclick="openAssistantModal()" title="{{ t('btn_ask_assistant') }}">
+            <i class="bi bi-robot"></i>{{ t('btn_ask_assistant') }}
+          </button>
+          <select id="filter-category" class="pp-select" style="width:auto; padding:5px 10px; font-size:12px;"
+                  onchange="filterComments(this.value)">
+            <option value="">{{ t('filter_all_cats') }}</option>
+            <option value="production">{{ t('cat_production') }}</option>
+            <option value="quality">{{ t('cat_quality') }}</option>
+            <option value="safety">{{ t('cat_safety') }}</option>
+            <option value="maintenance">{{ t('cat_maintenance') }}</option>
+          </select>
         </div>
       </div>
+
+      <div class="voice-recorder" id="voice-recorder">
+        <div id="recorder-idle">
+          <button class="voice-btn" onclick="startRecording()">
+            <span class="voice-btn__mic" aria-hidden="true">🎤</span>
+            <span class="voice-btn__label">{{ t('btn_record_voice') }}</span>
+          </button>
+          <button class="voice-btn voice-btn--secondary" onclick="openManualEntry()">
+            <span class="voice-btn__mic" aria-hidden="true">✏️</span>
+            <span class="voice-btn__label">{{ t('btn_write_comment') }}</span>
+          </button>
+        </div>
+
+        <div id="recorder-active" style="display:none">
+          <div class="rec-status">
+            <span class="rec-dot"></span>
+            <span id="rec-label">{{ t('listening_label') }}</span>
+          </div>
+          <div class="rec-interim" id="transcript-interim">
+            <em>{{ t('say_comment') }}</em>
+          </div>
+          <button class="voice-btn voice-btn--stop" onclick="stopRecording()">
+            <span class="voice-btn__mic" aria-hidden="true">⏹</span>
+            <span class="voice-btn__label">{{ t('btn_stop_recording') }}</span>
+          </button>
+        </div>
+
+        <div id="recorder-confirm" style="display:none">
+          <div class="rec-done-header">
+            <span class="rec-dot rec-dot--done"></span>
+            <span>{{ t('transcript_ready') }}</span>
+            <button class="btn-rerecord" onclick="startRecording()">{{ t('btn_retry_recording') }}</button>
+          </div>
+          <textarea id="transcript-text" class="form-control voice-transcript-area" rows="3"
+            placeholder="{{ t('comment_placeholder') }}"></textarea>
+          <div class="cat-picker" id="cat-picker">
+            <button type="button" class="cat-btn cat-btn--production cat-btn--active"
+                    data-cat="production" onclick="selectCategory(this)">{{ t('cat_production') }}</button>
+            <button type="button" class="cat-btn cat-btn--quality"
+                    data-cat="quality" onclick="selectCategory(this)">{{ t('cat_quality') }}</button>
+            <button type="button" class="cat-btn cat-btn--safety"
+                    data-cat="safety" onclick="selectCategory(this)">{{ t('cat_safety') }}</button>
+            <button type="button" class="cat-btn cat-btn--maintenance"
+                    data-cat="maintenance" onclick="selectCategory(this)">{{ t('cat_maintenance') }}</button>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button class="pp-btn pp-btn-sm pp-btn-ghost" onclick="cancelComment()">{{ t('btn_cancel_comment') }}</button>
+            <button class="pp-btn pp-btn-sm pp-btn-primary" id="btn-save" onclick="submitComment()">
+              {{ t('btn_save_comment') }}
+            </button>
+          </div>
+        </div>
+
+        <div id="recorder-error" style="display:none">
+          <div class="rec-error">
+            <span class="rec-error__icon">⚠️</span>
+            <span id="recorder-error-msg">{{ t('mic_error') }}</span>
+            <button class="pp-btn pp-btn-sm" onclick="dismissError()">{{ t('btn_close') }}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="comments-scroll flex-grow-1 overflow-auto" id="comments-list">
+        <div class="comments-empty" id="comments-empty">
+          <span>{{ t('no_comments') }}</span>
+          <small>{{ t('no_comments_hint') }}</small>
+        </div>
+      </div>
+
     </div>
   </div>
-</section>
+</div>
 
 <!-- Manual KPI form -->
 <section class="mb-4" id="kpi-entry-section" style="display:none">
-  <div class="card border-0 shadow-sm kpi-card-border-blue">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="mb-0">{{ t('kpi_manual_title') }}</h5>
-        <button class="btn btn-secondary btn-sm" onclick="toggleKpiForm()">✕ {{ t('btn_close') }}</button>
-      </div>
-      <p class="text-muted small mb-3">{{ t('kpi_hint') }}</p>
-      <form id="kpi-manual-form" onsubmit="submitManualKpi(event)">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label small" for="f-units-produced">{{ t('f_units_produced') }}</label>
-            <input type="number" id="f-units-produced" name="units_produced" class="form-control"
+  <div class="pp-card" style="border-left:3px solid var(--pp-info);">
+    <div class="pp-card-head">
+      <h3 class="pp-card-title">{{ t('kpi_manual_title') }}</h3>
+      <button class="pp-btn pp-btn-sm pp-btn-ghost" onclick="toggleKpiForm()">✕ {{ t('btn_close') }}</button>
+    </div>
+    <p class="pp-dim mb-3" style="font-size:13px;">{{ t('kpi_hint') }}</p>
+    <form id="kpi-manual-form" onsubmit="submitManualKpi(event)">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="pp-field">
+            <label class="pp-label" for="f-units-produced">{{ t('f_units_produced') }}</label>
+            <input type="number" id="f-units-produced" name="units_produced" class="pp-input"
                    min="0" required placeholder="Ej: 4800">
           </div>
-          <div class="col-md-4">
-            <label class="form-label small" for="f-units-rejected">{{ t('f_units_rejected') }}</label>
-            <input type="number" id="f-units-rejected" name="units_rejected" class="form-control"
+        </div>
+        <div class="col-md-4">
+          <div class="pp-field">
+            <label class="pp-label" for="f-units-rejected">{{ t('f_units_rejected') }}</label>
+            <input type="number" id="f-units-rejected" name="units_rejected" class="pp-input"
                    min="0" required placeholder="Ej: 120">
           </div>
-          <div class="col-md-4">
-            <label class="form-label small" for="f-downtime">{{ t('f_downtime') }}</label>
-            <input type="number" id="f-downtime" name="downtime_minutes" class="form-control"
+        </div>
+        <div class="col-md-4">
+          <div class="pp-field">
+            <label class="pp-label" for="f-downtime">{{ t('f_downtime') }}</label>
+            <input type="number" id="f-downtime" name="downtime_minutes" class="pp-input"
                    min="0" step="0.5" required placeholder="Ej: 15">
           </div>
-          <div class="col-md-4">
-            <label class="form-label small" for="f-speed">{{ t('f_speed') }}</label>
-            <input type="number" id="f-speed" name="line_speed" class="form-control"
+        </div>
+        <div class="col-md-4">
+          <div class="pp-field">
+            <label class="pp-label" for="f-speed">{{ t('f_speed') }}</label>
+            <input type="number" id="f-speed" name="line_speed" class="pp-input"
                    min="0" required placeholder="Ej: 1150">
           </div>
-          <div class="col-md-4">
-            <label class="form-label small" for="f-target">{{ t('f_target') }}</label>
-            <input type="number" id="f-target" name="target_units" class="form-control"
+        </div>
+        <div class="col-md-4">
+          <div class="pp-field">
+            <label class="pp-label" for="f-target">{{ t('f_target') }}</label>
+            <input type="number" id="f-target" name="target_units" class="pp-input"
                    min="1" required value="9600">
           </div>
-          <div class="col-md-4">
-            <label class="form-label small" for="f-nominal">{{ t('f_nominal') }}</label>
-            <input type="number" id="f-nominal" name="nominal_speed" class="form-control"
+        </div>
+        <div class="col-md-4">
+          <div class="pp-field">
+            <label class="pp-label" for="f-nominal">{{ t('f_nominal') }}</label>
+            <input type="number" id="f-nominal" name="nominal_speed" class="pp-input"
                    min="1" required value="1200">
           </div>
         </div>
-        <div id="kpi-form-error" class="alert alert-danger mt-3" style="display:none"></div>
-        <div class="d-flex justify-content-end mt-3">
-          <button type="submit" class="btn btn-primary" id="kpi-submit-btn">
-            {{ t('btn_save_kpi') }}
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+      <div id="kpi-form-error" class="alert alert-danger mt-3" style="display:none"></div>
+      <div class="d-flex justify-content-end mt-3">
+        <button type="submit" class="pp-btn pp-btn-primary" id="kpi-submit-btn">
+          {{ t('btn_save_kpi') }}
+        </button>
+      </div>
+    </form>
   </div>
 </section>
 
@@ -304,7 +295,7 @@
      PANEL DE AGENTES — sidebar flotante + modal de consulta
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<!-- Botón flotante para abrir el panel (esquina inferior derecha) -->
+<!-- FAB agentes -->
 <button id="agents-fab" class="agents-fab" onclick="toggleAgentsPanel()"
         title="Panel de Agentes IA">
   <i class="bi bi-robot"></i>
@@ -318,7 +309,6 @@
     <button class="agents-panel__close" onclick="toggleAgentsPanel()">✕</button>
   </div>
 
-  <!-- Botón análisis kaizen diario -->
   <div class="agents-panel__kaizen">
     <button class="btn btn-sm btn-outline-success w-100" id="kaizen-btn"
             onclick="triggerKaizenAnalysis()">
@@ -327,20 +317,17 @@
     <div id="kaizen-status" class="agents-panel__kaizen-status" style="display:none;"></div>
   </div>
 
-  <!-- Lista de agentes -->
   <div id="agents-list" class="agents-panel__list">
     <div class="agents-panel__loading">
       <span class="ai-suggestion__spinner"></span> Cargando agentes...
     </div>
   </div>
 
-  <!-- Última activación -->
   <div id="agents-last-run" class="agents-panel__last-run" style="display:none;">
     <div class="agents-panel__last-run-title">Última consulta activó:</div>
     <div id="agents-last-run-list"></div>
   </div>
 
-  <!-- Botón "Forzar agente" -->
   <div class="agents-panel__force" id="agents-force-section" style="display:none;">
     <div class="agents-panel__force-title">
       <i class="bi bi-send me-1"></i>Preguntar solo a:
@@ -349,7 +336,7 @@
   </div>
 </div>
 
-<!-- Modal de consulta al asistente (con selector de agente) -->
+<!-- Modal asistente IA -->
 <div id="assistant-modal" class="ai-modal-overlay" style="display:none;">
   <div class="ai-modal ai-modal--wide">
     <div class="ai-modal__header">
@@ -360,7 +347,7 @@
     <div class="ai-modal__body">
       <div class="row g-2 mb-3">
         <div class="col-sm-6">
-          <label class="form-label small">{{ t('assistant_cat_label') }}</label>
+          <label class="form-label small" style="color:var(--pp-text-dim);">{{ t('assistant_cat_label') }}</label>
           <select id="assistant-modal-category" class="form-select">
             <option value="production">{{ t('cat_production') }}</option>
             <option value="quality">{{ t('cat_quality') }}</option>
@@ -369,14 +356,14 @@
           </select>
         </div>
         <div class="col-sm-6">
-          <label class="form-label small">Agente a consultar</label>
+          <label class="form-label small" style="color:var(--pp-text-dim);">Agente a consultar</label>
           <select id="assistant-modal-agent" class="form-select">
             <option value="">🔀 Orquestador (automático)</option>
           </select>
         </div>
       </div>
       <div class="mb-3">
-        <label class="form-label small">{{ t('assistant_question_label') }}</label>
+        <label class="form-label small" style="color:var(--pp-text-dim);">{{ t('assistant_question_label') }}</label>
         <textarea id="assistant-modal-input" class="form-control"
                   rows="3" placeholder="{{ t('assistant_placeholder') }}"></textarea>
       </div>
@@ -388,4 +375,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpEx Platform — Proof of Concept (Original)</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="opex-original.css?v=5">
+</head>
+<body>
+
+<div class="demo-banner">
+  <strong>Réplica fiel</strong> del PoC original (Bootstrap 5.3) — datos de ejemplo, navegación entre pantallas vía sidebar
+</div>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav class="navbar navbar-dark bg-dark fixed-top navbar-opex px-3" style="height:56px; top:30px;">
+  <button class="btn btn-dark me-2 border-0" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+    <i class="bi bi-list fs-5"></i>
+  </button>
+  <a class="navbar-brand me-auto" href="#" data-screen="index">
+    <i class="bi bi-lightning-charge"></i> OpEx Platform
+  </a>
+
+  <div class="d-flex align-items-center gap-2 me-3">
+    <a href="#" data-screen="active" class="shift-pill" title="Turno activo — Línea 2">
+      <span class="shift-dot"></span>
+      <span>L2 <span style="opacity:.85; font-weight:400;">Carlos</span></span>
+    </a>
+    <a href="#" data-screen="active" class="shift-pill" title="Turno activo — Línea 4">
+      <span class="shift-dot"></span>
+      <span>L4 <span style="opacity:.85; font-weight:400;">María</span></span>
+    </a>
+  </div>
+
+  <div class="dropdown me-2">
+    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      🇪🇸 Madrid
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item" href="#">🌍 Global</a></li>
+      <li><a class="dropdown-item active" href="#">🇪🇸 Madrid</a></li>
+      <li><a class="dropdown-item" href="#">🇮🇪 Cork</a></li>
+      <li><a class="dropdown-item" href="#">🇺🇸 Indianapolis</a></li>
+      <li><a class="dropdown-item" href="#">🇯🇵 Kobe</a></li>
+    </ul>
+  </div>
+
+  <div class="d-flex align-items-center gap-1">
+    <button class="lang-btn lang-btn--active">ES</button>
+    <button class="lang-btn">EN</button>
+    <button class="lang-btn">日本語</button>
+  </div>
+
+  <button class="btn btn-dark border-0 position-relative px-2 ms-2" type="button" title="Alertas">
+    <i class="bi bi-bell fs-5"></i>
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
+  </button>
+</nav>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar" style="top:86px;">
+  <nav class="nav flex-column py-3">
+    <div class="nav-item"><a class="nav-link active" data-screen="index"><i class="bi bi-house"></i><span class="nav-text">Inicio</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="dashboard"><i class="bi bi-speedometer2"></i><span class="nav-text">Dashboard</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="global"><i class="bi bi-globe"></i><span class="nav-text">Global</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="vsm"><i class="bi bi-diagram-3"></i><span class="nav-text">VSM</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="sqdcp"><i class="bi bi-grid-3x3-gap"></i><span class="nav-text">SQDCP</span></a></div>
+
+    <hr class="border-secondary mx-3 my-2">
+
+    <div class="nav-item"><a class="nav-link" data-screen="start"><i class="bi bi-play-circle"></i><span class="nav-text">Nuevo turno</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="active"><i class="bi bi-activity"></i><span class="nav-text">Turno activo</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="end"><i class="bi bi-stop-circle"></i><span class="nav-text">Cierre de turno</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="summary"><i class="bi bi-file-text"></i><span class="nav-text">Reporte de turno</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="history"><i class="bi bi-clock-history"></i><span class="nav-text">Historial</span></a></div>
+
+    <hr class="border-secondary mx-3 my-2">
+
+    <div class="nav-item"><a class="nav-link" data-screen="builder"><i class="bi bi-robot"></i><span class="nav-text">IA Charts</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="problems"><i class="bi bi-exclamation-triangle"></i><span class="nav-text">Problemas</span></a></div>
+    <div class="nav-item"><a class="nav-link" data-screen="initiatives"><i class="bi bi-rocket"></i><span class="nav-text">Iniciativas</span></a></div>
+  </nav>
+</aside>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<div class="main-wrapper" style="padding-top: 86px;">
+<div class="container-fluid p-4">
+
+<!-- =====================================================
+     SCREEN: INDEX / Home
+     ===================================================== -->
+<section class="screen active" data-screen="index">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Líneas de empaquetado</h1>
+    <button class="btn btn-primary" data-screen-link="start">
+      <i class="bi bi-plus-circle me-1"></i>Iniciar turno
+    </button>
+  </div>
+
+  <section class="mb-4">
+    <h2 class="h5 text-muted mb-3">Turnos activos</h2>
+    <div class="row g-3">
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm" style="border-top: 3px solid #198754 !important;">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-success">Activo</span>
+              <span class="fw-bold">Línea 2</span>
+            </div>
+            <p class="mb-1"><i class="bi bi-person me-1 text-muted"></i>Carlos Pérez</p>
+            <p class="text-muted small mb-3"><i class="bi bi-clock me-1"></i>Desde 06:12</p>
+            <button class="btn btn-outline-primary btn-sm w-100" data-screen-link="active">
+              <i class="bi bi-activity me-1"></i>Ver turno
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm" style="border-top: 3px solid #198754 !important;">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-success">Activo</span>
+              <span class="fw-bold">Línea 4</span>
+            </div>
+            <p class="mb-1"><i class="bi bi-person me-1 text-muted"></i>María González</p>
+            <p class="text-muted small mb-3"><i class="bi bi-clock me-1"></i>Desde 06:05</p>
+            <button class="btn btn-outline-primary btn-sm w-100" data-screen-link="active">
+              <i class="bi bi-activity me-1"></i>Ver turno
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- =====================================================
+     SCREEN: SHIFT START
+     ===================================================== -->
+<section class="screen" data-screen="start">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
+        <div>
+          <h1 class="h3 fw-bold mb-1">Iniciar turno</h1>
+          <p class="text-muted mb-0">Selecciona operario, línea y tipo de turno</p>
+        </div>
+        <div class="bg-light border rounded px-3 py-2 text-primary fw-bold fs-4 font-monospace" id="live-clock">06:42:18</div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <form id="start-shift-form">
+
+            <div class="mb-4">
+              <label class="form-label text-uppercase small fw-bold text-muted">
+                <i class="bi bi-person me-1"></i>Operario
+              </label>
+              <select class="form-select" required>
+                <option value="">Selecciona operario...</option>
+                <option>Carlos Pérez (E0142)</option>
+                <option>María González (E0156)</option>
+                <option selected>Javier Ruiz (E0203)</option>
+                <option>Ana Martín (E0211)</option>
+                <option>Pedro López (E0289)</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-uppercase small fw-bold text-muted">
+                <i class="bi bi-building me-1"></i>Línea de empaquetado
+              </label>
+              <div class="row g-2">
+                <div class="col-6 col-md-4 col-lg">
+                  <label class="line-card line-card--occupied">
+                    <input type="radio" name="line_number" value="1" disabled>
+                    <div class="line-card__inner">
+                      <div class="line-card__number">L1</div>
+                      <div class="line-card__label">Línea 1</div>
+                      <div class="line-card__status"><span class="line-dot line-dot--occupied"></span><span class="small">Ocupada</span></div>
+                    </div>
+                  </label>
+                </div>
+                <div class="col-6 col-md-4 col-lg">
+                  <label class="line-card line-card--occupied">
+                    <input type="radio" name="line_number" value="2" disabled>
+                    <div class="line-card__inner">
+                      <div class="line-card__number">L2</div>
+                      <div class="line-card__label">Línea 2</div>
+                      <div class="line-card__status"><span class="line-dot line-dot--occupied"></span><span class="small">Ocupada</span></div>
+                    </div>
+                  </label>
+                </div>
+                <div class="col-6 col-md-4 col-lg">
+                  <label class="line-card">
+                    <input type="radio" name="line_number" value="3">
+                    <div class="line-card__inner">
+                      <div class="line-card__number">L3</div>
+                      <div class="line-card__label">Línea 3</div>
+                      <div class="line-card__status"><span class="line-dot line-dot--free"></span><span class="small">Libre</span></div>
+                    </div>
+                  </label>
+                </div>
+                <div class="col-6 col-md-4 col-lg">
+                  <label class="line-card line-card--occupied">
+                    <input type="radio" name="line_number" value="4" disabled>
+                    <div class="line-card__inner">
+                      <div class="line-card__number">L4</div>
+                      <div class="line-card__label">Línea 4</div>
+                      <div class="line-card__status"><span class="line-dot line-dot--occupied"></span><span class="small">Ocupada</span></div>
+                    </div>
+                  </label>
+                </div>
+                <div class="col-6 col-md-4 col-lg">
+                  <label class="line-card">
+                    <input type="radio" name="line_number" value="5">
+                    <div class="line-card__inner">
+                      <div class="line-card__number">L5</div>
+                      <div class="line-card__label">Línea 5</div>
+                      <div class="line-card__status"><span class="line-dot line-dot--free"></span><span class="small">Libre</span></div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-uppercase small fw-bold text-muted">
+                <i class="bi bi-clock me-1"></i>Tipo de turno
+              </label>
+              <div class="shift-type-grid">
+                <label class="shift-type-card">
+                  <input type="radio" name="shift_type" value="morning" checked>
+                  <div class="shift-type-card__inner">
+                    <span class="shift-type-card__icon">🌅</span>
+                    <span class="shift-type-card__name">Mañana</span>
+                    <span class="shift-type-card__hours">06:00 – 14:00</span>
+                  </div>
+                </label>
+                <label class="shift-type-card">
+                  <input type="radio" name="shift_type" value="afternoon">
+                  <div class="shift-type-card__inner">
+                    <span class="shift-type-card__icon">☀️</span>
+                    <span class="shift-type-card__name">Tarde</span>
+                    <span class="shift-type-card__hours">14:00 – 22:00</span>
+                  </div>
+                </label>
+                <label class="shift-type-card">
+                  <input type="radio" name="shift_type" value="night">
+                  <div class="shift-type-card__inner">
+                    <span class="shift-type-card__icon">🌙</span>
+                    <span class="shift-type-card__name">Noche</span>
+                    <span class="shift-type-card__hours">22:00 – 06:00</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-4">
+              <button class="btn btn-secondary btn-lg" data-screen-link="index">Cancelar</button>
+              <button type="button" class="btn btn-primary btn-lg" data-screen-link="active">
+                <i class="bi bi-play-fill me-1"></i>Iniciar turno
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+          <h6 class="text-uppercase small fw-bold text-muted mb-3">Estado de planta</h6>
+          <div class="row g-2 text-center">
+            <div class="col-6">
+              <div class="bg-light rounded p-3">
+                <span class="d-block fs-2 fw-bold text-primary">3</span>
+                <small class="text-muted">Líneas activas</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="bg-light rounded p-3">
+                <span class="d-block fs-2 fw-bold text-primary">2</span>
+                <small class="text-muted">Líneas libres</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm border-start border-primary border-3 mb-3">
+        <div class="card-body">
+          <h6 class="text-uppercase small fw-bold text-muted mb-3">Instrucciones</h6>
+          <ol class="mb-0 ps-3 small">
+            <li class="mb-2">Selecciona tu operario en el desplegable</li>
+            <li class="mb-2">Elige una línea marcada como <span class="badge bg-success" style="font-size:.7rem">Libre</span></li>
+            <li class="mb-2">Selecciona el tipo de turno</li>
+            <li>Pulsa <strong>Iniciar turno</strong></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm border-start border-warning border-3">
+        <div class="card-body">
+          <h6 class="text-uppercase small fw-bold text-muted mb-3">Líneas ocupadas</h6>
+          <ul class="list-unstyled mb-0 small">
+            <li class="mb-1"><strong>L1</strong> · Ana Martín · desde 06:00</li>
+            <li class="mb-1"><strong>L2</strong> · Carlos Pérez · desde 06:12</li>
+            <li class="mb-0"><strong>L4</strong> · María González · desde 06:05</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     SCREEN: SHIFT ACTIVE
+     ===================================================== -->
+<section class="screen" data-screen="active">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 mb-1">Línea 2 — Turno activo</h1>
+      <p class="text-muted mb-0 small">Carlos Pérez · Inicio 06:12</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary"><i class="bi bi-bar-chart me-1"></i>Registrar KPI</button>
+      <button class="btn btn-danger" data-screen-link="end">Finalizar turno</button>
+    </div>
+  </div>
+
+  <section class="mb-4">
+    <div class="row g-3">
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 kpi-card-border-success">
+          <div class="card-body text-center">
+            <div id="oee-gauge" style="width:100%; height:200px;"></div>
+            <div class="d-flex justify-content-center gap-3 small text-muted mt-2">
+              <span title="Disponibilidad">D <strong>92.4</strong>%</span>
+              <span title="Rendimiento">R <strong>88.1</strong>%</span>
+              <span title="Calidad">C <strong>98.7</strong>%</span>
+            </div>
+            <small class="text-muted">↻ 30 s · 14:32:08</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 kpi-card-border-blue">
+          <div class="card-body">
+            <small class="text-uppercase fw-bold text-muted">Unidades producidas</small>
+            <h2 class="fw-bold mt-2 mb-3">7.842</h2>
+            <div class="progress mb-2" style="height:10px;">
+              <div class="progress-bar bg-success" style="width:81.7%"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted">
+              <span>81.7%</span>
+              <span>Objetivo <strong>9.600</strong></span>
+            </div>
+            <div class="d-flex gap-3 small text-muted mt-3">
+              <span>Rechazos <strong>104</strong></span>
+              <span>RFT <strong>98.7</strong>%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 kpi-card-border-purple">
+          <div class="card-body">
+            <small class="text-uppercase fw-bold text-muted">Velocidad línea</small>
+            <h2 class="fw-bold mt-2 mb-1">1.156</h2>
+            <small class="text-muted">unidades/h</small>
+            <div class="progress mt-3 mb-2" style="height:10px;">
+              <div class="progress-bar bg-primary" style="width:96.3%"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted">
+              <span>0</span>
+              <span>Nominal <strong>1.200</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-red">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Rechazo</small>
+            <h3 class="fw-bold mt-1 mb-0">1.3</h3>
+            <small class="text-muted">%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-blue">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Paradas</small>
+            <h3 class="fw-bold mt-1 mb-0">38</h3>
+            <small class="text-muted">min</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-green">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Disponibilidad</small>
+            <h3 class="fw-bold mt-1 mb-0">92.4</h3>
+            <small class="text-muted">%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-teal">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Rendimiento</small>
+            <h3 class="fw-bold mt-1 mb-0">88.1</h3>
+            <small class="text-muted">%</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h6 class="text-uppercase small fw-bold text-muted mb-2">Evolución OEE</h6>
+            <div id="oee-evolution" style="width:100%; height:260px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body d-flex flex-column" style="max-height:550px; overflow:hidden;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h6 class="mb-0 fw-bold">Comentarios <span class="badge bg-primary ms-1">7</span></h6>
+              <select class="form-select form-select-sm" style="width:auto;">
+                <option>Todas las categorías</option>
+                <option>Producción</option>
+                <option>Calidad</option>
+                <option>Seguridad</option>
+                <option>Mantenimiento</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <button class="voice-btn"><span>🎤</span><span>Grabar comentario</span></button>
+              <button class="voice-btn voice-btn--secondary"><span>✏️</span><span>Escribir comentario</span></button>
+            </div>
+
+            <div class="flex-grow-1 overflow-auto">
+              <div class="comment-item">
+                <span class="comment-item__time">13:42</span>
+                <span class="comment-item__cat comment-item__cat--quality"></span>
+                <div class="flex-grow-1">Detectado lote con etiqueta descentrada — ajustada guía de alimentación.</div>
+              </div>
+              <div class="comment-item">
+                <span class="comment-item__time">12:18</span>
+                <span class="comment-item__cat comment-item__cat--maintenance"></span>
+                <div class="flex-grow-1">Sensor de presencia intermitente en encartonadora. Limpieza programada.</div>
+              </div>
+              <div class="comment-item">
+                <span class="comment-item__time">11:05</span>
+                <span class="comment-item__cat comment-item__cat--production"></span>
+                <div class="flex-grow-1">Cambio de formato a blíster 2×7 completado en 28 min.</div>
+              </div>
+              <div class="comment-item">
+                <span class="comment-item__time">09:52</span>
+                <span class="comment-item__cat comment-item__cat--safety"></span>
+                <div class="flex-grow-1">EPI verificado en relevo. Sin incidencias.</div>
+              </div>
+              <div class="comment-item">
+                <span class="comment-item__time">08:30</span>
+                <span class="comment-item__cat comment-item__cat--production"></span>
+                <div class="flex-grow-1">Inicio producción lote LT-2024-1183 (objetivo 9.600 uds).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- =====================================================
+     SCREEN: SHIFT END
+     ===================================================== -->
+<section class="screen" data-screen="end">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
+        <div>
+          <h1 class="h3 fw-bold mb-1">Cerrar turno</h1>
+          <p class="text-muted mb-0 small">
+            <span class="fw-bold text-primary">Línea 2</span><span class="mx-1">·</span>
+            <span>Carlos Pérez</span><span class="mx-1">·</span><span>Mañana</span>
+          </p>
+        </div>
+        <div class="bg-light border rounded px-3 py-2 text-center">
+          <span class="d-block fs-3 fw-bold text-primary font-monospace">7h 48m</span>
+          <small class="text-muted text-uppercase" style="font-size:.7rem;">Duración</small>
+        </div>
+      </div>
+
+      <section class="mb-4">
+        <h6 class="text-uppercase small fw-bold text-muted mb-3">Resumen KPI</h6>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center kpi-card-border-primary">
+              <div class="card-body">
+                <small class="text-uppercase fw-bold text-muted">OEE</small>
+                <h2 class="fw-bold mt-1 text-warning">80.4%</h2>
+                <div class="progress mb-2" style="height:6px;"><div class="progress-bar bg-warning" style="width:80.4%"></div></div>
+                <div class="d-flex justify-content-center gap-2 small text-muted">
+                  <span>D 92.4%</span><span>R 88.1%</span><span>C 98.7%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+              <div class="card-body">
+                <small class="text-uppercase fw-bold text-muted">Unidades</small>
+                <h2 class="fw-bold mt-1">9.421</h2>
+                <small class="text-muted">Objetivo 9.600 <span class="badge bg-warning text-dark">98.1%</span></small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+              <div class="card-body">
+                <small class="text-uppercase fw-bold text-muted">Tasa rechazo</small>
+                <h2 class="fw-bold mt-1 text-success">1.3%</h2>
+                <small class="text-muted">122 unidades rechazadas</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+              <div class="card-body">
+                <small class="text-uppercase fw-bold text-muted">Paradas</small>
+                <h2 class="fw-bold mt-1 text-warning">38 min</h2>
+                <small class="text-muted">Disp. 92.4%</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+              <div class="card-body">
+                <small class="text-uppercase fw-bold text-muted">RFT</small>
+                <h2 class="fw-bold mt-1 text-warning">98.7%</h2>
+                <small class="text-muted">9.299 unidades buenas</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+              <div class="card-body">
+                <small class="text-uppercase fw-bold text-muted">Comentarios</small>
+                <h2 class="fw-bold mt-1 text-primary">7</h2>
+                <div class="d-flex justify-content-center gap-1">
+                  <span class="end-kpi-cat-dot end-kpi-cat-dot--safety">1</span>
+                  <span class="end-kpi-cat-dot end-kpi-cat-dot--quality">2</span>
+                  <span class="end-kpi-cat-dot end-kpi-cat-dot--production">3</span>
+                  <span class="end-kpi-cat-dot end-kpi-cat-dot--maintenance">1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-4">
+        <h6 class="text-uppercase small fw-bold text-muted mb-3">Cierre de turno</h6>
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Notas de relevo</label>
+              <textarea class="form-control" rows="5" placeholder="Eventos relevantes para el turno siguiente, tareas pendientes, observaciones..."></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Estado de cierre</label>
+              <div class="end-status-options">
+                <label class="end-status-card">
+                  <input type="radio" name="status" value="completed" checked>
+                  <span class="end-status-card__inner">
+                    <span class="end-status-card__icon">✅</span>
+                    <span class="end-status-card__name">Cierre normal</span>
+                    <span class="end-status-card__desc">Turno completado sin incidencias mayores</span>
+                  </span>
+                </label>
+                <label class="end-status-card">
+                  <input type="radio" name="status" value="interrupted">
+                  <span class="end-status-card__inner">
+                    <span class="end-status-card__icon">⚠️</span>
+                    <span class="end-status-card__name">Cierre interrumpido</span>
+                    <span class="end-status-card__desc">Cierre anticipado o con incidencias</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <button class="btn btn-secondary" data-screen-link="active">← Volver al turno</button>
+              <button class="btn btn-danger btn-lg" data-screen-link="summary">Confirmar cierre</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm border-start border-primary border-3 mb-3">
+        <div class="card-body">
+          <h6 class="text-uppercase small fw-bold text-muted mb-3">Información del turno</h6>
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Inicio</dt><dd class="col-7">06:12</dd>
+            <dt class="col-5 text-muted">Línea</dt><dd class="col-7">2</dd>
+            <dt class="col-5 text-muted">Operario</dt><dd class="col-7">Carlos Pérez</dd>
+            <dt class="col-5 text-muted">Tipo</dt><dd class="col-7">☀️ Mañana</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm border-start border-warning border-3 mb-3">
+        <div class="card-body">
+          <h6 class="text-uppercase small fw-bold text-muted mb-3">Antes de cerrar</h6>
+          <ul class="mb-0 ps-3 small">
+            <li class="mb-2">Verifica que todos los KPIs estén registrados</li>
+            <li class="mb-2">Añade notas de relevo para el siguiente operario</li>
+            <li class="mb-2">Revisa los comentarios pendientes</li>
+            <li>Indica el estado correcto del cierre</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-uppercase small fw-bold text-muted mb-2">Resumen rápido</h6>
+          <span class="d-block display-4 fw-bold text-warning">80.4%</span>
+          <small class="text-muted text-uppercase">OEE del turno</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     SCREEN: SUMMARY (REPORT)
+     ===================================================== -->
+<section class="screen" data-screen="summary">
+  <div class="d-flex justify-content-end gap-2 mb-3">
+    <button class="btn btn-outline-secondary" data-screen-link="index">← Volver</button>
+    <button class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+  </div>
+
+  <div class="report">
+    <div class="report-header">
+      <div class="report-header__brand">
+        <span class="report-header__logo"><i class="bi bi-lightning-charge"></i></span>
+        <div>
+          <div class="report-header__company">Proof of Concept - OpEx Platform</div>
+          <div class="report-header__subtitle">Reporte de turno</div>
+        </div>
+      </div>
+      <div class="report-header__meta">
+        <div class="report-header__id">Turno #1183</div>
+        <div class="report-header__date">2024/04/15</div>
+        <div class="report-header__status report-header__status--ok">Completado</div>
+      </div>
+    </div>
+
+    <section class="report-section">
+      <h2 class="report-section__title">Datos del turno</h2>
+      <div class="row g-2">
+        <div class="col-md-4"><div class="bg-light rounded p-3"><small class="text-uppercase fw-bold text-muted d-block" style="font-size:.7rem;">Operario</small><span class="fw-semibold">Carlos Pérez</span></div></div>
+        <div class="col-md-4"><div class="bg-light rounded p-3"><small class="text-uppercase fw-bold text-muted d-block" style="font-size:.7rem;">Línea</small><span class="fw-semibold">Línea 2</span></div></div>
+        <div class="col-md-4"><div class="bg-light rounded p-3"><small class="text-uppercase fw-bold text-muted d-block" style="font-size:.7rem;">Tipo</small><span class="fw-semibold">☀ Mañana (06:00–14:00)</span></div></div>
+        <div class="col-md-4"><div class="bg-light rounded p-3"><small class="text-uppercase fw-bold text-muted d-block" style="font-size:.7rem;">Inicio</small><span class="fw-semibold">2024-04-15 06:12</span></div></div>
+        <div class="col-md-4"><div class="bg-light rounded p-3"><small class="text-uppercase fw-bold text-muted d-block" style="font-size:.7rem;">Fin</small><span class="fw-semibold">2024-04-15 14:00</span></div></div>
+        <div class="col-md-4"><div class="bg-light rounded p-3"><small class="text-uppercase fw-bold text-muted d-block" style="font-size:.7rem;">Duración</small><span class="fw-semibold text-primary">7h 48m</span></div></div>
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h2 class="report-section__title">Indicadores</h2>
+
+      <div class="report-oee-banner report-oee-banner--warn">
+        <div class="report-oee-banner__main">
+          <span class="report-oee-banner__value">80.4%</span>
+          <span class="report-oee-banner__label">OEE</span>
+        </div>
+        <div class="report-oee-banner__breakdown">
+          <div class="report-oee-factor">
+            <span class="report-oee-factor__name">Disponibilidad</span>
+            <span class="report-oee-factor__value">92.4%</span>
+            <div class="progress" style="height:6px;"><div class="progress-bar bg-secondary" style="width:92.4%"></div></div>
+          </div>
+          <div class="report-oee-factor">
+            <span class="report-oee-factor__name">Rendimiento</span>
+            <span class="report-oee-factor__value">88.1%</span>
+            <div class="progress" style="height:6px;"><div class="progress-bar bg-secondary" style="width:88.1%"></div></div>
+          </div>
+          <div class="report-oee-factor">
+            <span class="report-oee-factor__name">Calidad</span>
+            <span class="report-oee-factor__value">98.7%</span>
+            <div class="progress" style="height:6px;"><div class="progress-bar bg-secondary" style="width:98.7%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <table class="table table-hover table-sm">
+        <thead class="table-light">
+          <tr><th>Indicador</th><th>Valor</th><th>Referencia</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Unidades producidas</td>
+            <td><strong>9421</strong></td>
+            <td>Obj 9600</td>
+            <td><span class="badge bg-warning text-dark">98.1%</span></td>
+          </tr>
+          <tr>
+            <td>Unidades buenas</td>
+            <td><strong>9299</strong></td>
+            <td>de 9421</td>
+            <td><span class="badge bg-warning text-dark">RFT 98.7%</span></td>
+          </tr>
+          <tr>
+            <td>Unidades rechazadas</td>
+            <td><strong>122</strong></td>
+            <td>Tasa 1.3%</td>
+            <td><span class="badge bg-warning text-dark">Aceptable</span></td>
+          </tr>
+          <tr>
+            <td>Paradas acumuladas</td>
+            <td><strong>38 min</strong></td>
+            <td>Disp 92.4%</td>
+            <td><span class="badge bg-warning text-dark">Moderado</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="report-section">
+      <h2 class="report-section__title">Comentarios <span class="badge bg-secondary ms-1">7</span></h2>
+
+      <div class="report-cat-block mb-3">
+        <div class="report-cat-header report-cat--blue">
+          Producción <span class="report-cat-count">3</span>
+        </div>
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:70px">Hora</th><th>Comentario</th><th style="width:70px">Origen</th></tr></thead>
+          <tbody>
+            <tr><td class="font-monospace text-muted">08:30</td><td>Inicio producción lote LT-2024-1183 (objetivo 9.600 uds).</td><td class="text-muted small">Texto</td></tr>
+            <tr><td class="font-monospace text-muted">11:05</td><td>Cambio de formato a blíster 2×7 completado en 28 min.</td><td class="text-muted small">🎤 Voz</td></tr>
+            <tr><td class="font-monospace text-muted">13:20</td><td>Lote cerrado con 9.421 unidades.</td><td class="text-muted small">Texto</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="report-cat-block mb-3">
+        <div class="report-cat-header report-cat--orange">
+          Calidad <span class="report-cat-count">2</span>
+        </div>
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:70px">Hora</th><th>Comentario</th><th style="width:70px">Origen</th></tr></thead>
+          <tbody>
+            <tr><td class="font-monospace text-muted">10:14</td><td>Microparada CCD por etiqueta sucia. Limpieza realizada.</td><td class="text-muted small">🎤 Voz</td></tr>
+            <tr><td class="font-monospace text-muted">13:42</td><td>Detectado lote con etiqueta descentrada — ajustada guía.</td><td class="text-muted small">Texto</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="report-cat-block mb-3">
+        <div class="report-cat-header report-cat--gray">
+          Mantenimiento <span class="report-cat-count">1</span>
+        </div>
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:70px">Hora</th><th>Comentario</th><th style="width:70px">Origen</th></tr></thead>
+          <tbody>
+            <tr><td class="font-monospace text-muted">12:18</td><td>Sensor de presencia intermitente en encartonadora.</td><td class="text-muted small">🎤 Voz</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="report-cat-block mb-3">
+        <div class="report-cat-header report-cat--red">
+          Seguridad <span class="report-cat-count">1</span>
+        </div>
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:70px">Hora</th><th>Comentario</th><th style="width:70px">Origen</th></tr></thead>
+          <tbody>
+            <tr><td class="font-monospace text-muted">09:52</td><td>EPI verificado en relevo. Sin incidencias.</td><td class="text-muted small">Texto</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h2 class="report-section__title">Sugerencias IA <span class="badge bg-secondary ms-1">2</span></h2>
+
+      <div class="report-ai-card">
+        <div class="report-ai-card__header">
+          <span class="report-ai-card__icon">🤖</span>
+          <span class="report-ai-card__label">Asistente IA</span>
+          <span class="report-ai-card__time">12:25</span>
+          <span class="badge bg-success ms-auto">Útil</span>
+        </div>
+        <div class="report-ai-card__query"><strong>Consulta:</strong> ¿Cómo reducir las microparadas del CCD?</div>
+        <div class="report-ai-card__response">Las microparadas en el sistema de visión suelen deberse a iluminación irregular o etiquetas con baja calidad de impresión. Recomendaciones: (1) verificar limpieza del lente cada 4h, (2) ajustar threshold de inspección al lote actual, (3) registrar microparadas con causa para análisis Pareto semanal.</div>
+      </div>
+
+      <div class="report-ai-card">
+        <div class="report-ai-card__header">
+          <span class="report-ai-card__icon">🤖</span>
+          <span class="report-ai-card__label">Asistente IA</span>
+          <span class="report-ai-card__time">13:50</span>
+        </div>
+        <div class="report-ai-card__query"><strong>Consulta:</strong> Resumen del turno para relevo</div>
+        <div class="report-ai-card__response">Turno con OEE 80.4% (objetivo 85%). Punto de mejora: rendimiento (88.1%) por microparadas en CCD y cambio de formato. Producción 9.421/9.600 (98.1%). Calidad excelente (98.7% RFT). Pendientes: revisión sensor encartonadora.</div>
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h2 class="report-section__title">Notas de relevo</h2>
+      <div class="report-handover">Línea operativa al cierre. Pendiente revisión sensor de presencia en encartonadora — solicitada intervención mantenimiento. Lote LT-2024-1183 cerrado, próximo lote LT-2024-1184 listo para arranque (formato blíster 2×7 ya configurado).</div>
+    </section>
+
+    <div class="report-footer">
+      <span>Generado el 2024-04-15 14:05</span>
+      <span>Proof of Concept - OpEx Platform</span>
+      <span>Turno #1183 · Línea 2</span>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     SCREEN: HISTORY
+     ===================================================== -->
+<section class="screen" data-screen="history">
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1">Historial de turnos</h1>
+      <p class="text-muted mb-0 small">Consulta y filtra todos los turnos cerrados</p>
+    </div>
+    <button class="btn btn-primary" data-screen-link="start">Nuevo turno</button>
+  </div>
+
+  <section class="mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Línea</label>
+              <select class="form-select form-select-sm">
+                <option>Todas</option>
+                <option>Línea 1</option><option>Línea 2</option><option>Línea 3</option>
+                <option>Línea 4</option><option>Línea 5</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Operario</label>
+              <input type="text" class="form-control form-control-sm" placeholder="Nombre o ID">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Desde</label>
+              <input type="date" class="form-control form-control-sm" value="2024-04-01">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Hasta</label>
+              <input type="date" class="form-control form-control-sm" value="2024-04-15">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Estado</label>
+              <select class="form-select form-select-sm">
+                <option>Todos</option><option>Completado</option><option>Interrumpido</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+              <button type="button" class="btn btn-primary btn-sm">Buscar</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm">Limpiar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+      <span class="fw-semibold text-muted small">8 turnos encontrados</span>
+      <div class="d-flex align-items-center gap-1 flex-wrap">
+        <span class="text-muted small">Filtros:</span>
+        <span class="badge bg-primary">Desde 2024-04-01</span>
+        <span class="badge bg-primary">Hasta 2024-04-15</span>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th><th>Fecha</th><th>Operario</th><th>Línea</th><th>Tipo</th>
+              <th>Duración</th><th>Unidades</th><th>Rechazo</th><th>Paradas</th><th>Estado</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <!-- llenado por JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- =====================================================
+     SCREEN: CHART BUILDER (IA)
+     ===================================================== -->
+<section class="screen" data-screen="builder">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">Mis gráficos</h6>
+            <button class="btn btn-sm btn-outline-secondary">↻</button>
+          </div>
+
+          <div class="mb-3">
+            <p class="text-uppercase small fw-bold text-muted mb-2" style="font-size:.72rem;">Sugerencias rápidas</p>
+            <div class="d-flex flex-column gap-1">
+              <button class="suggestion-chip btn btn-sm btn-outline-secondary">OEE últimas 24h</button>
+              <button class="suggestion-chip btn btn-sm btn-outline-secondary">Top causas de parada</button>
+              <button class="suggestion-chip btn btn-sm btn-outline-secondary">Producción vs objetivo</button>
+              <button class="suggestion-chip btn btn-sm btn-outline-secondary">Tendencia rechazos 7d</button>
+              <button class="suggestion-chip btn btn-sm btn-outline-secondary">Comparativa entre líneas</button>
+              <button class="suggestion-chip btn btn-sm btn-outline-secondary">Comentarios por categoría</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-uppercase small fw-bold text-muted mb-2" style="font-size:.72rem;">Gráficos guardados <span class="badge bg-secondary">3</span></p>
+            <div class="history-item">
+              <div>
+                <div class="history-item__title">OEE semana 14</div>
+                <div class="history-item__date">14 abr 16:32</div>
+              </div>
+              <button class="btn-close btn-sm" style="font-size:.65rem;"></button>
+            </div>
+            <div class="history-item">
+              <div>
+                <div class="history-item__title">Paradas L2 mes</div>
+                <div class="history-item__date">12 abr 09:15</div>
+              </div>
+              <button class="btn-close btn-sm" style="font-size:.65rem;"></button>
+            </div>
+            <div class="history-item">
+              <div>
+                <div class="history-item__title">Rendimiento operarios</div>
+                <div class="history-item__date">10 abr 17:48</div>
+              </div>
+              <button class="btn-close btn-sm" style="font-size:.65rem;"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-9">
+      <div class="mb-3">
+        <h1 class="h3 fw-bold mb-1">Generador de gráficos <span class="badge bg-primary">IA</span></h1>
+        <p class="text-muted mb-0 small">Describe el gráfico que necesitas en lenguaje natural</p>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+          <textarea class="form-control mb-2" rows="3" placeholder="Ej: OEE de las últimas 24 horas por turno...">OEE de las últimas 24 horas por turno y línea</textarea>
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+              <i class="bi bi-mic"></i> Grabar voz
+            </button>
+            <span class="small text-muted flex-grow-1">36 / 500</span>
+            <button class="btn btn-primary">Generar gráfico</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge" style="background:#e8f5e9; color:#27ae60;">Datos reales</span>
+              <span class="small text-muted">192 registros consultados</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary">Modificar</button>
+              <button class="btn btn-sm btn-primary">Guardar en dashboard</button>
+            </div>
+          </div>
+          <div id="builder-chart" style="width:100%; height:420px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================
+     SCREEN: dashboard / global / vsm / problems / initiatives — placeholders
+     ===================================================== -->
+<section class="screen" data-screen="dashboard">
+  <div class="alert alert-info text-center py-5">
+    <i class="bi bi-speedometer2 fs-1 d-block mb-2"></i>
+    <p class="mb-0">Pantalla <strong>Dashboard</strong> — la versión rediseñada está en <code>OpEx Console.html</code></p>
+  </div>
+</section>
+<section class="screen" data-screen="global">
+  <div class="alert alert-info text-center py-5"><p class="mb-0">Vista <strong>Global</strong> — multi-planta</p></div>
+</section>
+<section class="screen" data-screen="vsm">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1">VSM — Value Stream Map</h1>
+      <p class="text-muted mb-0 small">Flujo de empaquetado farmacéutico — tiempos y cuellos de botella</p>
+    </div>
+    <div class="vsm-line-tabs" id="vsm-tabs"></div>
+  </div>
+
+  <section class="mb-4">
+    <div class="row g-3" id="vsm-metrics"></div>
+  </section>
+
+  <section class="mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h6 class="text-uppercase small fw-bold text-muted mb-0">Flujo de la línea</h6>
+          <div class="d-flex gap-3 small">
+            <span><span class="badge bg-success">●</span> OK</span>
+            <span><span class="badge bg-warning">●</span> Lento</span>
+            <span><span class="badge bg-danger">●</span> Cuello</span>
+            <span><span class="badge bg-primary">●</span> Cambio</span>
+            <span><span class="badge bg-secondary">●</span> Espera</span>
+          </div>
+        </div>
+        <div class="vsm-flow" id="vsm-flow"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="text-uppercase small fw-bold text-muted mb-0">Tiempo de ciclo por paso (s)</h6>
+          <span class="small text-muted">Real vs nominal</span>
+        </div>
+        <div id="vsm-cycle" style="width:100%; height:320px;"></div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- =====================================================
+     SCREEN: SQDCP
+     ===================================================== -->
+<section class="screen" data-screen="sqdcp">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1">SQDCP — Tablero diario</h1>
+      <p class="text-muted mb-0 small">Seguridad · Calidad · Entrega · Coste · Personas — turno actual <strong class="text-primary">T2 · 14:00</strong></p>
+    </div>
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-primary btn-sm">Diario</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm">Semanal</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm">Mensual</button>
+    </div>
+  </div>
+
+  <section class="mb-4">
+    <div class="row g-3" id="sqdcp-cards"><!-- llenado por JS --></div>
+  </section>
+
+  <section class="mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="text-uppercase small fw-bold text-muted mb-0">Tendencia 12 semanas — todos los pilares</h6>
+          <span class="badge bg-light text-dark border">% de cumplimiento</span>
+        </div>
+        <div id="sqdcp-trend" style="width:100%; height:300px;"></div>
+      </div>
+    </div>
+  </section>
+</section>
+<section class="screen" data-screen="problems">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1">Problemas detectados</h1>
+      <p class="text-muted mb-0 small">Gestión de problemas operacionales — flujo Lean</p>
+    </div>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm" style="width:auto;">
+        <option>Todas las líneas</option><option>L1</option><option>L2</option>
+        <option>L3</option><option>L4</option><option>L5</option>
+      </select>
+      <button class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Nuevo problema</button>
+    </div>
+  </div>
+
+  <section class="mb-4">
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-red">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Abiertos</small>
+            <h3 class="fw-bold mt-1 mb-0">14</h3>
+            <small class="text-danger">+3 esta semana</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-blue">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">En análisis</small>
+            <h3 class="fw-bold mt-1 mb-0">6</h3>
+            <small class="text-muted">5W2H · Ishikawa</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-purple">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Lead time medio</small>
+            <h3 class="fw-bold mt-1 mb-0">8.4</h3>
+            <small class="text-muted">días</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-green">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Cerrados (mes)</small>
+            <h3 class="fw-bold mt-1 mb-0">23</h3>
+            <small class="text-success">+18% vs mes ant.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kanban-grid">
+      <div class="kanban-col kanban-col--new">
+        <div class="kanban-col__head"><span>Nuevo</span><span class="badge bg-secondary">5</span></div>
+        <div class="kanban-card kanban-card--p1">
+          <div class="kanban-card__title">Microparadas recurrentes en CCD L2</div>
+          <div class="kanban-card__meta"><span class="badge bg-danger">P1</span><span>L2 · Calidad</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">CP</div><span>Carlos P.</span><span class="ms-auto">Hoy</span></div>
+        </div>
+        <div class="kanban-card kanban-card--p2">
+          <div class="kanban-card__title">Etiquetado descentrado lote LT-1183</div>
+          <div class="kanban-card__meta"><span class="badge bg-warning text-dark">P2</span><span>L2 · Calidad</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">CP</div><span>Carlos P.</span><span class="ms-auto">Hoy</span></div>
+        </div>
+        <div class="kanban-card kanban-card--p3">
+          <div class="kanban-card__title">Variabilidad peso blíster &gt; ±1.5%</div>
+          <div class="kanban-card__meta"><span class="badge bg-primary">P3</span><span>L4 · Calidad</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">MG</div><span>María G.</span><span class="ms-auto">Ayer</span></div>
+        </div>
+      </div>
+
+      <div class="kanban-col kanban-col--analysis">
+        <div class="kanban-col__head"><span>Análisis</span><span class="badge bg-warning text-dark">4</span></div>
+        <div class="kanban-card kanban-card--p1">
+          <div class="kanban-card__title">Sensor presencia encartonadora</div>
+          <div class="kanban-card__meta"><span class="badge bg-danger">P1</span><span>L2 · Mantenim.</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">JR</div><span>Javier R.</span><span class="ms-auto">3d</span></div>
+          <div class="kanban-card__progress"><div style="width:40%"></div></div>
+        </div>
+        <div class="kanban-card kanban-card--p2">
+          <div class="kanban-card__title">Cambio de formato &gt; 30 min L4</div>
+          <div class="kanban-card__meta"><span class="badge bg-warning text-dark">P2</span><span>L4 · SMED</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">AM</div><span>Ana M.</span><span class="ms-auto">5d</span></div>
+          <div class="kanban-card__progress"><div style="width:65%"></div></div>
+        </div>
+        <div class="kanban-card kanban-card--p3">
+          <div class="kanban-card__title">Rechazos por código de barras ilegible</div>
+          <div class="kanban-card__meta"><span class="badge bg-primary">P3</span><span>L1 · Calidad</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">PL</div><span>Pedro L.</span><span class="ms-auto">2d</span></div>
+          <div class="kanban-card__progress"><div style="width:30%"></div></div>
+        </div>
+      </div>
+
+      <div class="kanban-col kanban-col--progress">
+        <div class="kanban-col__head"><span>En curso</span><span class="badge bg-primary">3</span></div>
+        <div class="kanban-card kanban-card--p1">
+          <div class="kanban-card__title">Plan acción CAPA-2024-018</div>
+          <div class="kanban-card__meta"><span class="badge bg-danger">P1</span><span>L2 · CAPA</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">JR</div><span>Javier R.</span><span class="ms-auto">7d</span></div>
+          <div class="kanban-card__progress"><div style="width:75%"></div></div>
+        </div>
+        <div class="kanban-card kanban-card--p2">
+          <div class="kanban-card__title">Mejora ergonomía puesto L3</div>
+          <div class="kanban-card__meta"><span class="badge bg-warning text-dark">P2</span><span>L3 · Seguridad</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">PL</div><span>Pedro L.</span><span class="ms-auto">12d</span></div>
+          <div class="kanban-card__progress"><div style="width:55%"></div></div>
+        </div>
+      </div>
+
+      <div class="kanban-col kanban-col--done">
+        <div class="kanban-col__head"><span>Cerrado</span><span class="badge bg-success">23</span></div>
+        <div class="kanban-card kanban-card--p2" style="opacity:.85;">
+          <div class="kanban-card__title">Calibración celda de carga L1</div>
+          <div class="kanban-card__meta"><span class="badge bg-success">✓</span><span>L1 · Calidad</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">AM</div><span>Ana M.</span><span class="ms-auto">21/04</span></div>
+        </div>
+        <div class="kanban-card kanban-card--p3" style="opacity:.85;">
+          <div class="kanban-card__title">Reducción microparadas L4 -32%</div>
+          <div class="kanban-card__meta"><span class="badge bg-success">✓</span><span>L4 · Producción</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">MG</div><span>María G.</span><span class="ms-auto">18/04</span></div>
+        </div>
+        <div class="kanban-card kanban-card--p1" style="opacity:.85;">
+          <div class="kanban-card__title">Fuga aire compresor zona L2</div>
+          <div class="kanban-card__meta"><span class="badge bg-success">✓</span><span>L2 · Mantenim.</span></div>
+          <div class="kanban-card__meta"><div class="kanban-card__owner">JR</div><span>Javier R.</span><span class="ms-auto">15/04</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<section class="screen" data-screen="initiatives">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1">Iniciativas de mejora</h1>
+      <p class="text-muted mb-0 small">Pipeline de proyectos de mejora continua y ahorros estimados</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm">Exportar</button>
+      <button class="btn btn-primary btn-sm"><i class="bi bi-rocket me-1"></i>Nueva iniciativa</button>
+    </div>
+  </div>
+
+  <section class="mb-4">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-blue">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Activas</small>
+            <h3 class="fw-bold mt-1 mb-0">12</h3>
+            <small class="text-muted">8 on track · 3 en riesgo · 1 retrasada</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-success">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Ahorro estimado YTD</small>
+            <h3 class="fw-bold mt-1 mb-0">€ 1.24M</h3>
+            <small class="text-success">+18% vs plan</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-purple">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Hit rate</small>
+            <h3 class="fw-bold mt-1 mb-0">78%</h3>
+            <small class="text-muted">objetivos alcanzados</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center kpi-card-border-teal">
+          <div class="card-body p-3">
+            <small class="text-uppercase fw-bold text-muted">Implicación</small>
+            <h3 class="fw-bold mt-1 mb-0">42</h3>
+            <small class="text-muted">empleados activos</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h6 class="text-uppercase small fw-bold text-muted mb-0">Cartera de iniciativas</h6>
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-primary">Todas</button>
+            <button class="btn btn-outline-secondary">SMED</button>
+            <button class="btn btn-outline-secondary">5S</button>
+            <button class="btn btn-outline-secondary">TPM</button>
+            <button class="btn btn-outline-secondary">Kaizen</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th><th>Iniciativa</th><th>Tipo</th><th>Líder</th><th>Línea</th>
+                <th>Avance</th><th>Ahorro €/año</th><th>Estado</th><th>Fin previsto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-muted small">INI-024</td>
+                <td><strong>SMED cambio formato L4</strong><div class="text-muted small">Reducir tiempo de cambio de 32 a 18 min</div></td>
+                <td><span class="badge bg-info text-dark">SMED</span></td>
+                <td>María G.</td>
+                <td><span class="badge bg-secondary">L4</span></td>
+                <td><div class="progress" style="height:8px; width:100px;"><div class="progress-bar bg-success" style="width:78%"></div></div><small class="text-muted">78%</small></td>
+                <td><strong>€ 184k</strong></td>
+                <td><span class="badge bg-success">On track</span></td>
+                <td class="small">31/05/2024</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">INI-023</td>
+                <td><strong>TPM autónomo encartonadoras</strong><div class="text-muted small">Mantenimiento autónomo nivel 2</div></td>
+                <td><span class="badge bg-warning text-dark">TPM</span></td>
+                <td>Javier R.</td>
+                <td><span class="badge bg-secondary">L2,L3,L4</span></td>
+                <td><div class="progress" style="height:8px; width:100px;"><div class="progress-bar bg-success" style="width:62%"></div></div><small class="text-muted">62%</small></td>
+                <td><strong>€ 245k</strong></td>
+                <td><span class="badge bg-success">On track</span></td>
+                <td class="small">15/06/2024</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">INI-022</td>
+                <td><strong>5S almacén granel</strong><div class="text-muted small">Reorganización completa zona Z3</div></td>
+                <td><span class="badge bg-primary">5S</span></td>
+                <td>Ana M.</td>
+                <td><span class="badge bg-secondary">—</span></td>
+                <td><div class="progress" style="height:8px; width:100px;"><div class="progress-bar bg-warning" style="width:45%"></div></div><small class="text-muted">45%</small></td>
+                <td><strong>€ 62k</strong></td>
+                <td><span class="badge bg-warning text-dark">En riesgo</span></td>
+                <td class="small">30/04/2024</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">INI-021</td>
+                <td><strong>Kaizen reducción rechazo etiqueta</strong><div class="text-muted small">Mejora visión artificial CCD</div></td>
+                <td><span class="badge bg-success">Kaizen</span></td>
+                <td>Carlos P.</td>
+                <td><span class="badge bg-secondary">L2</span></td>
+                <td><div class="progress" style="height:8px; width:100px;"><div class="progress-bar bg-success" style="width:90%"></div></div><small class="text-muted">90%</small></td>
+                <td><strong>€ 98k</strong></td>
+                <td><span class="badge bg-success">On track</span></td>
+                <td class="small">10/05/2024</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">INI-020</td>
+                <td><strong>Optimización energética L1-L2</strong><div class="text-muted small">Reducción consumo aire comprimido</div></td>
+                <td><span class="badge bg-warning text-dark">TPM</span></td>
+                <td>Pedro L.</td>
+                <td><span class="badge bg-secondary">L1,L2</span></td>
+                <td><div class="progress" style="height:8px; width:100px;"><div class="progress-bar bg-danger" style="width:25%"></div></div><small class="text-muted">25%</small></td>
+                <td><strong>€ 142k</strong></td>
+                <td><span class="badge bg-danger">Retrasada</span></td>
+                <td class="small">15/04/2024</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">INI-019</td>
+                <td><strong>SMED L1 autoinyectores</strong><div class="text-muted small">Cambio &lt; 15 min</div></td>
+                <td><span class="badge bg-info text-dark">SMED</span></td>
+                <td>Ana M.</td>
+                <td><span class="badge bg-secondary">L1</span></td>
+                <td><div class="progress" style="height:8px; width:100px;"><div class="progress-bar bg-success" style="width:100%"></div></div><small class="text-muted">100%</small></td>
+                <td><strong>€ 156k</strong></td>
+                <td><span class="badge bg-secondary">Cerrada</span></td>
+                <td class="small">28/03/2024</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="text-uppercase small fw-bold text-muted mb-3">Ahorro acumulado YTD</h6>
+            <div id="initiatives-savings" style="width:100%; height:280px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="text-uppercase small fw-bold text-muted mb-3">Iniciativas por tipo</h6>
+            <div id="initiatives-by-type" style="width:100%; height:280px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="data-sqdcp.js?v=3"></script>
+<script src="data-vsm.js?v=1"></script>
+<script src="opex-original.js?v=5"></script>
+</body>
+</html>

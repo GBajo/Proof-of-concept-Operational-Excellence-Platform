@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>OpEx · Alternativas de diseño</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="stylesheet" href="alt-pharma.css" />
+<link rel="stylesheet" href="alt-tactical.css" />
+<link rel="stylesheet" href="alt-minimal.css" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<style>
+  html, body { margin: 0; background: #f0eee9; }
+  /* font-face Ringside (compartido) */
+  @font-face { font-family:'Ringside'; src:url('fonts/ringside-sans-400.woff2') format('woff2'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Ringside'; src:url('fonts/ringside-sans-900.woff2') format('woff2'); font-weight:900; font-display:swap; }
+  @font-face { font-family:'Ringside Wide'; src:url('fonts/ringside-wide-400.woff2') format('woff2'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Ringside Wide'; src:url('fonts/ringside-wide-900.woff2') format('woff2'); font-weight:900; font-display:swap; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="alt-pharma.jsx"></script>
+<script type="text/babel" src="alt-tactical.jsx"></script>
+<script type="text/babel" src="alt-minimal.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection
+          id="alternativas"
+          title="OpEx Console — 3 direcciones visuales"
+          subtitle="Cada artboard es un Dashboard Overview completo aplicando la dirección al 100%. Click en ⤢ para ver pantalla completa.">
+          <DCPostIt x={20} y={120} width={260}>
+            Tres direcciones visuales muy distintas.{'\n\n'}
+            Compara densidad, tono y jerarquía.{'\n\n'}
+            Después decidimos cuál evolucionar.
+          </DCPostIt>
+
+          <DCArtboard id="pharma" label="A · Pharma Premium — brand-led, claro, editorial" width={1440} height={960}>
+            <window.PharmaArtboard />
+          </DCArtboard>
+
+          <DCArtboard id="tactical" label="B · Industrial Tactical — cockpit oscuro, alta densidad" width={1440} height={960}>
+            <window.TacticalArtboard />
+          </DCArtboard>
+
+          <DCArtboard id="minimal" label="C · Modern Minimalist — SaaS clean, Linear/Vercel vibe" width={1440} height={960}>
+            <window.MinimalArtboard />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

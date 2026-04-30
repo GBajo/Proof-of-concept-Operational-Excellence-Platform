@@ -8,274 +8,249 @@ const SHIFT_I18N = {
   errConnection:   "{{ t('err_connection') }}",
 };
 </script>
-<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
+<script src="{{ url_for('static', filename='js/shift.js') }}"></script>
+{% endblock %}
 
 {% block content %}
-<div class="row g-4">
+<div class="pp-page-head">
+  <div>
+    <p class="pp-eyebrow">Turnos / Cierre</p>
+    <h1 class="pp-h1">{{ t('end_shift_title') }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">
+      {{ t('line_label') }} {{ shift.line_number }} · {{ shift.operator_name }} ·
+      {% if shift.shift_type == 'morning' %}{{ t('shift_morning') }}
+      {% elif shift.shift_type == 'afternoon' %}{{ t('shift_afternoon') }}
+      {% else %}{{ t('shift_night') }}{% endif %}
+    </p>
+  </div>
+  <div class="pp-actions">
+    <div style="background:var(--pp-warm); border:1px solid var(--pp-line); border-radius:8px; padding:10px 18px; text-align:center;">
+      <span style="display:block; font-size:22px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--pp-text);">{{ duration_h }}h {{ duration_m }}m</span>
+      <small class="pp-faint" style="font-size:10px; text-transform:uppercase; letter-spacing:0.06em;">{{ t('shift_duration') }}</small>
+    </div>
+  </div>
+</div>
+
+<div class="pp-grid-2-1">
 
   <!-- Main column -->
-  <div class="col-lg-8">
+  <div style="display:flex; flex-direction:column; gap:16px;">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
-      <div>
-        <h1 class="h3 fw-bold mb-1">{{ t('end_shift_title') }}</h1>
-        <p class="text-muted mb-0 small">
-          <span class="fw-bold text-primary">{{ t('line_label') }} {{ shift.line_number }}</span>
-          <span class="mx-1">·</span>
-          <span>{{ shift.operator_name }}</span>
-          <span class="mx-1">·</span>
-          <span>
-            {% if shift.shift_type == 'morning' %}{{ t('shift_morning') }}
-            {% elif shift.shift_type == 'afternoon' %}{{ t('shift_afternoon') }}
-            {% else %}{{ t('shift_night') }}{% endif %}
-          </span>
-        </p>
-      </div>
-      <div class="bg-light border rounded px-3 py-2 text-center">
-        <span class="d-block fs-3 fw-bold text-primary font-monospace">{{ duration_h }}h {{ duration_m }}m</span>
-        <small class="text-muted text-uppercase" style="font-size:0.7rem;">{{ t('shift_duration') }}</small>
-      </div>
-    </div>
-
-    <!-- KPI Summary -->
-    <section class="mb-4">
-      <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('kpi_summary_title') }}</h6>
-      <div class="row g-3">
+    <!-- KPI summary -->
+    <div class="pp-card">
+      <h3 class="pp-card-title mb-3">{{ t('kpi_summary_title') }}</h3>
+      <div class="pp-grid-3">
 
         <!-- OEE -->
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm text-center kpi-card-border-primary">
-            <div class="card-body">
-              <small class="text-uppercase fw-bold text-muted">{{ t('oee_label') }}</small>
-              <h2 class="fw-bold mt-1 {% if kpi.oee >= 85 %}text-success{% elif kpi.oee >= 60 %}text-warning{% else %}text-danger{% endif %}">
-                {{ kpi.oee }}%
-              </h2>
-              <div class="progress mb-2" style="height:6px;">
-                {% set bar_width = kpi.oee if kpi.oee <= 100 else 100 %}
-                <div class="progress-bar {% if kpi.oee >= 85 %}bg-success{% elif kpi.oee >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
-                     style="width: {{ bar_width }}%"></div>
-              </div>
-              <div class="d-flex justify-content-center gap-2 small text-muted">
-                <span title="{{ t('availability') }}">D {{ kpi.availability }}%</span>
-                <span title="{{ t('performance') }}">R {{ kpi.performance }}%</span>
-                <span title="{{ t('quality_kpi') }}">C {{ kpi.quality }}%</span>
-              </div>
-            </div>
+        <div class="pp-kpi" style="text-align:center; border-left:3px solid {% if kpi.oee >= 85 %}var(--pp-good){% elif kpi.oee >= 60 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">
+          <p class="pp-kpi-label">{{ t('oee_label') }}</p>
+          <div class="pp-kpi-value" style="justify-content:center;">
+            <span class="pp-kpi-num" style="color:{% if kpi.oee >= 85 %}var(--pp-good){% elif kpi.oee >= 60 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ kpi.oee }}</span>
+            <span class="pp-kpi-unit">%</span>
+          </div>
+          <div class="pp-progress mt-3">
+            {% set bar_width = kpi.oee if kpi.oee <= 100 else 100 %}
+            <div class="pp-progress-fill {% if kpi.oee >= 85 %}pp-progress-fill-ok{% elif kpi.oee >= 60 %}pp-progress-fill-warn{% else %}pp-progress-fill-bad{% endif %}"
+                 style="width:{{ bar_width }}%"></div>
+          </div>
+          <div class="d-flex justify-content-center gap-2 mt-2" style="font-size:11px; color:var(--pp-text-dim);">
+            <span>D {{ kpi.availability }}%</span>
+            <span>R {{ kpi.performance }}%</span>
+            <span>C {{ kpi.quality }}%</span>
           </div>
         </div>
 
         <!-- Units -->
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-              <small class="text-uppercase fw-bold text-muted">{{ t('units_produced_short') }}</small>
-              <h2 class="fw-bold mt-1">{{ "{:,}".format(kpi.total_units_produced).replace(",", ".") }}</h2>
-              {% if kpi.target_units > 0 %}
-              <small class="text-muted">
-                {{ t('target_kpi') }} {{ "{:,}".format(kpi.target_units).replace(",", ".") }}
-                {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
-                <span class="badge {% if pct >= 95 %}bg-success{% elif pct >= 80 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-                  {{ pct }}%
-                </span>
-              </small>
-              {% endif %}
-            </div>
+        <div class="pp-kpi" style="text-align:center;">
+          <p class="pp-kpi-label">{{ t('units_produced_short') }}</p>
+          <div class="pp-kpi-value" style="justify-content:center;">
+            <span class="pp-kpi-num">{{ "{:,}".format(kpi.total_units_produced).replace(",", ".") }}</span>
           </div>
+          {% if kpi.target_units > 0 %}
+          {% set pct = (kpi.total_units_produced / kpi.target_units * 100) | round(1) %}
+          <div class="pp-kpi-foot">
+            <span class="pp-faint">Obj. {{ "{:,}".format(kpi.target_units).replace(",", ".") }}</span>
+            <span class="pp-tag {% if pct >= 95 %}pp-tag-ok{% elif pct >= 80 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">{{ pct }}%</span>
+          </div>
+          {% endif %}
         </div>
 
-        <!-- Reject rate -->
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-              <small class="text-uppercase fw-bold text-muted">{{ t('reject_rate_label') }}</small>
-              <h2 class="fw-bold mt-1 {% if kpi.reject_rate_pct <= 1 %}text-success{% elif kpi.reject_rate_pct <= 3 %}text-warning{% else %}text-danger{% endif %}">
-                {{ kpi.reject_rate_pct }}%
-              </h2>
-              <small class="text-muted">{{ kpi.total_units_rejected }} {{ t('rejected_units_label') }}</small>
-            </div>
+        <!-- Reject -->
+        <div class="pp-kpi" style="text-align:center;">
+          <p class="pp-kpi-label">{{ t('reject_rate_label') }}</p>
+          <div class="pp-kpi-value" style="justify-content:center;">
+            <span class="pp-kpi-num" style="color:{% if kpi.reject_rate_pct <= 1 %}var(--pp-good){% elif kpi.reject_rate_pct <= 3 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ kpi.reject_rate_pct }}</span>
+            <span class="pp-kpi-unit">%</span>
+          </div>
+          <div class="pp-kpi-foot">
+            <span class="pp-faint">{{ kpi.total_units_rejected }} {{ t('rejected_units_label') }}</span>
           </div>
         </div>
 
         <!-- Downtime -->
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-              <small class="text-uppercase fw-bold text-muted">{{ t('downtime_label') }}</small>
-              <h2 class="fw-bold mt-1 {% if kpi.total_downtime_minutes <= 30 %}text-success{% elif kpi.total_downtime_minutes <= 60 %}text-warning{% else %}text-danger{% endif %}">
-                {{ kpi.total_downtime_minutes | int }} min
-              </h2>
-              <small class="text-muted">{{ t('availability_label') }} {{ kpi.availability }}%</small>
-            </div>
+        <div class="pp-kpi" style="text-align:center;">
+          <p class="pp-kpi-label">{{ t('downtime_label') }}</p>
+          <div class="pp-kpi-value" style="justify-content:center;">
+            <span class="pp-kpi-num" style="color:{% if kpi.total_downtime_minutes <= 30 %}var(--pp-good){% elif kpi.total_downtime_minutes <= 60 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ kpi.total_downtime_minutes | int }}</span>
+            <span class="pp-kpi-unit">min</span>
+          </div>
+          <div class="pp-kpi-foot">
+            <span class="pp-faint">{{ t('availability_label') }} {{ kpi.availability }}%</span>
           </div>
         </div>
 
         <!-- RFT -->
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-              <small class="text-uppercase fw-bold text-muted">{{ t('rft_full') }}</small>
-              <h2 class="fw-bold mt-1 {% if kpi.right_first_time_pct >= 99 %}text-success{% elif kpi.right_first_time_pct >= 97 %}text-warning{% else %}text-danger{% endif %}">
-                {{ kpi.right_first_time_pct }}%
-              </h2>
-              <small class="text-muted">{{ kpi.good_units }} {{ t('good_units') }}</small>
-            </div>
+        <div class="pp-kpi" style="text-align:center;">
+          <p class="pp-kpi-label">{{ t('rft_full') }}</p>
+          <div class="pp-kpi-value" style="justify-content:center;">
+            <span class="pp-kpi-num" style="color:{% if kpi.right_first_time_pct >= 99 %}var(--pp-good){% elif kpi.right_first_time_pct >= 97 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ kpi.right_first_time_pct }}</span>
+            <span class="pp-kpi-unit">%</span>
+          </div>
+          <div class="pp-kpi-foot">
+            <span class="pp-faint">{{ kpi.good_units }} {{ t('good_units') }}</span>
           </div>
         </div>
 
-        <!-- Comments -->
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-              <small class="text-uppercase fw-bold text-muted">{{ t('comments_label') }}</small>
-              <h2 class="fw-bold mt-1 text-primary">{{ total_comments }}</h2>
-              <div class="d-flex justify-content-center gap-1">
-                {% for cat, items in by_category.items() %}
-                <span class="end-kpi-cat-dot end-kpi-cat-dot--{{ cat }}" title="{{ cat | capitalize }}">
-                  {{ items | length }}
-                </span>
-                {% endfor %}
-              </div>
-            </div>
+        <!-- Comments count -->
+        <div class="pp-kpi" style="text-align:center;">
+          <p class="pp-kpi-label">{{ t('comments_label') }}</p>
+          <div class="pp-kpi-value" style="justify-content:center;">
+            <span class="pp-kpi-num">{{ total_comments }}</span>
+          </div>
+          <div class="pp-kpi-foot" style="justify-content:center; gap:6px;">
+            {% for cat, items in by_category.items() %}
+            <span class="pp-tag pp-tag-neutral" style="font-size:10px;" title="{{ cat }}">{{ items | length }}</span>
+            {% endfor %}
           </div>
         </div>
 
       </div>
-    </section>
+    </div>
 
     <!-- Comments summary -->
     {% if total_comments > 0 %}
-    <section class="mb-4">
-      <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('comments_registered') }}</h6>
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          {% set cat_labels = {
-            'safety':      t('cat_safety'),
-            'quality':     t('cat_quality'),
-            'production':  t('cat_production'),
-            'maintenance': t('cat_maintenance')
-          } %}
-          {% for cat, items in by_category.items() %}
-          <div class="mb-3">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-{{ {'safety':'danger','quality':'warning','production':'primary','maintenance':'secondary'}[cat] }} {% if cat == 'quality' %}text-dark{% endif %}">
-                {{ cat_labels[cat] }}
-              </span>
-              <span class="text-muted small">{{ items | length }}</span>
-            </div>
-            <ul class="list-group list-group-flush">
-              {% for c in items %}
-              <li class="list-group-item px-0 py-1 d-flex gap-2 align-items-baseline small">
-                <span class="text-muted font-monospace" style="min-width:40px;">{{ c.timestamp[11:16] }}</span>
-                <span class="flex-grow-1">{{ c.text }}</span>
-                {% if c.source == 'voice' %}<span title="{{ t('source_voice') }}">🎤</span>{% endif %}
-              </li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endfor %}
+    <div class="pp-card">
+      <h3 class="pp-card-title mb-3">{{ t('comments_registered') }}</h3>
+      {% set cat_labels = {
+        'safety':      t('cat_safety'),
+        'quality':     t('cat_quality'),
+        'production':  t('cat_production'),
+        'maintenance': t('cat_maintenance')
+      } %}
+      {% set cat_tags = {
+        'safety': 'pp-tag-bad', 'quality': 'pp-tag-warn',
+        'production': 'pp-tag-info', 'maintenance': 'pp-tag-neutral'
+      } %}
+      {% for cat, items in by_category.items() %}
+      <div class="mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="pp-tag {{ cat_tags.get(cat, 'pp-tag-neutral') }}">{{ cat_labels.get(cat, cat) }}</span>
+          <span class="pp-faint" style="font-size:12px;">{{ items | length }}</span>
         </div>
+        <ul class="pp-list">
+          {% for c in items %}
+          <li class="pp-list-row" style="grid-template-columns:auto 1fr auto; font-size:13px;">
+            <span class="pp-mono pp-faint" style="font-size:11px;">{{ c.timestamp[11:16] }}</span>
+            <span>{{ c.text }}</span>
+            {% if c.source == 'voice' %}<span title="{{ t('source_voice') }}" style="font-size:11px;">🎤</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
       </div>
-    </section>
+      {% endfor %}
+    </div>
     {% endif %}
 
     <!-- Close form -->
-    <section class="mb-4">
-      <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('close_shift_title') }}</h6>
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <form id="end-shift-form" data-shift-id="{{ shift.id }}">
-            <div class="mb-3">
-              <label class="form-label" for="handover_notes">{{ t('handover_notes_label') }}</label>
-              <textarea id="handover_notes" name="handover_notes" class="form-control" rows="5"
-                placeholder="{{ t('handover_placeholder') }}"></textarea>
-              <div class="form-text">{{ t('handover_hint') }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">{{ t('closure_status_label') }}</label>
-              <div class="end-status-options">
-                <label class="end-status-card">
-                  <input type="radio" name="status" value="completed" checked>
-                  <span class="end-status-card__inner">
-                    <span class="end-status-card__icon">✅</span>
-                    <span class="end-status-card__name">{{ t('status_normal') }}</span>
-                    <span class="end-status-card__desc">{{ t('status_normal_desc') }}</span>
-                  </span>
-                </label>
-                <label class="end-status-card">
-                  <input type="radio" name="status" value="interrupted">
-                  <span class="end-status-card__inner">
-                    <span class="end-status-card__icon">⚠️</span>
-                    <span class="end-status-card__name">{{ t('status_interrupted') }}</span>
-                    <span class="end-status-card__desc">{{ t('status_interrupted_desc') }}</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div id="form-error" class="alert alert-danger" style="display:none"></div>
-
-            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
-              <a href="{{ url_for('views.shift_active', shift_id=shift.id) }}" class="btn btn-secondary">
-                {{ t('btn_back_active') }}
-              </a>
-              <button type="submit" class="btn btn-danger btn-lg" id="end-btn">
-                {{ t('btn_confirm_close') }}
-              </button>
-            </div>
-          </form>
+    <div class="pp-card">
+      <h3 class="pp-card-title mb-3">{{ t('close_shift_title') }}</h3>
+      <form id="end-shift-form" data-shift-id="{{ shift.id }}">
+        <div class="pp-field mb-4">
+          <label class="pp-label" for="handover_notes">{{ t('handover_notes_label') }}</label>
+          <textarea id="handover_notes" name="handover_notes" class="pp-textarea" rows="5"
+            placeholder="{{ t('handover_placeholder') }}"></textarea>
+          <small class="pp-faint" style="font-size:11px;">{{ t('handover_hint') }}</small>
         </div>
-      </div>
-    </section>
+
+        <div class="pp-field mb-4">
+          <label class="pp-label">{{ t('closure_status_label') }}</label>
+          <div class="end-status-options">
+            <label class="end-status-card">
+              <input type="radio" name="status" value="completed" checked>
+              <span class="end-status-card__inner">
+                <span class="end-status-card__icon">✅</span>
+                <span class="end-status-card__name">{{ t('status_normal') }}</span>
+                <span class="end-status-card__desc">{{ t('status_normal_desc') }}</span>
+              </span>
+            </label>
+            <label class="end-status-card">
+              <input type="radio" name="status" value="interrupted">
+              <span class="end-status-card__inner">
+                <span class="end-status-card__icon">⚠️</span>
+                <span class="end-status-card__name">{{ t('status_interrupted') }}</span>
+                <span class="end-status-card__desc">{{ t('status_interrupted_desc') }}</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div id="form-error" class="alert alert-danger" style="display:none"></div>
+
+        <div class="d-flex justify-content-end gap-2 pt-3" style="border-top:1px solid var(--pp-line);">
+          <a href="{{ url_for('views.shift_active', shift_id=shift.id) }}" class="pp-btn pp-btn-ghost">
+            {{ t('btn_back_active') }}
+          </a>
+          <button type="submit" class="pp-btn pp-btn-primary" id="end-btn">
+            {{ t('btn_confirm_close') }}
+          </button>
+        </div>
+      </form>
+    </div>
 
   </div>
 
-  <!-- Sidebar -->
-  <div class="col-lg-4">
-    <div class="card border-0 shadow-sm border-start border-primary border-3 mb-3">
-      <div class="card-body">
-        <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('shift_info_title') }}</h6>
-        <dl class="row mb-0 small">
-          <dt class="col-5 text-muted">{{ t('info_start') }}</dt>
-          <dd class="col-7">{{ shift.start_time[11:16] }}</dd>
-          <dt class="col-5 text-muted">{{ t('info_line') }}</dt>
-          <dd class="col-7">{{ shift.line_number }}</dd>
-          <dt class="col-5 text-muted">{{ t('info_operator') }}</dt>
-          <dd class="col-7">{{ shift.operator_name }}</dd>
-          <dt class="col-5 text-muted">{{ t('info_type') }}</dt>
-          <dd class="col-7">
-            {% if shift.shift_type == 'morning' %}☀️ {{ t('shift_morning') }}
-            {% elif shift.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }}
-            {% else %}🌙 {{ t('shift_night') }}{% endif %}
-          </dd>
-        </dl>
-      </div>
+  <!-- Sidebar info -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <div class="pp-card" style="border-left:3px solid var(--pp-red);">
+      <h3 class="pp-card-title mb-3">{{ t('shift_info_title') }}</h3>
+      <dl style="display:grid; grid-template-columns:auto 1fr; gap:8px 16px; font-size:13px; margin:0;">
+        <dt class="pp-faint">{{ t('info_start') }}</dt>
+        <dd style="margin:0; font-weight:600;">{{ shift.start_time[11:16] }}</dd>
+        <dt class="pp-faint">{{ t('info_line') }}</dt>
+        <dd style="margin:0; font-weight:600;">{{ shift.line_number }}</dd>
+        <dt class="pp-faint">{{ t('info_operator') }}</dt>
+        <dd style="margin:0; font-weight:600;">{{ shift.operator_name }}</dd>
+        <dt class="pp-faint">{{ t('info_type') }}</dt>
+        <dd style="margin:0; font-weight:600;">
+          {% if shift.shift_type == 'morning' %}☀️ {{ t('shift_morning') }}
+          {% elif shift.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon') }}
+          {% else %}🌙 {{ t('shift_night') }}{% endif %}
+        </dd>
+      </dl>
     </div>
 
-    <div class="card border-0 shadow-sm border-start border-warning border-3 mb-3">
-      <div class="card-body">
-        <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('before_close_title') }}</h6>
-        <ul class="mb-0 ps-3 small">
-          <li class="mb-2">{{ t('before_close_1') }}</li>
-          <li class="mb-2">{{ t('before_close_2') }}</li>
-          <li class="mb-2">{{ t('before_close_3') }}</li>
-          <li>{{ t('before_close_4') }}</li>
-        </ul>
-      </div>
+    <div class="pp-card" style="border-left:3px solid var(--pp-warn);">
+      <h3 class="pp-card-title mb-3">{{ t('before_close_title') }}</h3>
+      <ol style="margin:0; padding-left:18px; font-size:13px; color:var(--pp-text-mid); line-height:1.9;">
+        <li>{{ t('before_close_1') }}</li>
+        <li>{{ t('before_close_2') }}</li>
+        <li>{{ t('before_close_3') }}</li>
+        <li>{{ t('before_close_4') }}</li>
+      </ol>
     </div>
 
     {% if kpi.total_units_produced > 0 %}
-    <div class="card border-0 shadow-sm">
-      <div class="card-body text-center">
-        <h6 class="text-uppercase small fw-bold text-muted mb-2">{{ t('quick_summary_title') }}</h6>
-        <span class="d-block display-4 fw-bold {% if kpi.oee >= 85 %}text-success{% elif kpi.oee >= 60 %}text-warning{% else %}text-danger{% endif %}">
-          {{ kpi.oee }}%
-        </span>
-        <small class="text-muted text-uppercase">{{ t('oee_shift') }}</small>
+    <div class="pp-kpi" style="text-align:center;">
+      <p class="pp-kpi-label">{{ t('quick_summary_title') }}</p>
+      <div class="pp-kpi-value" style="justify-content:center;">
+        <span class="pp-kpi-num" style="font-size:52px; color:{% if kpi.oee >= 85 %}var(--pp-good){% elif kpi.oee >= 60 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ kpi.oee }}</span>
+        <span class="pp-kpi-unit">%</span>
       </div>
+      <p class="pp-faint" style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; margin-top:6px;">{{ t('oee_shift') }}</p>
     </div>
     {% endif %}
+
   </div>
 
 </div>

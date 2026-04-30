@@ -1,289 +1,268 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}" data-bs-theme="light">
+<html lang="{{ lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}OpEx Platform{% endblock %} — Proof of Concept</title>
-  <!-- Bootstrap 5.3 CSS -->
+  <title>{% block title %}OpEx Platform{% endblock %} — Lilly OpEx</title>
+  <!-- Bootstrap 5.3 CSS (funcionalidad: dropdowns, modals, forms) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <!-- Bootstrap Icons 1.11 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- ECharts 5 -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-  <!-- App CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <!-- Pharma design system — carga después de Bootstrap para sobreescribir -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pharma.css') }}">
+  <!-- CSS adicionales existentes -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/voice.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
 
   <!-- ============================================================
-       FIXED TOP NAVBAR
+       TOPBAR PHARMA
        ============================================================ -->
-  <nav class="navbar navbar-dark bg-dark fixed-top navbar-opex px-3" style="height:56px;">
-    <!-- Sidebar toggle -->
-    <button class="btn btn-dark me-2 border-0" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
-      <i class="bi bi-list fs-5"></i>
-    </button>
+  <header class="pp-top" role="banner">
 
     <!-- Brand -->
-    <a class="navbar-brand me-auto" href="{{ url_for('views.index') }}">
-      <i class="bi bi-lightning-charge"></i> OpEx Platform
+    <a class="pp-brand" href="{{ url_for('views.index') }}">
+      <span class="pp-brand-dot"></span>
+      <span class="pp-brand-mark">LILLY</span>
+      <span class="pp-brand-sep"></span>
+      <span class="pp-brand-product">Operational Excellence</span>
     </a>
 
-    <!-- Active shift indicators -->
-    <div class="d-flex align-items-center gap-2 me-3">
+    <!-- Tools row -->
+    <div class="pp-top-tools">
+
+      <!-- Active shift pills -->
       {% if navbar_active_shifts %}
         {% for s in navbar_active_shifts %}
         <a href="{{ url_for('views.shift_active', shift_id=s.shift_id) }}"
-           class="shift-pill {% if '/shift/' ~ s.shift_id ~ '/' in request.path %}shift-pill--current{% endif %}"
+           class="pp-pill pp-pill--shift {% if '/shift/' ~ s.shift_id ~ '/' in request.path %}pp-pill--shift-current{% endif %}"
            title="{{ t('nav_active_shift_title') }} — {{ t('line_label') }} {{ s.line_number }}">
-          <span class="shift-dot"></span>
+          <span class="pp-shift-dot"></span>
           <span>L{{ s.line_number }}
-            <span style="opacity:0.85;font-weight:400;">{{ s.operator_name.split()[0] }}</span>
+            <span style="opacity:0.8; font-weight:400;">· {{ s.operator_name.split()[0] }}</span>
           </span>
           {% if '/shift/' ~ s.shift_id ~ '/' in request.path %}
           <a href="{{ url_for('views.shift_end', shift_id=s.shift_id) }}"
-             class="shift-end-link"
+             class="pp-shift-end-link"
              onclick="event.stopPropagation()"
-             title="{{ t('nav_end_shift') }}">&#10005;</a>
+             title="{{ t('nav_end_shift') }}">✕</a>
           {% endif %}
         </a>
         {% endfor %}
       {% else %}
-        <a href="{{ url_for('views.shift_start') }}" class="no-shift-link">
-          {{ t('nav_start_shift') }}
+        <a href="{{ url_for('views.shift_start') }}" class="pp-pill pp-pill--no-shift">
+          <i class="bi bi-play-circle"></i> {{ t('nav_start_shift') }}
         </a>
       {% endif %}
-    </div>
 
-    <!-- Site selector dropdown -->
-    <div class="dropdown me-2">
-      <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-        {% if current_site == 'global' %}🌍 Global{% else %}{{ sites[current_site].flag }} {{ sites[current_site].name }}{% endif %}
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item {% if current_site == 'global' %}active{% endif %}" href="/set-site?site=global">🌍 Global</a></li>
-        {% for site_id, site_info in sites.items() %}
-        <li><a class="dropdown-item {% if current_site == site_id %}active{% endif %}"
-               href="/set-site?site={{ site_id }}">{{ site_info.flag }} {{ site_info.name }}</a></li>
-        {% endfor %}
-      </ul>
-    </div>
+      <!-- Site selector -->
+      <div class="dropdown">
+        <button class="pp-pill dropdown-toggle border-0" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                style="font-size:11px;">
+          <i class="bi bi-geo-alt"></i>
+          {% if current_site == 'global' %}🌍 Global{% else %}{{ sites[current_site].flag }} {{ sites[current_site].name }}{% endif %}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item {% if current_site == 'global' %}active{% endif %}" href="/set-site?site=global">🌍 Global</a></li>
+          {% for site_id, site_info in sites.items() %}
+          <li><a class="dropdown-item {% if current_site == site_id %}active{% endif %}"
+                 href="/set-site?site={{ site_id }}">{{ site_info.flag }} {{ site_info.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
 
-    <!-- Language switcher -->
-    <div class="d-flex align-items-center gap-1">
-      <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
-        <input type="hidden" name="next" value="{{ request.path }}">
-        <input type="hidden" name="lang" value="es">
-        <button type="submit" class="lang-btn {% if lang == 'es' %}lang-btn--active{% endif %}">ES</button>
-      </form>
-      <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
-        <input type="hidden" name="next" value="{{ request.path }}">
-        <input type="hidden" name="lang" value="en">
-        <button type="submit" class="lang-btn {% if lang == 'en' %}lang-btn--active{% endif %}">EN</button>
-      </form>
-      <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
-        <input type="hidden" name="next" value="{{ request.path }}">
-        <input type="hidden" name="lang" value="ja">
-        <button type="submit" class="lang-btn {% if lang == 'ja' %}lang-btn--active{% endif %}">日本語</button>
-      </form>
-    </div>
+      <!-- Language switcher -->
+      <div class="d-flex align-items-center gap-1">
+        <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <input type="hidden" name="lang" value="es">
+          <button type="submit" class="pp-lang-btn {% if lang == 'es' %}pp-lang-btn--active{% endif %}">ES</button>
+        </form>
+        <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <input type="hidden" name="lang" value="en">
+          <button type="submit" class="pp-lang-btn {% if lang == 'en' %}pp-lang-btn--active{% endif %}">EN</button>
+        </form>
+        <form method="post" action="{{ url_for('views.set_lang') }}" class="m-0">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <input type="hidden" name="lang" value="ja">
+          <button type="submit" class="pp-lang-btn {% if lang == 'ja' %}pp-lang-btn--active{% endif %}">日本語</button>
+        </form>
+      </div>
 
-    <!-- Bell icon + alerts dropdown -->
-    <div class="dropdown ms-2" id="alertsDropdown">
-      <button class="btn btn-dark border-0 position-relative px-2" type="button"
-              data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
-              id="bellBtn" title="{{ t('alerts_active') }}">
-        <i class="bi bi-bell fs-5" id="bellIcon"></i>
-        <span id="alertBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none"></span>
-      </button>
-      <div class="dropdown-menu dropdown-menu-end shadow p-0" style="width:380px;max-height:480px;overflow-y:auto;" id="alertPanel">
-        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
-          <span class="fw-semibold small">{{ t('alerts_active') }}</span>
-          <a href="{{ url_for('alerts.alerts_history') }}" class="btn btn-link btn-sm p-0 small">{{ t('alerts_see_history') }}</a>
-        </div>
-        <div id="alertList">
-          <div class="text-center text-muted small py-3">{{ t('alerts_loading') }}</div>
+      <!-- Bell + alerts dropdown -->
+      <div class="dropdown" id="alertsDropdown">
+        <button class="pp-icon-btn dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                aria-expanded="false" id="bellBtn"
+                title="{{ t('alerts_active') }}"
+                style="border:none;">
+          <i class="bi bi-bell" id="bellIcon"></i>
+          <span id="alertBadge" class="pp-badge d-none"></span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end shadow-sm p-0"
+             style="width:380px; max-height:480px; overflow-y:auto;" id="alertPanel">
+          <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+            <span class="fw-semibold small" style="color:var(--pp-text)">{{ t('alerts_active') }}</span>
+            <a href="{{ url_for('alerts.alerts_history') }}"
+               class="small" style="color:var(--pp-red); text-decoration:none;">{{ t('alerts_see_history') }}</a>
+          </div>
+          <div id="alertList">
+            <div class="text-center py-3" style="color:var(--pp-text-faint); font-size:12px;">{{ t('alerts_loading') }}</div>
+          </div>
         </div>
       </div>
-    </div>
-  </nav>
+
+      <!-- Avatar -->
+      <div class="pp-avatar" title="Usuario">SR</div>
+
+    </div><!-- /pp-top-tools -->
+  </header>
 
   <!-- ============================================================
-       SIDEBAR
+       SHELL: sidebar + main
        ============================================================ -->
-  <aside class="sidebar" id="mainSidebar">
-    <nav class="nav flex-column py-3">
-      <div class="nav-item">
-        <a class="nav-link {% if request.path == '/' %}active{% endif %}"
+  <div class="pp-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="pp-side" id="mainSidebar" role="navigation">
+
+      <div class="pp-side-section">
+        <a class="pp-side-item {% if request.path == '/' %}active{% endif %}"
            href="{{ url_for('views.index') }}">
-          <i class="bi bi-house"></i>
-          <span class="nav-text">{{ t('nav_home') }}</span>
+          <i class="bi bi-house"></i>{{ t('nav_home') }}
         </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}"
+        <a class="pp-side-item {% if request.path == '/dashboard' %}active{% endif %}"
            href="{{ url_for('views.dashboard') }}">
-          <i class="bi bi-speedometer2"></i>
-          <span class="nav-text">{{ t('nav_dashboard') }}</span>
+          <i class="bi bi-speedometer2"></i>{{ t('nav_dashboard') }}
         </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path == '/global' %}active{% endif %}"
+        <a class="pp-side-item {% if request.path == '/global' %}active{% endif %}"
            href="{{ url_for('views.global_view') }}">
-          <i class="bi bi-globe"></i>
-          <span class="nav-text">{{ t('nav_global') }}</span>
+          <i class="bi bi-globe"></i>{{ t('nav_global') }}
         </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/vsm') %}active{% endif %}"
+        <a class="pp-side-item {% if request.path.startswith('/vsm') %}active{% endif %}"
            href="{{ url_for('vsm.vsm_page') }}">
-          <i class="bi bi-diagram-3"></i>
-          <span class="nav-text">{{ t('nav_vsm') }}</span>
+          <i class="bi bi-diagram-3"></i>{{ t('nav_vsm') }}
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/sqdcp') %}active{% endif %}"
+           href="{{ url_for('sqdcp.sqdcp_page') }}">
+          <i class="bi bi-columns-gap"></i>SQDCP
         </a>
       </div>
 
-      <hr class="border-secondary mx-3 my-2">
-
-      <div class="nav-item">
-        <a class="nav-link {% if request.path == '/shift/start' %}active{% endif %}"
+      <div class="pp-side-section">
+        <p class="pp-side-label">{{ t('nav_group_shifts') if t('nav_group_shifts') != 'nav_group_shifts' else 'Turnos' }}</p>
+        <a class="pp-side-item {% if request.path == '/shift/start' %}active{% endif %}"
            href="{{ url_for('views.shift_start') }}">
-          <i class="bi bi-play-circle"></i>
-          <span class="nav-text">{{ t('nav_new_shift') }}</span>
+          <i class="bi bi-play-circle"></i>{{ t('nav_new_shift') }}
         </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path == '/shifts' %}active{% endif %}"
+        <a class="pp-side-item {% if request.path == '/shifts' %}active{% endif %}"
            href="{{ url_for('views.shifts_history') }}">
-          <i class="bi bi-clock-history"></i>
-          <span class="nav-text">{{ t('nav_history') }}</span>
+          <i class="bi bi-clock-history"></i>{{ t('nav_history') }}
         </a>
       </div>
 
-      <hr class="border-secondary mx-3 my-2">
-
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/problems') %}active{% endif %}"
+      <div class="pp-side-section">
+        <p class="pp-side-label">{{ t('nav_group_improvement') if t('nav_group_improvement') != 'nav_group_improvement' else 'Mejora' }}</p>
+        <a class="pp-side-item {% if request.path.startswith('/problems') %}active{% endif %}"
            href="{{ url_for('problems.problems_page') }}">
-          <i class="bi bi-exclamation-triangle"></i>
-          <span class="nav-text">{{ t('nav_problems') }}</span>
+          <i class="bi bi-exclamation-triangle"></i>{{ t('nav_problems') }}
         </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/initiatives') %}active{% endif %}"
+        <a class="pp-side-item {% if request.path.startswith('/initiatives') %}active{% endif %}"
            href="{{ url_for('initiatives.initiatives_page') }}">
-          <i class="bi bi-rocket"></i>
-          <span class="nav-text">{{ t('nav_initiatives') }}</span>
+          <i class="bi bi-rocket"></i>{{ t('nav_initiatives') }}
         </a>
-      </div>
-
-      <hr class="border-secondary mx-3 my-2">
-
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/dashboard/builder') %}active{% endif %}"
+        <a class="pp-side-item {% if request.path.startswith('/dashboard/builder') %}active{% endif %}"
            href="{{ url_for('chart_builder.chart_builder') }}">
-          <i class="bi bi-robot"></i>
-          <span class="nav-text">{{ t('nav_ai_charts') }}</span>
+          <i class="bi bi-robot"></i>{{ t('nav_ai_charts') }}
         </a>
       </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/admin/notifications') %}active{% endif %}"
-           href="{{ url_for('notifications_admin.notifications_config') }}">
-          <i class="bi bi-bell"></i>
-          <span class="nav-text">Notificaciones</span>
-        </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/admin/alert-rules') %}active{% endif %}"
-           href="{{ url_for('alerts.alert_rules_page') }}">
-          <i class="bi bi-sliders"></i>
-          <span class="nav-text">Reglas de alerta</span>
-        </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/alerts') %}active{% endif %}"
-           href="{{ url_for('alerts.alerts_history') }}">
-          <i class="bi bi-bell-fill"></i>
-          <span class="nav-text">Historial alertas</span>
-        </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') %}active{% endif %}"
-           href="{{ url_for('admin.admin_docs') }}">
-          <i class="bi bi-book"></i>
-          <span class="nav-text">{{ t('nav_docs') }}</span>
-        </a>
-      </div>
-      <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/admin/data-explorer') %}active{% endif %}"
-           href="{{ url_for('data_explorer.data_explorer_page') }}">
-          <i class="bi bi-database"></i>
-          <span class="nav-text">Data Explorer</span>
-        </a>
-      </div>
-    </nav>
-  </aside>
 
-  <!-- ============================================================
-       MAIN CONTENT
-       ============================================================ -->
-  <div class="main-wrapper">
-    <div class="container-fluid p-4">
+      <div class="pp-side-section">
+        <p class="pp-side-label">Admin</p>
+        <a class="pp-side-item {% if request.path.startswith('/admin/notifications') %}active{% endif %}"
+           href="{{ url_for('notifications_admin.notifications_config') }}">
+          <i class="bi bi-bell"></i>Notificaciones
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/admin/alert-rules') %}active{% endif %}"
+           href="{{ url_for('alerts.alert_rules_page') }}">
+          <i class="bi bi-sliders"></i>Reglas de alerta
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/alerts') %}active{% endif %}"
+           href="{{ url_for('alerts.alerts_history') }}">
+          <i class="bi bi-bell-fill"></i>Historial alertas
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') %}active{% endif %}"
+           href="{{ url_for('admin.admin_docs') }}">
+          <i class="bi bi-book"></i>{{ t('nav_docs') }}
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/admin/data-explorer') %}active{% endif %}"
+           href="{{ url_for('data_explorer.data_explorer_page') }}">
+          <i class="bi bi-database"></i>Data Explorer
+        </a>
+      </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="pp-main" role="main">
+
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
         {% endfor %}
       {% endwith %}
+
       {% block content %}{% endblock %}
-    </div>
 
-    <footer class="text-center py-3 text-muted small border-top">
-      <span>{{ t('footer_copyright') }}</span>
-    </footer>
-  </div>
+      <footer class="text-center py-4 mt-5 border-top">
+        <span style="font-size:12px; color:var(--pp-text-faint);">{{ t('footer_copyright') }}</span>
+      </footer>
+    </main>
 
-  <!-- Bootstrap 5.3 JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-  <!-- Traducciones para JS -->
-  <script>
-    const ALERTS_I18N = {
-      noAlerts:   "{{ t('alerts_none') }}",
-      ack:        "{{ t('alerts_ack') }}",
-      resolve:    "{{ t('alerts_resolve') }}",
-    };
-  </script>
-  <!-- Sidebar toggle -->
-  <script>
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-      document.body.classList.toggle('sidebar-collapsed');
-    });
-  </script>
+  </div><!-- /pp-shell -->
 
-  <!-- ── Critical alert banner (inserted dynamically) ── -->
+  <!-- Critical alert banner -->
   <div id="criticalBanner" class="d-none alert-banner-critical">
     <i class="bi bi-exclamation-triangle-fill me-2"></i>
     <span id="criticalBannerText"></span>
-    <button type="button" class="btn-close btn-close-white ms-auto" onclick="document.getElementById('criticalBanner').classList.add('d-none')"></button>
+    <button type="button" class="btn-close btn-close-white ms-auto"
+            onclick="document.getElementById('criticalBanner').classList.add('d-none')"></button>
   </div>
 
-  <!-- ── Polling de alertas en tiempo real (cada 10 s) ── -->
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+
+  <!-- Traducciones para JS -->
+  <script>
+    const ALERTS_I18N = {
+      noAlerts: "{{ t('alerts_none') }}",
+      ack:      "{{ t('alerts_ack') }}",
+      resolve:  "{{ t('alerts_resolve') }}",
+    };
+  </script>
+
+  <!-- Polling de alertas en tiempo real (cada 10 s) -->
   <script>
   (function() {
-    const badge    = document.getElementById('alertBadge');
-    const bellIcon = document.getElementById('bellIcon');
+    const badge     = document.getElementById('alertBadge');
+    const bellIcon  = document.getElementById('bellIcon');
     const alertList = document.getElementById('alertList');
     const critBanner = document.getElementById('criticalBanner');
     const critText   = document.getElementById('criticalBannerText');
 
-    const SEV_COLOR  = { critical: '#dc3545', warning: '#ffc107', info: '#0dcaf0' };
-    const SEV_ICON   = { critical: '🔴', warning: '🟡', info: '🔵' };
-    const SEV_BADGE  = { critical: 'bg-danger', warning: 'bg-warning text-dark', info: 'bg-info text-dark' };
+    const SEV_COLOR = { critical: 'var(--pp-bad)', warning: 'var(--pp-warn)', info: 'var(--pp-info)' };
+    const SEV_ICON  = { critical: '🔴', warning: '🟡', info: '🔵' };
+    const SEV_TAG   = { critical: 'pp-tag-bad', warning: 'pp-tag-warn', info: 'pp-tag-info' };
 
     async function fetchAlerts() {
       try {
@@ -293,7 +272,6 @@
         const alerts = data.alerts || [];
         const total  = data.total_active || 0;
 
-        // Badge
         if (total > 0) {
           badge.textContent = total > 99 ? '99+' : total;
           badge.classList.remove('d-none');
@@ -301,11 +279,9 @@
           badge.classList.add('d-none');
         }
 
-        // Bell pulsing si hay críticas
         const hasCritical = alerts.some(a => a.severity === 'critical');
         bellIcon.classList.toggle('bell-critical', hasCritical);
 
-        // Critical banner
         const critAlerts = alerts.filter(a => a.severity === 'critical');
         if (critAlerts.length > 0) {
           critText.textContent = critAlerts.map(a => `L${a.line_number}: ${a.title}`).join(' | ');
@@ -314,38 +290,33 @@
           critBanner.classList.add('d-none');
         }
 
-        // Panel desplegable
         if (alerts.length === 0) {
-          alertList.innerHTML = `<div class="text-center text-muted small py-3">${ALERTS_I18N.noAlerts} ✅</div>`;
+          alertList.innerHTML = `<div class="text-center py-3" style="color:var(--pp-text-faint);font-size:12px;">${ALERTS_I18N.noAlerts} ✅</div>`;
           return;
         }
 
         alertList.innerHTML = alerts.map(a => `
-          <div class="alert-item px-3 py-2 border-bottom" style="border-left:3px solid ${SEV_COLOR[a.severity]||'#aaa'}">
+          <div class="alert-item px-3 py-2 border-bottom"
+               style="border-left:3px solid ${SEV_COLOR[a.severity]||'var(--pp-divider)'}">
             <div class="d-flex align-items-start gap-2">
               <span class="mt-1">${SEV_ICON[a.severity]||'⚪'}</span>
               <div class="flex-grow-1 min-w-0">
                 <div class="d-flex align-items-center gap-1 mb-1">
-                  <span class="badge ${SEV_BADGE[a.severity]} badge-sm">${a.severity}</span>
-                  <span class="badge bg-secondary badge-sm">L${a.line_number}</span>
-                  <span class="text-muted small ms-auto">${(a.timestamp||'').slice(0,16)}</span>
+                  <span class="pp-tag ${SEV_TAG[a.severity]||'pp-tag-neutral'}">${a.severity}</span>
+                  <span class="pp-tag pp-tag-neutral">L${a.line_number}</span>
+                  <span style="color:var(--pp-text-faint);font-size:11px;margin-left:auto;">${(a.timestamp||'').slice(0,16)}</span>
                 </div>
-                <div class="small fw-semibold text-truncate">${a.title}</div>
-                <div class="small text-muted text-truncate">${a.description}</div>
+                <div style="font-size:13px;font-weight:600;color:var(--pp-text);">${a.title}</div>
+                <div style="font-size:12px;color:var(--pp-text-dim);">${a.description}</div>
               </div>
             </div>
             <div class="d-flex gap-1 mt-2">
-              <button class="btn btn-xs btn-outline-warning py-0 px-2"
-                      onclick="ackAlert(${a.id})">${ALERTS_I18N.ack}</button>
-              <button class="btn btn-xs btn-outline-success py-0 px-2"
-                      onclick="resolveAlert(${a.id})">${ALERTS_I18N.resolve}</button>
+              <button class="pp-btn pp-btn-sm" onclick="ackAlert(${a.id})">${ALERTS_I18N.ack}</button>
+              <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="resolveAlert(${a.id})">${ALERTS_I18N.resolve}</button>
             </div>
           </div>
         `).join('');
-
-      } catch(e) {
-        // silencioso — no interrumpir UX
-      }
+      } catch(e) { /* silencioso */ }
     }
 
     async function ackAlert(id) {
@@ -361,7 +332,6 @@
       fetchAlerts();
     }
 
-    // Exponer globalmente para que los botones del panel funcionen
     window.ackAlert     = ackAlert;
     window.resolveAlert = resolveAlert;
 

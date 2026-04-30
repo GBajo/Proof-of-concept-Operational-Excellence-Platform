@@ -5,7 +5,8 @@
       "Bash(git commit:*)",
       "Bash(lilly-code models:*)",
       "Bash(python:*)",
-      "Bash(ls *)"
+      "Bash(ls *)",
+      "WebFetch(domain:claude.ai)"
     ]
   }
 }

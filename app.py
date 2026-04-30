@@ -32,6 +32,7 @@ def create_app() -> Flask:
     from routes.notifications import bp as notifications_bp
     from routes.alerts import bp as alerts_bp
     from routes.data_explorer import bp as data_explorer_bp
+    from routes.sqdcp import bp as sqdcp_bp
 
     app.register_blueprint(operators_bp)
     app.register_blueprint(shifts_bp)
@@ -47,6 +48,7 @@ def create_app() -> Flask:
     app.register_blueprint(notifications_bp)
     app.register_blueprint(alerts_bp)
     app.register_blueprint(data_explorer_bp)
+    app.register_blueprint(sqdcp_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
     @app.before_request

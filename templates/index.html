@@ -2,45 +2,46 @@
 {% block title %}{{ t('page_title_home') }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0">{{ t('packaging_lines') }}</h1>
-  <a href="{{ url_for('views.shift_start') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i>{{ t('btn_start_shift') }}
-  </a>
+<div class="pp-page-head">
+  <div>
+    <p class="pp-eyebrow">{{ t('packaging_lines') }}</p>
+    <h1 class="pp-h1">{{ t('nav_home') }}</h1>
+  </div>
+  <div class="pp-actions">
+    <a href="{{ url_for('views.shift_start') }}" class="pp-btn pp-btn-primary">
+      <i class="bi bi-play-fill"></i>{{ t('btn_start_shift') }}
+    </a>
+  </div>
 </div>
 
 {% if active_lines %}
 <section class="mb-4">
-  <h2 class="h5 text-muted mb-3">{{ t('active_shifts') }}</h2>
-  <div class="row g-3">
+  <p class="pp-eyebrow pp-eyebrow-muted mb-3">{{ t('active_shifts') }}</p>
+  <div class="pp-grid-4">
     {% for line in active_lines %}
-    <div class="col-md-4 col-lg-3">
-      <div class="card h-100 border-0 shadow-sm" style="border-top: 3px solid #198754 !important;">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="badge bg-success">{{ t('badge_active') }}</span>
-            <span class="fw-bold">{{ t('line_label') }} {{ line.line_number }}</span>
-          </div>
-          <p class="mb-1">
-            <i class="bi bi-person me-1 text-muted"></i>{{ line.operator_name }}
-          </p>
-          <p class="text-muted small mb-3">
-            <i class="bi bi-clock me-1"></i>{{ t('since_label') }} {{ line.start_time | replace('T',' ') }}
-          </p>
-          <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}" class="btn btn-outline-primary btn-sm w-100">
-            <i class="bi bi-activity me-1"></i>{{ t('btn_view_shift') }}
-          </a>
-        </div>
+    <div class="pp-kpi" style="border-left: 3px solid var(--pp-good);">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="pp-tag pp-tag-ok">{{ t('badge_active') }}</span>
+        <span style="font-weight:700; font-size:13px;">{{ t('line_label') }} {{ line.line_number }}</span>
       </div>
+      <p class="mb-1" style="font-size:13px;">
+        <i class="bi bi-person me-1" style="color:var(--pp-text-faint)"></i>{{ line.operator_name }}
+      </p>
+      <p style="color:var(--pp-text-dim); font-size:12px; margin-bottom:14px;">
+        <i class="bi bi-clock me-1"></i>{{ t('since_label') }} {{ line.start_time[11:16] }}
+      </p>
+      <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}" class="pp-btn pp-btn-sm" style="width:100%; justify-content:center;">
+        <i class="bi bi-activity"></i>{{ t('btn_view_shift') }}
+      </a>
     </div>
     {% endfor %}
   </div>
 </section>
 {% else %}
-<div class="alert alert-info text-center py-5">
-  <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
-  <p class="mb-3">{{ t('no_active_shifts') }}</p>
-  <a href="{{ url_for('views.shift_start') }}" class="btn btn-primary">{{ t('btn_start_first_shift') }}</a>
+<div class="pp-empty mb-4">
+  <i class="bi bi-info-circle"></i>
+  <p class="pp-empty-title">{{ t('no_active_shifts') }}</p>
+  <a href="{{ url_for('views.shift_start') }}" class="pp-btn pp-btn-primary mt-2">{{ t('btn_start_first_shift') }}</a>
 </div>
 {% endif %}
 {% endblock %}

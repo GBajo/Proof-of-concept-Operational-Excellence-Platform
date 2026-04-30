@@ -14,153 +14,140 @@ const SHIFT_I18N = {
   errConnection:   "{{ t('err_connection') }}",
 };
 </script>
-<script src="{{ url_for('static', filename='js/shift.js') }}"></script>{% endblock %}
+<script src="{{ url_for('static', filename='js/shift.js') }}"></script>
+{% endblock %}
 
 {% block content %}
-<div class="row g-4">
+<div class="pp-page-head">
+  <div>
+    <p class="pp-eyebrow">Turnos</p>
+    <h1 class="pp-h1">{{ t('shift_start_title') }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ t('shift_start_subtitle') }}</p>
+  </div>
+  <div class="pp-actions">
+    <div style="background:var(--pp-warm); border:1px solid var(--pp-line); border-radius:8px; padding:8px 16px; font-weight:700; font-size:18px; font-variant-numeric:tabular-nums; color:var(--pp-text);" id="live-clock">--:--:--</div>
+  </div>
+</div>
 
-  <!-- Left column: form -->
-  <div class="col-lg-8">
-    <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
-      <div>
-        <h1 class="h3 fw-bold mb-1">{{ t('shift_start_title') }}</h1>
-        <p class="text-muted mb-0">{{ t('shift_start_subtitle') }}</p>
+<div class="pp-grid-2-1">
+
+  <!-- Left: form -->
+  <div class="pp-card">
+    <h3 class="pp-card-title mb-4">{{ t('shift_start_title') }}</h3>
+    <form id="start-shift-form" novalidate>
+
+      <!-- Operator -->
+      <div class="pp-field mb-4">
+        <label class="pp-label"><i class="bi bi-person me-1"></i>{{ t('operator_label') }}</label>
+        {% if operators %}
+        <select name="operator_id" id="operator_id" class="pp-select" required>
+          <option value="">{{ t('select_operator') }}</option>
+          {% for op in operators %}
+          <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
+          {% endfor %}
+        </select>
+        {% else %}
+        <div class="alert alert-danger">{{ t('no_operators_msg') | safe }}</div>
+        {% endif %}
       </div>
-      <div class="bg-light border rounded px-3 py-2 text-primary fw-bold fs-4 font-monospace" id="live-clock">--:--:--</div>
-    </div>
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body p-4">
-        <form id="start-shift-form" novalidate>
-
-          <!-- Operator -->
-          <div class="mb-4">
-            <label class="form-label text-uppercase small fw-bold text-muted">
-              <i class="bi bi-person me-1"></i>{{ t('operator_label') }}
-            </label>
-            {% if operators %}
-            <select name="operator_id" id="operator_id" class="form-select" required>
-              <option value="">{{ t('select_operator') }}</option>
-              {% for op in operators %}
-              <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
-              {% endfor %}
-            </select>
-            {% else %}
-            <div class="alert alert-danger">{{ t('no_operators_msg') | safe }}</div>
-            {% endif %}
-          </div>
-
-          <!-- Packaging line -->
-          <div class="mb-4">
-            <label class="form-label text-uppercase small fw-bold text-muted">
-              <i class="bi bi-building me-1"></i>{{ t('packaging_line_label') }}
-            </label>
-            <div class="row g-2" id="line-grid">
-              {% for n in site_lines %}
-              <div class="col-6 col-md-4 col-lg">
-                <label class="line-card d-block" id="line-card-{{ n }}" data-line="{{ n }}">
-                  <input type="radio" name="line_number" value="{{ n }}" required class="d-none">
-                  <div class="line-card__inner card text-center p-3 border-2 h-100" style="cursor:pointer;">
-                    <div class="line-card__number fs-4 fw-bold">L{{ n }}</div>
-                    <div class="line-card__label text-muted small">{{ t('line_label') }} {{ n }}</div>
-                    <div class="line-card__status mt-1" id="line-status-{{ n }}">
-                      <span class="line-dot line-dot--loading"></span>
-                      <span class="line-status-text small">{{ t('verifying') }}</span>
-                    </div>
-                  </div>
-                </label>
+      <!-- Packaging line -->
+      <div class="pp-field mb-4">
+        <label class="pp-label"><i class="bi bi-building me-1"></i>{{ t('packaging_line_label') }}</label>
+        <div class="row g-2" id="line-grid">
+          {% for n in site_lines %}
+          <div class="col-6 col-md-4 col-lg">
+            <label class="line-card d-block" id="line-card-{{ n }}" data-line="{{ n }}">
+              <input type="radio" name="line_number" value="{{ n }}" required class="d-none">
+              <div class="line-card__inner card text-center p-3 border-2 h-100" style="cursor:pointer;">
+                <div class="line-card__number" style="font-size:1.4rem; font-weight:900; color:var(--pp-text);">L{{ n }}</div>
+                <div class="line-card__label pp-faint" style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em;">{{ t('line_label') }} {{ n }}</div>
+                <div class="line-card__status mt-1" id="line-status-{{ n }}">
+                  <span class="line-dot line-dot--loading"></span>
+                  <span class="line-status-text" style="font-size:11px;">{{ t('verifying') }}</span>
+                </div>
               </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <!-- Shift type -->
-          <div class="mb-4">
-            <label class="form-label text-uppercase small fw-bold text-muted">
-              <i class="bi bi-clock me-1"></i>{{ t('shift_type_label') }}
             </label>
-            <div class="shift-type-grid">
-              <label class="shift-type-card">
-                <input type="radio" name="shift_type" value="morning" checked>
-                <div class="shift-type-card__inner">
-                  <span class="shift-type-card__icon">🌅</span>
-                  <span class="shift-type-card__name">{{ t('shift_morning') }}</span>
-                  <span class="shift-type-card__hours">06:00 – 14:00</span>
-                </div>
-              </label>
-              <label class="shift-type-card">
-                <input type="radio" name="shift_type" value="afternoon">
-                <div class="shift-type-card__inner">
-                  <span class="shift-type-card__icon">☀️</span>
-                  <span class="shift-type-card__name">{{ t('shift_afternoon') }}</span>
-                  <span class="shift-type-card__hours">14:00 – 22:00</span>
-                </div>
-              </label>
-              <label class="shift-type-card">
-                <input type="radio" name="shift_type" value="night">
-                <div class="shift-type-card__inner">
-                  <span class="shift-type-card__icon">🌙</span>
-                  <span class="shift-type-card__name">{{ t('shift_night') }}</span>
-                  <span class="shift-type-card__hours">22:00 – 06:00</span>
-                </div>
-              </label>
-            </div>
           </div>
-
-          <div id="form-error" class="alert alert-danger" style="display:none" role="alert"></div>
-
-          <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-4">
-            <a href="{{ url_for('views.index') }}" class="btn btn-secondary btn-lg">{{ t('btn_cancel') }}</a>
-            <button type="submit" class="btn btn-primary btn-lg">
-              <i class="bi bi-play-fill me-1"></i>{{ t('btn_start_shift_action') }}
-            </button>
-          </div>
-
-        </form>
+          {% endfor %}
+        </div>
       </div>
-    </div>
+
+      <!-- Shift type -->
+      <div class="pp-field mb-4">
+        <label class="pp-label"><i class="bi bi-clock me-1"></i>{{ t('shift_type_label') }}</label>
+        <div class="shift-type-grid">
+          <label class="shift-type-card">
+            <input type="radio" name="shift_type" value="morning" checked>
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">🌅</span>
+              <span class="shift-type-card__name">{{ t('shift_morning') }}</span>
+              <span class="shift-type-card__hours">06:00 – 14:00</span>
+            </div>
+          </label>
+          <label class="shift-type-card">
+            <input type="radio" name="shift_type" value="afternoon">
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">☀️</span>
+              <span class="shift-type-card__name">{{ t('shift_afternoon') }}</span>
+              <span class="shift-type-card__hours">14:00 – 22:00</span>
+            </div>
+          </label>
+          <label class="shift-type-card">
+            <input type="radio" name="shift_type" value="night">
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">🌙</span>
+              <span class="shift-type-card__name">{{ t('shift_night') }}</span>
+              <span class="shift-type-card__hours">22:00 – 06:00</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div id="form-error" class="alert alert-danger" style="display:none" role="alert"></div>
+
+      <div class="d-flex justify-content-end gap-2 pt-3" style="border-top:1px solid var(--pp-line); margin-top:8px;">
+        <a href="{{ url_for('views.index') }}" class="pp-btn pp-btn-ghost">{{ t('btn_cancel') }}</a>
+        <button type="submit" class="pp-btn pp-btn-primary">
+          <i class="bi bi-play-fill"></i>{{ t('btn_start_shift_action') }}
+        </button>
+      </div>
+
+    </form>
   </div>
 
-  <!-- Right column: context info -->
-  <div class="col-lg-4">
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-body">
-        <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('plant_status') }}</h6>
-        <div class="row g-2 text-center" id="plant-stats">
-          <div class="col-6">
-            <div class="bg-light rounded p-3">
-              <span class="d-block fs-2 fw-bold text-primary" id="stat-active">—</span>
-              <small class="text-muted">{{ t('active_lines_stat') }}</small>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="bg-light rounded p-3">
-              <span class="d-block fs-2 fw-bold text-primary" id="stat-free">—</span>
-              <small class="text-muted">{{ t('free_lines_stat') }}</small>
-            </div>
-          </div>
+  <!-- Right: context info -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <div class="pp-card">
+      <h3 class="pp-card-title mb-3">{{ t('plant_status') }}</h3>
+      <div class="pp-grid-2 text-center" id="plant-stats">
+        <div style="background:var(--pp-warm); border-radius:8px; padding:16px;">
+          <span style="display:block; font-size:2rem; font-weight:900; color:var(--pp-text);" id="stat-active">—</span>
+          <small class="pp-faint">{{ t('active_lines_stat') }}</small>
+        </div>
+        <div style="background:var(--pp-warm); border-radius:8px; padding:16px;">
+          <span style="display:block; font-size:2rem; font-weight:900; color:var(--pp-good);" id="stat-free">—</span>
+          <small class="pp-faint">{{ t('free_lines_stat') }}</small>
         </div>
       </div>
     </div>
 
-    <div class="card border-0 shadow-sm border-start border-primary border-3 mb-3">
-      <div class="card-body">
-        <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('instructions_title') }}</h6>
-        <ol class="mb-0 ps-3 small">
-          <li class="mb-2">{{ t('instructions_1') }}</li>
-          <li class="mb-2">{{ t('instructions_2') }} <span class="badge bg-success" style="font-size:0.7rem">{{ t('badge_free') }}</span></li>
-          <li class="mb-2">{{ t('instructions_3') }}</li>
-          <li>{{ t('instructions_4') }} <strong>{{ t('btn_start_shift_action') }}</strong></li>
-        </ol>
-      </div>
+    <div class="pp-card" style="border-left:3px solid var(--pp-red);">
+      <h3 class="pp-card-title mb-3">{{ t('instructions_title') }}</h3>
+      <ol style="margin:0; padding-left:18px; font-size:13px; color:var(--pp-text-mid); line-height:1.8;">
+        <li>{{ t('instructions_1') }}</li>
+        <li>{{ t('instructions_2') }} <span class="pp-tag pp-tag-ok" style="font-size:10px;">{{ t('badge_free') }}</span></li>
+        <li>{{ t('instructions_3') }}</li>
+        <li>{{ t('instructions_4') }} <strong>{{ t('btn_start_shift_action') }}</strong></li>
+      </ol>
     </div>
 
-    <div class="card border-0 shadow-sm border-start border-warning border-3" id="active-lines-info" style="display:none">
-      <div class="card-body">
-        <h6 class="text-uppercase small fw-bold text-muted mb-3">{{ t('occupied_lines_title') }}</h6>
-        <ul class="occupied-list list-unstyled mb-0" id="occupied-list"></ul>
-      </div>
+    <div class="pp-card" id="active-lines-info" style="display:none; border-left:3px solid var(--pp-warn);">
+      <h3 class="pp-card-title mb-3">{{ t('occupied_lines_title') }}</h3>
+      <ul class="occupied-list list-unstyled mb-0" id="occupied-list"></ul>
     </div>
+
   </div>
 
 </div>

@@ -432,6 +432,19 @@ CREATE INDEX IF NOT EXISTS idx_comments_shift    ON comments(shift_id);
 CREATE INDEX IF NOT EXISTS idx_comments_ts       ON comments(timestamp);
 CREATE INDEX IF NOT EXISTS idx_kpi_shift         ON kpi_readings(shift_id);
 CREATE INDEX IF NOT EXISTS idx_kpi_ts            ON kpi_readings(timestamp);
+CREATE TABLE IF NOT EXISTS sqdcp_actions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    line_number  INTEGER NOT NULL CHECK(line_number BETWEEN 1 AND 20),
+    action_date  TEXT NOT NULL DEFAULT (date('now')),
+    pillar       TEXT NOT NULL CHECK(pillar IN ('S','Q','D','C','P')),
+    title        TEXT NOT NULL CHECK(length(title) > 0 AND length(title) <= 300),
+    owner        TEXT NOT NULL DEFAULT '',
+    deadline     TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL DEFAULT 'open'
+                 CHECK(status IN ('open','in_progress','done','blocked')),
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sqdcp_line_date ON sqdcp_actions(line_number, action_date);
 CREATE INDEX IF NOT EXISTS idx_kb_source         ON knowledge_base(source_file);
 CREATE INDEX IF NOT EXISTS idx_sugg_shift        ON assistant_suggestions(shift_id);
 CREATE INDEX IF NOT EXISTS idx_sugg_comment      ON assistant_suggestions(comment_id);

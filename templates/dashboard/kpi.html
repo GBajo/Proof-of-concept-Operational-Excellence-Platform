@@ -12,15 +12,17 @@
 
 {% block content %}
 
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<div class="pp-page-head">
   <div>
-    <h1 class="h3 mb-1">{{ t('dashboard_title') }}</h1>
-    <p class="text-muted mb-0 small">{{ t('dashboard_subtitle') }}</p>
+    <p class="pp-eyebrow">Operaciones</p>
+    <h1 class="pp-h1">{{ t('dashboard_title') }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ t('dashboard_subtitle') }}</p>
   </div>
-  <div class="d-flex gap-2 align-items-center flex-wrap">
-    <span class="badge bg-success" id="live-indicator">{{ t('badge_live') }}</span>
-    <select id="filter-line-select" class="form-select form-select-sm" style="width:auto;"
+  <div class="pp-actions">
+    <span class="pp-tag pp-tag-ok" id="live-indicator">
+      <span class="pp-pulse" style="width:6px;height:6px;margin-right:4px;"></span>{{ t('badge_live') }}
+    </span>
+    <select id="filter-line-select" class="pp-select" style="width:auto; padding:7px 12px;"
             title="{{ t('filter_line') }}">
       <option value="">{{ t('all_lines') }}</option>
       {% for n in range(1,6) %}
@@ -29,203 +31,146 @@
       </option>
       {% endfor %}
     </select>
-    <a href="{{ url_for('views.shifts_history') }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ url_for('views.shifts_history') }}" class="pp-btn">
       {{ t('btn_view_history') }}
     </a>
   </div>
 </div>
 
-<!-- Metric cards -->
-<section class="mb-4">
-  <div class="row g-3">
-    {% if active_lines %}
-    {% set total_lines = active_lines | length %}
-    {% else %}
-    {% set total_lines = 0 %}
-    {% endif %}
+<!-- KPI metrics -->
+<div class="pp-grid-4 mb-4" style="margin-bottom:20px !important;">
+  {% if active_lines %}{% set total_lines = active_lines | length %}{% else %}{% set total_lines = 0 %}{% endif %}
 
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm kpi-card-border-blue">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-lightning-charge text-primary me-2"></i>
-            <small class="text-muted">{{ t('active_lines_metric') }}</small>
-          </div>
-          <h3 class="mb-0 fw-bold">{{ total_lines }}</h3>
-        </div>
-      </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('active_lines_metric') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num">{{ total_lines }}</span>
     </div>
-
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm kpi-card-border-green">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-box-seam text-success me-2"></i>
-            <small class="text-muted">{{ t('units_produced_metric') }}</small>
-          </div>
-          <h3 class="mb-0 fw-bold" id="sv-total-units">—</h3>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm kpi-card-border-yellow">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-bullseye text-warning me-2"></i>
-            <small class="text-muted">{{ t('avg_oee_metric') }}</small>
-          </div>
-          <h3 class="mb-0 fw-bold" id="sv-avg-oee">—</h3>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm kpi-card-border-red">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-exclamation-triangle text-danger me-2"></i>
-            <small class="text-muted">{{ t('avg_reject_metric') }}</small>
-          </div>
-          <h3 class="mb-0 fw-bold" id="sv-avg-reject">—</h3>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm kpi-card-border-purple">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-stopwatch text-secondary me-2"></i>
-            <small class="text-muted">{{ t('total_downtime_metric') }}</small>
-          </div>
-          <h3 class="mb-0 fw-bold" id="sv-total-downtime">—</h3>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-6 col-md-4 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm kpi-card-border-teal">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-check-circle text-info me-2"></i>
-            <small class="text-muted">{{ t('rft_metric') }}</small>
-          </div>
-          <h3 class="mb-0 fw-bold" id="sv-avg-rft">—</h3>
-        </div>
-      </div>
+    <div class="pp-kpi-foot">
+      <span class="pp-faint">{{ t('line_label') }}s activas</span>
     </div>
   </div>
-  <div class="text-end mt-2">
-    <small class="text-muted">{{ t('last_update') }} <span id="sv-last-update">—</span></small>
-  </div>
-</section>
 
-<!-- Charts grid -->
-<section class="mb-4">
-  <div class="row g-3">
-    <div class="col-lg-8">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="card-title mb-0 text-uppercase small fw-bold">{{ t('chart_prod_vs_target') }}</h6>
-            <span class="badge bg-primary">{{ t('badge_current_shift') }}</span>
-          </div>
-          <div id="chart-bars" style="width:100%; height:240px;"></div>
-        </div>
-      </div>
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('units_produced_metric') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="sv-total-units">—</span>
     </div>
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="card-title mb-0 text-uppercase small fw-bold">{{ t('chart_stops_dist') }}</h6>
-            <span class="badge bg-warning text-dark">{{ t('badge_by_type') }}</span>
-          </div>
-          <div id="chart-donut" style="width:100%; height:240px;"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="card-title mb-0 text-uppercase small fw-bold">{{ t('chart_oee_components') }}</h6>
-            <span class="badge bg-success">{{ t('badge_oee_components') }}</span>
-          </div>
-          <div id="chart-area" style="width:100%; height:240px;"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="card-title mb-0 text-uppercase small fw-bold">{{ t('chart_oee_trend') }}</h6>
-            <span class="badge bg-primary">{{ t('badge_14_shifts') }}</span>
-          </div>
-          <div id="chart-oee-line" style="width:100%; height:240px;"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="card-title mb-0 text-uppercase small fw-bold">{{ t('chart_heatmap') }}</h6>
-            <span class="badge bg-danger">{{ t('badge_downtime_min') }}</span>
-          </div>
-          <div id="chart-heatmap" style="width:100%; height:220px;"></div>
-        </div>
-      </div>
+    <div class="pp-kpi-foot">
+      <span class="pp-faint">{{ t('last_update') }} <span id="sv-last-update">—</span></span>
     </div>
   </div>
-</section>
 
-<!-- Active lines -->
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('avg_oee_metric') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="sv-avg-oee">—</span>
+      <span class="pp-kpi-unit">%</span>
+    </div>
+    <div class="pp-kpi-foot">
+      <span class="pp-faint">OEE promedio</span>
+    </div>
+  </div>
+
+  <div class="pp-kpi">
+    <p class="pp-kpi-label">{{ t('avg_reject_metric') }}</p>
+    <div class="pp-kpi-value">
+      <span class="pp-kpi-num" id="sv-avg-reject">—</span>
+      <span class="pp-kpi-unit">%</span>
+    </div>
+    <div class="pp-kpi-foot">
+      <span id="sv-total-downtime" class="pp-faint">— min paros</span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="pp-grid-2-1 mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_current_shift') }}</p>
+        <h3 class="pp-card-title">{{ t('chart_prod_vs_target') }}</h3>
+      </div>
+    </div>
+    <div id="chart-bars" style="width:100%; height:260px;"></div>
+  </div>
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_by_type') }}</p>
+        <h3 class="pp-card-title">{{ t('chart_stops_dist') }}</h3>
+      </div>
+    </div>
+    <div id="chart-donut" style="width:100%; height:260px;"></div>
+  </div>
+</div>
+
+<div class="pp-grid-2 mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_oee_components') }}</p>
+        <h3 class="pp-card-title">{{ t('chart_oee_components') }}</h3>
+      </div>
+    </div>
+    <div id="chart-area" style="width:100%; height:240px;"></div>
+  </div>
+  <div class="pp-card">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_14_shifts') }}</p>
+        <h3 class="pp-card-title">{{ t('chart_oee_trend') }}</h3>
+      </div>
+    </div>
+    <div id="chart-oee-line" style="width:100%; height:240px;"></div>
+  </div>
+</div>
+
+<div class="pp-card mb-4">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_downtime_min') }}</p>
+      <h3 class="pp-card-title">{{ t('chart_heatmap') }}</h3>
+    </div>
+  </div>
+  <div id="chart-heatmap" style="width:100%; height:220px;"></div>
+</div>
+
+<!-- Active lines grid -->
 {% if active_lines %}
 <section class="mb-4">
-  <h2 class="h5 text-muted mb-3">{{ t('lines_in_production') }}</h2>
-  <div class="row g-3" id="supervisor-grid">
+  <h2 class="pp-h2 mb-3">{{ t('lines_in_production') }}</h2>
+  <div class="pp-grid-4" id="supervisor-grid">
     {% for line in active_lines %}
-    <div class="col-md-6 col-lg-4 col-xl-3">
-      <div class="card border-0 shadow-sm h-100" id="line-card-{{ line.line_number }}"
-           data-shift="{{ line.shift_id }}" data-line="{{ line.line_number }}"
-           style="border-top: 3px solid #0d6efd !important;">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong>{{ t('line_label') }} {{ line.line_number }}</strong>
-            <span class="badge bg-success">{{ t('badge_active') }}</span>
-          </div>
-          <p class="text-muted small mb-1">{{ line.operator_name }}</p>
-          <p class="text-muted small mb-3">{{ t('since_label') }} {{ line.start_time[11:16] }}</p>
-          <div class="row g-2 mb-3 text-center">
-            <div class="col-4">
-              <div class="bg-light rounded p-2">
-                <small class="text-muted d-block" style="font-size:0.7rem;">OEE</small>
-                <strong id="sv-oee-{{ line.line_number }}">—</strong>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="bg-light rounded p-2">
-                <small class="text-muted d-block" style="font-size:0.7rem;">Uds.</small>
-                <strong id="sv-units-{{ line.line_number }}">—</strong>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="bg-light rounded p-2">
-                <small class="text-muted d-block" style="font-size:0.7rem;">{{ t('col_reject') }}</small>
-                <strong id="sv-reject-{{ line.line_number }}">—</strong>
-              </div>
-            </div>
-          </div>
-          <div class="d-flex gap-2">
-            <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}"
-               class="btn btn-outline-primary btn-sm flex-fill">{{ t('btn_view_shift') }}</a>
-            <a href="{{ url_for('views.shift_end', shift_id=line.shift_id) }}"
-               class="btn btn-outline-danger btn-sm flex-fill">{{ t('btn_end_shift_action') }}</a>
-          </div>
+    <div class="pp-card" id="line-card-{{ line.line_number }}"
+         data-shift="{{ line.shift_id }}" data-line="{{ line.line_number }}"
+         style="border-left: 3px solid var(--pp-info);">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong>{{ t('line_label') }} {{ line.line_number }}</strong>
+        <span class="pp-tag pp-tag-ok">{{ t('badge_active') }}</span>
+      </div>
+      <p style="color:var(--pp-text-dim); font-size:12px; margin-bottom:2px;">{{ line.operator_name }}</p>
+      <p style="color:var(--pp-text-dim); font-size:12px; margin-bottom:14px;">{{ t('since_label') }} {{ line.start_time[11:16] }}</p>
+      <div class="pp-grid-3 mb-3" style="text-align:center;">
+        <div style="background:var(--pp-warm); border-radius:6px; padding:8px 4px;">
+          <small style="color:var(--pp-text-faint); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.08em;">OEE</small>
+          <strong id="sv-oee-{{ line.line_number }}" style="font-size:15px;">—</strong>
         </div>
+        <div style="background:var(--pp-warm); border-radius:6px; padding:8px 4px;">
+          <small style="color:var(--pp-text-faint); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.08em;">Uds.</small>
+          <strong id="sv-units-{{ line.line_number }}" style="font-size:15px;">—</strong>
+        </div>
+        <div style="background:var(--pp-warm); border-radius:6px; padding:8px 4px;">
+          <small style="color:var(--pp-text-faint); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.08em;">{{ t('col_reject') }}</small>
+          <strong id="sv-reject-{{ line.line_number }}" style="font-size:15px;">—</strong>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}"
+           class="pp-btn pp-btn-sm flex-fill" style="justify-content:center;">{{ t('btn_view_shift') }}</a>
+        <a href="{{ url_for('views.shift_end', shift_id=line.shift_id) }}"
+           class="pp-btn pp-btn-sm flex-fill" style="justify-content:center; border-color:var(--pp-bad); color:var(--pp-bad);">{{ t('btn_end_shift_action') }}</a>
       </div>
     </div>
     {% endfor %}
@@ -233,9 +178,10 @@
 </section>
 {% else %}
 <section class="mb-4">
-  <div class="alert alert-info text-center py-4">
-    <p class="mb-2">{{ t('no_active_lines') }}</p>
-    <a href="{{ url_for('views.shift_start') }}" class="btn btn-primary btn-sm">{{ t('btn_start_shift_dash') }}</a>
+  <div class="pp-empty">
+    <i class="bi bi-info-circle"></i>
+    <p class="pp-empty-title">{{ t('no_active_lines') }}</p>
+    <a href="{{ url_for('views.shift_start') }}" class="pp-btn pp-btn-primary mt-2">{{ t('btn_start_shift_dash') }}</a>
   </div>
 </section>
 {% endif %}
@@ -243,36 +189,32 @@
 <!-- Line performance -->
 {% if line_perf %}
 <section class="mb-4">
-  <h2 class="h5 text-muted mb-3">{{ t('line_perf_title') }}</h2>
-  <div class="row g-3">
+  <h2 class="pp-h2 mb-3">{{ t('line_perf_title') }}</h2>
+  <div class="pp-grid-4">
     {% for lp in line_perf %}
     {% set pct = ((lp.total_units / lp.target_units * 100) | round(1)) if lp.target_units else 0 %}
-    <div class="col-md-4 col-lg-3 col-xl-2">
-      <div class="card border-0 shadow-sm h-100 kpi-card-border-primary">
-        <div class="card-body p-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold text-primary">L{{ lp.line_number }}</span>
-            <span class="badge bg-light text-muted">
-              {{ lp.shift_count }} {{ t('shifts_label_pl') if lp.shift_count != 1 else t('shifts_label') }}
-            </span>
-          </div>
-          <div class="d-flex justify-content-between small mb-1">
-            <span class="text-muted">{{ t('uds_producidas_card') }}</span>
-            <strong>{{ "{:,}".format(lp.total_units | int).replace(",", ".") if lp.total_units else '—' }}</strong>
-          </div>
-          <div class="d-flex justify-content-between small mb-2">
-            <span class="text-muted">{{ t('downtime_card') }}</span>
-            <strong>{{ lp.total_downtime | int if lp.total_downtime else '—' }} min</strong>
-          </div>
-          {% if lp.target_units and lp.total_units %}
-          <div class="progress" style="height:6px;">
-            <div class="progress-bar {% if pct >= 95 %}bg-success{% elif pct >= 80 %}bg-warning{% else %}bg-danger{% endif %}"
-                 style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%"></div>
-          </div>
-          <small class="text-muted">{{ pct }}% {{ t('pct_target') }}</small>
-          {% endif %}
-        </div>
+    <div class="pp-kpi">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <p class="pp-kpi-label" style="margin:0;">L{{ lp.line_number }}</p>
+        <span class="pp-faint" style="font-size:11px;">
+          {{ lp.shift_count }} {{ t('shifts_label_pl') if lp.shift_count != 1 else t('shifts_label') }}
+        </span>
       </div>
+      <div class="d-flex justify-content-between" style="font-size:12px; margin-bottom:6px;">
+        <span class="pp-faint">{{ t('uds_producidas_card') }}</span>
+        <strong>{{ "{:,}".format(lp.total_units | int).replace(",", ".") if lp.total_units else '—' }}</strong>
+      </div>
+      <div class="d-flex justify-content-between" style="font-size:12px; margin-bottom:12px;">
+        <span class="pp-faint">{{ t('downtime_card') }}</span>
+        <strong>{{ lp.total_downtime | int if lp.total_downtime else '—' }} min</strong>
+      </div>
+      {% if lp.target_units and lp.total_units %}
+      <div class="pp-progress">
+        <div class="pp-progress-fill {% if pct >= 95 %}pp-progress-fill-ok{% elif pct >= 80 %}pp-progress-fill-warn{% else %}pp-progress-fill-bad{% endif %}"
+             style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%"></div>
+      </div>
+      <small class="pp-faint" style="font-size:11px;">{{ pct }}% {{ t('pct_target') }}</small>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
@@ -282,69 +224,65 @@
 <!-- Recent shifts table -->
 <section class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h5 text-muted mb-0">{{ t('recent_shifts_title') }}</h2>
-    <a href="{{ url_for('views.shifts_history') }}" class="btn btn-outline-secondary btn-sm">
+    <h2 class="pp-h2">{{ t('recent_shifts_title') }}</h2>
+    <a href="{{ url_for('views.shifts_history') }}" class="pp-btn pp-btn-sm">
       {{ t('btn_view_all_arrow') }}
     </a>
   </div>
 
   {% if recent_shifts %}
-  <div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-hover table-sm mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>{{ t('col_date') }}</th>
-            <th>{{ t('col_operator') }}</th>
-            <th>{{ t('col_line') }}</th>
-            <th>{{ t('col_type') }}</th>
-            <th>{{ t('col_units') }}</th>
-            <th>{{ t('col_downtime') }}</th>
-            <th>{{ t('col_status') }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in recent_shifts %}
-          <tr>
-            <td class="small">
-              {{ s.start_time[:10] | replace('-', '/') }}
-              <div class="text-muted" style="font-size:0.75rem;">{{ s.start_time[11:16] }}</div>
-            </td>
-            <td>{{ s.operator_name }}</td>
-            <td><span class="badge bg-primary">L{{ s.line_number }}</span></td>
-            <td class="small">
-              {% if s.shift_type == 'morning' %}☀ {{ t('shift_morning_short') }}
-              {% elif s.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon_short') }}
-              {% else %}🌙 {{ t('shift_night_short') }}{% endif %}
-            </td>
-            <td>
-              {% if s.last_units_produced is not none %}
-                {{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}
-              {% else %}—{% endif %}
-            </td>
-            <td>
-              {% if s.last_downtime is not none %}
-                {{ s.last_downtime | int }} min
-              {% else %}—{% endif %}
-            </td>
-            <td>
-              <span class="badge {% if s.status == 'completed' %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                {% if s.status == 'completed' %}OK{% else %}Int.{% endif %}
-              </span>
-            </td>
-            <td>
-              <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
-                 class="btn btn-outline-primary btn-sm">{{ t('btn_summary') }}</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <div class="pp-table-wrap">
+    <table class="pp-table">
+      <thead>
+        <tr>
+          <th>{{ t('col_date') }}</th>
+          <th>{{ t('col_operator') }}</th>
+          <th>{{ t('col_line') }}</th>
+          <th>{{ t('col_type') }}</th>
+          <th class="right">{{ t('col_units') }}</th>
+          <th class="right">{{ t('col_downtime') }}</th>
+          <th>{{ t('col_status') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in recent_shifts %}
+        <tr>
+          <td>
+            <span style="font-variant-numeric:tabular-nums;">{{ s.start_time[:10] | replace('-', '/') }}</span>
+            <div class="pp-faint" style="font-size:11px;">{{ s.start_time[11:16] }}</div>
+          </td>
+          <td>{{ s.operator_name }}</td>
+          <td><span class="pp-tag pp-tag-info">L{{ s.line_number }}</span></td>
+          <td style="font-size:12px;">
+            {% if s.shift_type == 'morning' %}☀ {{ t('shift_morning_short') }}
+            {% elif s.shift_type == 'afternoon' %}🌤 {{ t('shift_afternoon_short') }}
+            {% else %}🌙 {{ t('shift_night_short') }}{% endif %}
+          </td>
+          <td class="right num">
+            {% if s.last_units_produced is not none %}
+              {{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}
+            {% else %}—{% endif %}
+          </td>
+          <td class="right num">
+            {% if s.last_downtime is not none %}{{ s.last_downtime | int }} min{% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="pp-tag {% if s.status == 'completed' %}pp-tag-ok{% else %}pp-tag-warn{% endif %}">
+              {% if s.status == 'completed' %}Cerrado{% else %}Activo{% endif %}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
+               class="pp-btn pp-btn-sm">{{ t('btn_summary') }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
   {% else %}
-  <p class="text-muted fst-italic">{{ t('no_shifts_completed') }}</p>
+  <p class="pp-faint" style="font-style:italic; font-size:13px;">{{ t('no_shifts_completed') }}</p>
   {% endif %}
 </section>
 

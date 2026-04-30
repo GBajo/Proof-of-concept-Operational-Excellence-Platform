@@ -3,123 +3,136 @@
 
 {% block content %}
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+<div class="pp-page-head">
   <div>
-    <h1 class="h3 fw-bold mb-1">📋 Iniciativas de Mejora Continua</h1>
-    <p class="text-muted mb-0 small">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Proyectos A3, Kaizen, DMAIC y 5Why</p>
+    <div class="pp-crumbs"><span>Mejora Continua</span><span class="pp-crumb-sep">/</span><span>Iniciativas</span></div>
+    <h1 class="pp-h1">📋 Iniciativas de Mejora Continua</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Proyectos A3, Kaizen, DMAIC y 5Why</p>
   </div>
 </div>
 
 <!-- Filters -->
-<form method="get" class="card border-0 shadow-sm mb-4" id="filterForm">
-  <div class="card-body py-2">
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-      <label class="form-label small fw-bold text-muted mb-0">Estado:</label>
-      <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
-        <option value="">Todos</option>
-        <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>En curso</option>
-        <option value="planned"     {% if current_status=='planned'     %}selected{% endif %}>Planificado</option>
-        <option value="completed"   {% if current_status=='completed'   %}selected{% endif %}>Completado</option>
-        <option value="on_hold"     {% if current_status=='on_hold'     %}selected{% endif %}>En espera</option>
-      </select>
-      <label class="form-label small fw-bold text-muted mb-0">Metodologia:</label>
-      <select name="methodology" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
-        <option value="">Todas</option>
-        <option value="A3"    {% if current_method=='A3'    %}selected{% endif %}>A3</option>
-        <option value="Kaizen"{% if current_method=='Kaizen'%}selected{% endif %}>Kaizen</option>
-        <option value="DMAIC" {% if current_method=='DMAIC' %}selected{% endif %}>DMAIC</option>
-        <option value="5Why"  {% if current_method=='5Why'  %}selected{% endif %}>5Why</option>
-      </select>
-      <label class="form-label small fw-bold text-muted mb-0">Linea:</label>
-      <select name="line" class="form-select form-select-sm" style="width:auto;" onchange="document.getElementById('filterForm').submit()">
-        <option value="">Todas</option>
-        {% for l in site_lines %}
-        <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
-        {% endfor %}
-      </select>
+<div class="pp-card mb-4" style="margin-bottom:16px !important;">
+  <form method="get" id="filterForm">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="pp-field" style="margin:0;">
+        <label class="pp-label" style="margin-bottom:2px;">Estado</label>
+        <select name="status" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
+          <option value="">Todos</option>
+          <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>En curso</option>
+          <option value="planned"     {% if current_status=='planned'     %}selected{% endif %}>Planificado</option>
+          <option value="completed"   {% if current_status=='completed'   %}selected{% endif %}>Completado</option>
+          <option value="on_hold"     {% if current_status=='on_hold'     %}selected{% endif %}>En espera</option>
+        </select>
+      </div>
+      <div class="pp-field" style="margin:0;">
+        <label class="pp-label" style="margin-bottom:2px;">Metodología</label>
+        <select name="methodology" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
+          <option value="">Todas</option>
+          <option value="A3"    {% if current_method=='A3'    %}selected{% endif %}>A3</option>
+          <option value="Kaizen"{% if current_method=='Kaizen'%}selected{% endif %}>Kaizen</option>
+          <option value="DMAIC" {% if current_method=='DMAIC' %}selected{% endif %}>DMAIC</option>
+          <option value="5Why"  {% if current_method=='5Why'  %}selected{% endif %}>5Why</option>
+        </select>
+      </div>
+      <div class="pp-field" style="margin:0;">
+        <label class="pp-label" style="margin-bottom:2px;">Línea</label>
+        <select name="line" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
+          <option value="">Todas</option>
+          {% for l in site_lines %}
+          <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
+          {% endfor %}
+        </select>
+      </div>
       {% if current_status or current_method or current_line %}
-      <a href="/initiatives" class="btn btn-sm btn-outline-danger">✕ Limpiar</a>
+      <a href="/initiatives" class="pp-btn pp-btn-sm" style="margin-top:18px;">✕ Limpiar</a>
       {% endif %}
     </div>
-  </div>
-</form>
+  </form>
+</div>
 
 <!-- Gantt timeline -->
-<section class="mb-4">
-  <h2 class="h5 text-primary fw-bold mb-3">📅 Timeline de Iniciativas</h2>
-  <div class="card border-0 shadow-sm">
-    <div class="card-body">
-      <div id="ganttChart" style="width:100%;height:320px"></div>
+<div class="pp-card mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">Planificación</p>
+      <h3 class="pp-card-title">📅 Timeline de Iniciativas</h3>
     </div>
   </div>
-</section>
+  <div id="ganttChart" style="width:100%;height:320px"></div>
+</div>
 
 <!-- Initiatives list -->
-<section class="mb-4">
-  <h2 class="h5 text-primary fw-bold mb-3">🗂 Iniciativas ({{ initiatives|length }})</h2>
+<div class="mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card-head mb-3" style="margin-bottom:12px !important;">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">Lista</p>
+      <h3 class="pp-card-title">🗂 Iniciativas</h3>
+    </div>
+    <span class="pp-tag pp-tag-neutral">{{ initiatives|length }}</span>
+  </div>
   {% if initiatives %}
-  <div class="row g-3">
+  <div class="pp-grid-3">
     {% for ini in initiatives %}
-    <div class="col-md-6 col-xl-4">
-      <div class="card border-0 shadow-sm h-100 init-card init-card--{{ ini.status }} {% if highlight == ini.id %}init-card--highlighted{% endif %}"
-           id="ini-{{ ini.id }}" data-id="{{ ini.id }}">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-            <div class="d-flex align-items-center gap-1 flex-wrap">
-              <span class="badge method-badge--{{ ini.methodology }}">{{ ini.methodology }}</span>
-              <span class="badge status-badge--{{ ini.status }}">
-                {% if ini.status == 'in_progress' %}🔄 En curso
-                {% elif ini.status == 'planned'   %}⏳ Planificado
-                {% elif ini.status == 'completed' %}✅ Completado
-                {% else %}⏸ En espera{% endif %}
-              </span>
-              {% if ini.line_number %}<span class="badge bg-light text-dark">L{{ ini.line_number }}</span>{% endif %}
-            </div>
-            <span class="small text-muted">👤 {{ ini.owner }}</span>
-          </div>
-
-          <h6 class="fw-bold mb-1">{{ ini.title }}</h6>
-          <p class="small text-muted mb-2">{{ ini.description }}</p>
-
-          <div class="d-flex gap-3 flex-wrap small text-muted mb-2">
-            <span>🗓 Inicio: {{ ini.start_date }}</span>
-            <span>🎯 Target: {{ ini.target_date }}</span>
-            {% if ini.completion_date %}
-            <span>✅ Completado: {{ ini.completion_date }}</span>
-            {% endif %}
-          </div>
-
-          {% if ini.expected_benefit %}
-          <div class="small text-muted mb-1"><span class="fw-semibold">💡 Beneficio esperado:</span> {{ ini.expected_benefit }}</div>
-          {% endif %}
-          {% if ini.actual_benefit %}
-          <div class="small text-success mb-1"><span class="fw-semibold">📈 Resultado real:</span> {{ ini.actual_benefit }}</div>
-          {% endif %}
-
-          {% if ini.problem_desc %}
-          <div class="mb-2">
-            <a href="/problems" class="text-decoration-none small fw-semibold text-warning">⚠ Problema origen: {{ ini.problem_desc[:60] }}{% if ini.problem_desc|length > 60 %}...{% endif %}</a>
-          </div>
-          {% endif %}
-
-          {% if ini.doc_id %}
-          <div class="mt-2">
-            <button class="btn btn-primary btn-sm" onclick="openDocument({{ ini.id }})">
-              📄 Ver documento {{ ini.doc_type }}
-            </button>
-          </div>
-          {% endif %}
+    <div class="pp-card init-card init-card--{{ ini.status }} {% if highlight == ini.id %}init-card--highlighted{% endif %}"
+         id="ini-{{ ini.id }}" data-id="{{ ini.id }}">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          <span class="pp-tag method-badge--{{ ini.methodology }}">{{ ini.methodology }}</span>
+          <span class="pp-tag status-badge--{{ ini.status }}">
+            {% if ini.status == 'in_progress' %}🔄 En curso
+            {% elif ini.status == 'planned'   %}⏳ Planificado
+            {% elif ini.status == 'completed' %}✅ Completado
+            {% else %}⏸ En espera{% endif %}
+          </span>
+          {% if ini.line_number %}<span class="pp-tag pp-tag-neutral">L{{ ini.line_number }}</span>{% endif %}
         </div>
+        <span class="pp-faint" style="font-size:11px;">👤 {{ ini.owner }}</span>
       </div>
+
+      <h6 style="font-weight:700; font-size:13px; margin-bottom:4px;">{{ ini.title }}</h6>
+      <p class="pp-faint" style="font-size:12px; margin-bottom:8px;">{{ ini.description }}</p>
+
+      <div class="d-flex gap-3 flex-wrap pp-faint" style="font-size:11px; margin-bottom:8px;">
+        <span>🗓 Inicio: {{ ini.start_date }}</span>
+        <span>🎯 Target: {{ ini.target_date }}</span>
+        {% if ini.completion_date %}
+        <span>✅ Completado: {{ ini.completion_date }}</span>
+        {% endif %}
+      </div>
+
+      {% if ini.expected_benefit %}
+      <div class="pp-faint" style="font-size:12px; margin-bottom:4px;"><span style="font-weight:600;">💡 Beneficio esperado:</span> {{ ini.expected_benefit }}</div>
+      {% endif %}
+      {% if ini.actual_benefit %}
+      <div style="font-size:12px; color:var(--pp-good); margin-bottom:4px;"><span style="font-weight:600;">📈 Resultado real:</span> {{ ini.actual_benefit }}</div>
+      {% endif %}
+
+      {% if ini.problem_desc %}
+      <div class="mb-2">
+        <a href="/problems" style="font-size:12px; font-weight:600; color:var(--pp-warn); text-decoration:none;">⚠ Problema origen: {{ ini.problem_desc[:60] }}{% if ini.problem_desc|length > 60 %}...{% endif %}</a>
+      </div>
+      {% endif %}
+
+      {% if ini.doc_id %}
+      <div class="mt-2">
+        <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="openDocument({{ ini.id }})">
+          📄 Ver documento {{ ini.doc_type }}
+        </button>
+      </div>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <p class="text-muted fst-italic">No hay iniciativas que coincidan con los filtros seleccionados.</p>
+  <div class="pp-empty">
+    <p class="pp-empty-title">No hay iniciativas que coincidan con los filtros seleccionados.</p>
+    <a href="/initiatives" class="pp-btn mt-2">Ver todas</a>
+  </div>
   {% endif %}
-</section>
+</div>
 
-<!-- Document modal -->
+<!-- Document modal (Bootstrap modal — kept for functionality) -->
 <div id="docModal" class="modal fade" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -136,13 +149,13 @@
 
 <style>
 /* Initiative cards */
-.init-card { border-left: 4px solid #dee2e6 !important; transition: box-shadow .15s; }
-.init-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.10) !important; }
-.init-card--in_progress { border-left-color: #0d6efd !important; }
-.init-card--planned     { border-left-color: #ffc107 !important; }
-.init-card--completed   { border-left-color: #198754 !important; }
-.init-card--on_hold     { border-left-color: #6c757d !important; }
-.init-card--highlighted { outline: 3px solid #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.25) !important; }
+.init-card { transition: box-shadow .15s; }
+.init-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08) !important; }
+.init-card--in_progress { border-left: 3px solid var(--pp-info) !important; }
+.init-card--planned     { border-left: 3px solid var(--pp-warn) !important; }
+.init-card--completed   { border-left: 3px solid var(--pp-good) !important; }
+.init-card--on_hold     { border-left: 3px solid var(--pp-text-faint) !important; }
+.init-card--highlighted { outline: 3px solid var(--pp-red); box-shadow: 0 0 0 3px rgba(213,43,30,.15) !important; }
 
 .method-badge--A3     { background: #bee3f8; color: #2c5282; }
 .method-badge--Kaizen { background: #c6f6d5; color: #276749; }
@@ -157,8 +170,8 @@
 
 /* A3 document styles */
 .a3-document { font-size: 0.88rem; line-height: 1.6; }
-.a3-document h2 { font-size: 1.1rem; color: #0d6efd; margin-bottom: 0.25rem; }
-.a3-document h3 { font-size: 0.95rem; font-weight: 700; margin: 1.2rem 0 0.4rem; border-left: 3px solid #0d6efd; padding-left: 0.5rem; }
+.a3-document h2 { font-size: 1.1rem; color: var(--pp-red); margin-bottom: 0.25rem; }
+.a3-document h3 { font-size: 0.95rem; font-weight: 700; margin: 1.2rem 0 0.4rem; border-left: 3px solid var(--pp-red); padding-left: 0.5rem; }
 .a3-document section { margin-bottom: 0.75rem; }
 .a3-document table { font-size: 0.82rem; }
 .a3-document pre { font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; }
@@ -182,7 +195,7 @@ let docModalInstance = null;
   };
 
   const items = data.map(d => ({
-    name: d.title.length > 35 ? d.title.slice(0, 35) + "\u2026" : d.title,
+    name: d.title.length > 35 ? d.title.slice(0, 35) + "…" : d.title,
     start: d.start_date,
     end: d.completion_date || d.target_date,
     status: d.status,
@@ -197,7 +210,7 @@ let docModalInstance = null;
       formatter: p => {
         if (p.componentType !== "series") return "";
         const d = items[p.dataIndex];
-        return `<b>${d.name}</b><br>${d.method} \u00B7 ${d.status}<br>${d.start} \u2192 ${d.end}`;
+        return `<b>${d.name}</b><br>${d.method} · ${d.status}<br>${d.start} → ${d.end}`;
       },
     },
     grid: { left: "3%", right: "2%", top: "8%", bottom: "10%", containLabel: true },
@@ -242,8 +255,8 @@ async function openDocument(initId) {
   if (!docModalInstance) {
     docModalInstance = new bootstrap.Modal(modalEl);
   }
-  document.getElementById("docModalTitle").textContent = "Cargando\u2026";
-  document.getElementById("docModalBody").innerHTML = '<div class="text-muted">Cargando documento\u2026</div>';
+  document.getElementById("docModalTitle").textContent = "Cargando…";
+  document.getElementById("docModalBody").innerHTML = '<div class="text-muted">Cargando documento…</div>';
   docModalInstance.show();
 
   try {
@@ -262,7 +275,7 @@ if (HIGHLIGHT_ID) {
   const el = document.getElementById("ini-" + HIGHLIGHT_ID);
   if (el) {
     setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
-    const btn = el.querySelector(".btn-primary");
+    const btn = el.querySelector(".pp-btn-primary");
     if (btn) setTimeout(() => btn.click(), 700);
   }
 }

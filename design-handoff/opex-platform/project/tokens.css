@@ -1,0 +1,141 @@
+/* ============================================================
+   OpEx Industrial Premium — Design Tokens
+   Extracted from existing codebase (dashboard.js PALETTE) + Lilly LDS
+   ============================================================ */
+
+@font-face {
+  font-family: 'Ringside';
+  src: url('fonts/ringside-sans-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Ringside';
+  src: url('fonts/ringside-sans-900.woff2') format('woff2');
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Ringside Wide';
+  src: url('fonts/ringside-wide-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Ringside Wide';
+  src: url('fonts/ringside-wide-900.woff2') format('woff2');
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+
+:root {
+  /* ── Surfaces (industrial dark) ─────────────────────────── */
+  --bg-base:    #0e151f;
+  --bg-panel:   #16202d;
+  --bg-card:    #1b2837;
+  --bg-elev:    #243447;
+  --bg-hover:   #20303f;
+  --bg-input:   #0f1822;
+
+  /* ── Lines & dividers ──────────────────────────────────── */
+  --line-soft:  #243447;
+  --line-mid:   #2e3f52;
+  --line-hard:  #3a4d63;
+
+  /* ── Type ──────────────────────────────────────────────── */
+  --text:       #e6edf6;
+  --text-mid:   #cdd6e0;
+  --text-dim:   #8a9bb0;
+  --text-faint: #5e7186;
+
+  /* ── Status (steel-industrial) ─────────────────────────── */
+  --good:       #2ecc71;
+  --good-dim:   #1f7a45;
+  --good-glow:  rgba(46,204,113,0.18);
+
+  --warn:       #f5a623;
+  --warn-dim:   #8a5912;
+  --warn-glow:  rgba(245,166,35,0.18);
+
+  --bad:        #ff5466;
+  --bad-dim:    #8a2a36;
+  --bad-glow:   rgba(255,84,102,0.20);
+
+  --info:       #3fb6ff;
+  --info-dim:   #1a5f8a;
+  --info-glow:  rgba(63,182,255,0.18);
+
+  /* ── Accent (Lilly red — used as platform identity dot) ── */
+  --lilly-red:  #d52b1e;
+  --accent:     var(--info);
+
+  /* ── Type families ─────────────────────────────────────── */
+  --font-sans:    'Ringside', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Ringside Wide', 'Ringside', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ── Radius ────────────────────────────────────────────── */
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r:    8px;
+  --r-lg: 12px;
+
+  /* ── Shadows ───────────────────────────────────────────── */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.03) inset, 0 6px 24px rgba(0,0,0,0.32);
+  --shadow-pop:  0 12px 40px rgba(0,0,0,0.5);
+
+  /* ── Spacing rhythm (4px) ──────────────────────────────── */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 48px;
+}
+
+/* ── Theme: tactical (deeper blues) ────────────────────────── */
+[data-theme="tactical"] {
+  --bg-base:    #0a1018;
+  --bg-panel:   #0f1822;
+  --bg-card:    #14202e;
+  --bg-elev:    #1a2a3d;
+  --line-soft:  #1c2a3a;
+  --line-mid:   #263849;
+  --accent:     #5ad1ff;
+}
+
+/* ── Theme: graphite (neutral / less saturated) ─────────────── */
+[data-theme="graphite"] {
+  --bg-base:    #14161a;
+  --bg-panel:   #1c1f24;
+  --bg-card:    #22262d;
+  --bg-elev:    #2a2f37;
+  --line-soft:  #2a2f37;
+  --line-mid:   #353c46;
+  --accent:     #ffb454;
+  --good:       #88c057;
+  --warn:       #ffb454;
+  --bad:        #ef6c6c;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "tnum";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body { font-size: 14px; line-height: 1.5; }
+
+/* Scrollbars in product surfaces */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--line-mid); border-radius: 99px; border: 2px solid var(--bg-base); }
+*::-webkit-scrollbar-thumb:hover { background: var(--line-hard); }
+
+/* Type utilities */
+.t-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.t-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.01em; }
+.t-num { font-variant-numeric: tabular-nums; }
