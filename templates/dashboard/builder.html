@@ -499,6 +499,16 @@
 
   loadHistory();
 
+  // Si venimos de Data Explorer con una query SQL pendiente, cargarla en el prompt
+  (function checkExplorerSQL() {
+    const sql = sessionStorage.getItem("de_pending_sql");
+    if (sql) {
+      sessionStorage.removeItem("de_pending_sql");
+      promptInput.value = "Genera un gráfico con esta query SQL:\n\n" + sql;
+      promptChars.textContent = `${promptInput.value.length} / 500`;
+    }
+  })();
+
 })();
 </script>
 {% endblock %}

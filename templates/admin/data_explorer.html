@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% block title %}Data Explorer{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3">
+    <h1 class="h3 fw-bold mb-0">Data Explorer</h1>
+    <span id="sourceBadge" class="badge
+      {% if source_info.source == 'redshift' %}bg-success{% else %}bg-secondary{% endif %}
+      fs-6">
+      <i class="bi {% if source_info.source == 'redshift' %}bi-cloud-fill{% else %}bi-database{% endif %} me-1"></i>
+      {{ source_info.mode_label }}
+    </span>
+  </div>
+  <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+          id="testConnBtn" onclick="testConnection()">
+    <i class="bi bi-wifi"></i> Test conexión
+    <span id="testConnSpinner" class="spinner-border spinner-border-sm d-none"></span>
+  </button>
+</div>
+
+<!-- Status bar (shown after test) -->
+<div id="connStatus" class="alert d-none mb-3 py-2" role="alert"></div>
+
+<div class="row g-3" style="min-height: 70vh;">
+
+  <!-- ── Sidebar: lista de tablas ──────────────────────────────────── -->
+  <div class="col-lg-2 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+          <span class="small fw-bold text-uppercase text-muted" style="font-size:.7rem;">Tablas</span>
+          <button class="btn btn-link btn-sm p-0 text-muted" onclick="loadTables()" title="Recargar">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+        <input class="form-control form-control-sm mb-2" id="tableSearch"
+               placeholder="Filtrar..." oninput="filterTables()">
+        <div id="tablesList" class="overflow-auto" style="max-height: calc(70vh - 80px);">
+          <div class="text-muted small text-center py-3">
+            <span class="spinner-border spinner-border-sm me-1"></span>Cargando…
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Panel principal ───────────────────────────────────────────── -->
+  <div class="col-lg-10 col-md-9 d-flex flex-column gap-3">
+
+    <!-- SQL Editor -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="fw-semibold small">Editor SQL</span>
+          <span class="badge bg-warning text-dark" style="font-size:.65rem;">Solo SELECT</span>
+          <div class="ms-auto d-flex align-items-center gap-2">
+            <label class="small text-muted mb-0">Límite</label>
+            <select id="limitSelect" class="form-select form-select-sm" style="width:90px;">
+              <option value="25">25</option>
+              <option value="100" selected>100</option>
+              <option value="250">250</option>
+              <option value="500">500</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm" onclick="copySQL()" title="Copiar SQL">
+              <i class="bi bi-clipboard"></i>
+            </button>
+            <button class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+                    id="runBtn" onclick="runQuery()">
+              <i class="bi bi-play-fill"></i> Ejecutar
+              <span id="runSpinner" class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+          </div>
+        </div>
+        <textarea id="sqlEditor" class="form-control font-monospace"
+                  rows="5"
+                  placeholder="SELECT * FROM shifts LIMIT 25"
+                  style="font-size:.85rem; resize:vertical;"
+                  onkeydown="handleEditorKey(event)"></textarea>
+        <div class="d-flex justify-content-between mt-1">
+          <span class="small text-muted">Ctrl+Enter para ejecutar</span>
+          <span class="small text-muted" id="queryStatus"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columnas (aparece al seleccionar tabla) -->
+    <div class="card border-0 shadow-sm d-none" id="columnsCard">
+      <div class="card-body py-2">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-list-columns text-primary"></i>
+          <span class="fw-semibold small">Columnas de <code id="columnsTableName"></code></span>
+        </div>
+        <div id="columnsTable" class="overflow-auto" style="max-height:180px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="card border-0 shadow-sm d-none" id="resultsCard">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-3">
+            <span class="fw-semibold small">Resultados</span>
+            <span class="badge bg-info text-dark" id="rowCountBadge"></span>
+            <span class="small text-muted" id="durationBadge"></span>
+          </div>
+          <button class="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
+                  id="useInDashboardBtn" onclick="useInDashboard()">
+            <i class="bi bi-graph-up"></i> Usar en dashboard
+          </button>
+        </div>
+        <!-- Tabla de resultados -->
+        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+          <table class="table table-sm table-striped table-hover mb-0" id="resultsTable">
+            <thead class="table-dark sticky-top" id="resultsHead"></thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <!-- Paginación -->
+        <div class="d-flex align-items-center justify-content-between mt-2 flex-wrap gap-2"
+             id="paginationBar">
+          <span class="small text-muted" id="pageInfo"></span>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" id="prevPageBtn" onclick="changePage(-1)">
+              ‹ Anterior
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="nextPageBtn" onclick="changePage(1)">
+              Siguiente ›
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error panel -->
+    <div class="alert alert-danger d-none" id="errorPanel" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <span id="errorText"></span>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  // ── Estado ──────────────────────────────────────────────────────────────────
+  const state = {
+    allTables:   [],
+    columns:     {},          // cache: {tableName: [cols]}
+    resultRows:  [],
+    resultCols:  [],
+    page:        0,
+    pageSize:    25,
+    lastSQL:     "",
+  };
+
+  // ── Arranque ─────────────────────────────────────────────────────────────────
+  loadTables();
+
+  // ── Tablas ───────────────────────────────────────────────────────────────────
+
+  async function loadTables() {
+    const list = document.getElementById("tablesList");
+    list.innerHTML = '<div class="text-muted small text-center py-3"><span class="spinner-border spinner-border-sm me-1"></span>Cargando…</div>';
+    try {
+      const res   = await fetch("/api/data-explorer/tables");
+      const data  = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cargar tablas");
+      state.allTables = data.map(t => t.name);
+      renderTables(state.allTables);
+    } catch (err) {
+      list.innerHTML = `<div class="text-danger small p-2"><i class="bi bi-exclamation-triangle me-1"></i>${esc(err.message)}</div>`;
+    }
+  }
+
+  function renderTables(tables) {
+    const list = document.getElementById("tablesList");
+    if (!tables.length) {
+      list.innerHTML = '<div class="text-muted small text-center py-3">Sin tablas</div>';
+      return;
+    }
+    list.innerHTML = tables.map(t => `
+      <div class="de-table-item px-2 py-1 rounded d-flex align-items-center gap-1"
+           onclick="selectTable('${esc(t)}')" title="${esc(t)}">
+        <i class="bi bi-table text-secondary" style="font-size:.75rem;flex-shrink:0"></i>
+        <span class="small text-truncate">${esc(t)}</span>
+      </div>`).join("");
+  }
+
+  window.filterTables = function () {
+    const q = document.getElementById("tableSearch").value.toLowerCase();
+    renderTables(state.allTables.filter(t => t.toLowerCase().includes(q)));
+  };
+
+  window.selectTable = async function (table) {
+    // Resaltar en sidebar
+    document.querySelectorAll(".de-table-item").forEach(el => el.classList.remove("de-table-item--active"));
+    const items = [...document.querySelectorAll(".de-table-item")];
+    const match = items.find(el => el.querySelector("span")?.textContent === table);
+    if (match) match.classList.add("de-table-item--active");
+
+    // Pre-rellenar editor
+    document.getElementById("sqlEditor").value = `SELECT *\nFROM ${table}\nLIMIT 25`;
+
+    // Cargar columnas
+    await loadColumns(table);
+  };
+
+  // ── Columnas ──────────────────────────────────────────────────────────────────
+
+  async function loadColumns(table) {
+    const card = document.getElementById("columnsCard");
+    const nameEl = document.getElementById("columnsTableName");
+    const container = document.getElementById("columnsTable");
+
+    card.classList.remove("d-none");
+    nameEl.textContent = table;
+    container.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Cargando…';
+
+    if (state.columns[table]) {
+      renderColumns(state.columns[table], container);
+      return;
+    }
+
+    try {
+      const res  = await fetch(`/api/data-explorer/columns/${encodeURIComponent(table)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cargar columnas");
+      state.columns[table] = data;
+      renderColumns(data, container);
+    } catch (err) {
+      container.innerHTML = `<span class="text-danger small">${esc(err.message)}</span>`;
+    }
+  }
+
+  function renderColumns(cols, container) {
+    if (!cols.length) { container.innerHTML = '<span class="text-muted small">Sin columnas</span>'; return; }
+    container.innerHTML = `
+      <table class="table table-sm mb-0" style="font-size:.78rem;">
+        <thead class="table-light"><tr>
+          <th>#</th><th>Columna</th><th>Tipo</th><th>Nullable</th>
+        </tr></thead>
+        <tbody>
+          ${cols.map(c => `<tr>
+            <td class="text-muted">${c.position}</td>
+            <td><code>${esc(c.name)}</code></td>
+            <td><span class="badge bg-light text-dark border">${esc(c.type)}</span></td>
+            <td>${c.nullable ? '✓' : '<strong>NOT NULL</strong>'}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  // ── Query ─────────────────────────────────────────────────────────────────────
+
+  window.runQuery = async function () {
+    const sql   = document.getElementById("sqlEditor").value.trim();
+    const limit = parseInt(document.getElementById("limitSelect").value, 10);
+    if (!sql) { document.getElementById("sqlEditor").focus(); return; }
+
+    state.lastSQL = sql;
+    setRunning(true);
+    hideError();
+    document.getElementById("resultsCard").classList.add("d-none");
+
+    try {
+      const res  = await fetch("/api/data-explorer/query", {
+        method:  "POST",
+        headers: {"Content-Type": "application/json"},
+        body:    JSON.stringify({ sql, limit }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 408) throw new Error("Timeout — la query tardó más de 30 s.");
+        throw new Error(data.error || "Error al ejecutar la query");
+      }
+
+      state.resultCols = data.columns || [];
+      state.resultRows = data.rows    || [];
+      state.page       = 0;
+      document.getElementById("queryStatus").textContent = "";
+      showResults(data.row_count, data.duration_ms);
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  function setRunning(on) {
+    const btn = document.getElementById("runBtn");
+    const sp  = document.getElementById("runSpinner");
+    btn.disabled = on;
+    sp.classList.toggle("d-none", !on);
+    document.getElementById("queryStatus").textContent = on ? "Ejecutando…" : "";
+  }
+
+  function showResults(rowCount, durationMs) {
+    document.getElementById("resultsCard").classList.remove("d-none");
+    document.getElementById("rowCountBadge").textContent = `${rowCount} fila${rowCount !== 1 ? "s" : ""}`;
+    document.getElementById("durationBadge").textContent = durationMs != null ? `${durationMs} ms` : "";
+    renderResultsPage();
+  }
+
+  function renderResultsPage() {
+    const head = document.getElementById("resultsHead");
+    const body = document.getElementById("resultsBody");
+    const cols = state.resultCols;
+    const start = state.page * state.pageSize;
+    const slice = state.resultRows.slice(start, start + state.pageSize);
+
+    head.innerHTML = `<tr>${cols.map(c => `<th class="text-nowrap">${esc(c)}</th>`).join("")}</tr>`;
+    body.innerHTML = slice.map(row =>
+      `<tr>${row.map(cell => `<td class="text-nowrap" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${esc(String(cell ?? ""))}">
+        ${cell === null ? '<span class="text-muted fst-italic">NULL</span>' : esc(String(cell))}
+      </td>`).join("")}</tr>`
+    ).join("") || `<tr><td colspan="${cols.length}" class="text-center text-muted py-3">Sin resultados</td></tr>`;
+
+    const total     = state.resultRows.length;
+    const totalPages = Math.ceil(total / state.pageSize) || 1;
+    document.getElementById("pageInfo").textContent =
+      `Página ${state.page + 1} de ${totalPages} (${total} filas totales)`;
+    document.getElementById("prevPageBtn").disabled = state.page === 0;
+    document.getElementById("nextPageBtn").disabled = state.page >= totalPages - 1;
+  }
+
+  window.changePage = function (delta) {
+    const total = state.resultRows.length;
+    const totalPages = Math.ceil(total / state.pageSize) || 1;
+    state.page = Math.max(0, Math.min(state.page + delta, totalPages - 1));
+    renderResultsPage();
+  };
+
+  // ── "Usar en dashboard" ───────────────────────────────────────────────────────
+
+  window.useInDashboard = function () {
+    const sql = state.lastSQL || document.getElementById("sqlEditor").value.trim();
+    if (!sql) return;
+    sessionStorage.setItem("de_pending_sql", sql);
+    window.location.href = "/dashboard/builder?from=explorer";
+  };
+
+  // ── Test de conexión ─────────────────────────────────────────────────────────
+
+  window.testConnection = async function () {
+    const btn  = document.getElementById("testConnBtn");
+    const sp   = document.getElementById("testConnSpinner");
+    const bar  = document.getElementById("connStatus");
+
+    btn.disabled = true;
+    sp.classList.remove("d-none");
+    bar.className = "alert d-none mb-3 py-2";
+
+    try {
+      const res  = await fetch("/api/data-explorer/status");
+      const data = await res.json();
+
+      if (data.ok) {
+        bar.className = "alert alert-success mb-3 py-2";
+        bar.innerHTML =
+          `<i class="bi bi-check-circle-fill me-2"></i>` +
+          `<strong>Conexión OK</strong> — ` +
+          `${esc(data.source.toUpperCase())} | ` +
+          `${data.table_count} tabla(s) | ` +
+          `${data.latency_ms} ms latencia`;
+      } else {
+        bar.className = "alert alert-danger mb-3 py-2";
+        bar.innerHTML =
+          `<i class="bi bi-x-circle-fill me-2"></i>` +
+          `<strong>Sin conexión</strong> — ${esc(data.error || "Error desconocido")}`;
+      }
+    } catch (err) {
+      bar.className = "alert alert-danger mb-3 py-2";
+      bar.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i>${esc(err.message)}`;
+    } finally {
+      bar.classList.remove("d-none");
+      btn.disabled = false;
+      sp.classList.add("d-none");
+    }
+  };
+
+  // ── Utilidades ────────────────────────────────────────────────────────────────
+
+  window.copySQL = function () {
+    const sql = document.getElementById("sqlEditor").value;
+    navigator.clipboard?.writeText(sql).then(() => {
+      document.getElementById("queryStatus").textContent = "✓ Copiado";
+      setTimeout(() => { document.getElementById("queryStatus").textContent = ""; }, 1500);
+    });
+  };
+
+  window.handleEditorKey = function (e) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      runQuery();
+    }
+  };
+
+  function showError(msg) {
+    const el = document.getElementById("errorPanel");
+    document.getElementById("errorText").textContent = msg;
+    el.classList.remove("d-none");
+  }
+
+  function hideError() {
+    document.getElementById("errorPanel").classList.add("d-none");
+  }
+
+  function esc(s) {
+    return String(s ?? "")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+
+  // Si venimos del dashboard builder con SQL pendiente, cargarlo en el editor
+  (function checkPendingSQL() {
+    const pending = sessionStorage.getItem("de_pending_sql");
+    if (pending) {
+      document.getElementById("sqlEditor").value = pending;
+      sessionStorage.removeItem("de_pending_sql");
+    }
+  })();
+
+})();
+</script>
+
+<style>
+.de-table-item {
+  cursor: pointer;
+  transition: background .12s;
+}
+.de-table-item:hover {
+  background: #e8f0fb;
+}
+.de-table-item--active {
+  background: #dbeafe;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+.de-table-item--active .bi { color: #1d4ed8 !important; }
+#sqlEditor {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid #313244;
+  border-radius: 6px;
+}
+#sqlEditor::placeholder { color: #6c7086; }
+#resultsTable thead th {
+  font-size: .78rem;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+</style>
+{% endblock %}

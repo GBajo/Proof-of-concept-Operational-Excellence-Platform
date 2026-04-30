@@ -210,10 +210,17 @@
         </a>
       </div>
       <div class="nav-item">
-        <a class="nav-link {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') %}active{% endif %}"
+        <a class="nav-link {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') %}active{% endif %}"
            href="{{ url_for('admin.admin_docs') }}">
           <i class="bi bi-book"></i>
           <span class="nav-text">{{ t('nav_docs') }}</span>
+        </a>
+      </div>
+      <div class="nav-item">
+        <a class="nav-link {% if request.path.startswith('/admin/data-explorer') %}active{% endif %}"
+           href="{{ url_for('data_explorer.data_explorer_page') }}">
+          <i class="bi bi-database"></i>
+          <span class="nav-text">Data Explorer</span>
         </a>
       </div>
     </nav>

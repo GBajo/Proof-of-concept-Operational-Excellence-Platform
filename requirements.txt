@@ -7,3 +7,5 @@ requests==2.32.3
 beautifulsoup4==4.12.3
 # anthropic is optional — mock responses are used when not installed
 anthropic>=0.40.0
+# Redshift connector — optional, only needed when DATA_SOURCE=redshift
+redshift_connector>=2.1.0
