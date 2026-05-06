@@ -101,6 +101,22 @@ def _register_builtin_agents() -> None:
         category="improvement",
     )
 
+    register_agent(
+        name="ci_coach",
+        import_path="agents.ci_coach_agent:CICoachAgent",
+        description=(
+            "Coach experto en mejora continua y lean manufacturing farmacéutico. "
+            "Busca iniciativas similares en todos los sites para aprender de lo que ya funcionó. "
+            "Revisa el contenido de iniciativas y verifica que los A3 tengan las 8 secciones "
+            "completas. Estima beneficios cuantificables comparando con iniciativas similares "
+            "completadas. Sugiere hitos, plazos razonables y métricas de seguimiento. "
+            "Activar cuando el usuario pregunte cómo gestionar una iniciativa, quiera feedback "
+            "sobre un proyecto en curso, necesite estimar el beneficio esperado, quiera saber si "
+            "los plazos son realistas, o busque aprender de lo que funcionó en otras plantas."
+        ),
+        category="improvement",
+    )
+
 
 # ── API pública ───────────────────────────────────────────────────────────────
 

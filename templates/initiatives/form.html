@@ -1,0 +1,725 @@
+{% extends "base.html" %}
+{% block title %}{% if initiative %}{{ t('ini_form_title_edit') }}{% else %}{{ t('ini_form_title_new') }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="pp-page-head">
+  <div>
+    <div class="pp-crumbs">
+      <span>{{ t('ini_crumb_ci') }}</span><span class="pp-crumb-sep">/</span>
+      <a href="/initiatives" style="color:inherit;text-decoration:none;">{{ t('ini_crumb_list') }}</a>
+      <span class="pp-crumb-sep">/</span>
+      <span>{% if initiative %}{{ t('ini_crumb_edit') }}{% else %}{{ t('ini_crumb_new') }}{% endif %}</span>
+    </div>
+    <h1 class="pp-h1">{% if initiative %}{{ t('ini_form_title_edit') }}{% else %}{{ t('ini_form_title_new') }}{% endif %}</h1>
+    {% if initiative %}
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">ID #{{ initiative.id }} · {{ t('ini_form_created_on') }} {{ initiative.start_date }}</p>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    {% if initiative %}
+    <button type="button" id="view-doc-btn" style="display:none;"
+            onclick="openDocumentModal()"
+            class="pp-btn pp-btn-primary"
+            style="font-size:13px;">
+      {{ t('ini_form_view_doc') }}
+    </button>
+    {% endif %}
+    <button type="button" class="pp-btn" id="coach-toggle-btn"
+            onclick="toggleCoachPanel()"
+            title="{{ t('ini_form_coach_title') }}"
+            style="display:flex; align-items:center; gap:6px; font-size:13px; border-color:var(--pp-info); color:var(--pp-info);">
+      {{ t('ini_form_open_coach') }}
+    </button>
+    <a href="/initiatives" class="pp-btn">{{ t('ini_btn_back') }}</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Form -->
+  <div class="{% if initiative %}col-lg-7{% else %}col-lg-9{% endif %}">
+    <div class="pp-card">
+      <form id="iniForm">
+        <div class="row g-3">
+
+          <!-- Título -->
+          <div class="col-12">
+            <label class="pp-label">{{ t('ini_form_lbl_title') }} <span style="color:var(--pp-red)">*</span></label>
+            <input type="text" class="pp-input" id="f_title" name="title" required
+                   placeholder="Ej: A3: Reducción de atascos en etiquetadora"
+                   value="{{ initiative.title if initiative else '' }}">
+          </div>
+
+          <!-- Descripción -->
+          <div class="col-12">
+            <label class="pp-label">{{ t('ini_form_lbl_desc') }} <span style="color:var(--pp-red)">*</span></label>
+            <textarea class="pp-input" id="f_desc" name="description" rows="3" required
+                      placeholder="{{ t('ini_form_desc_ph') }}">{{ initiative.description if initiative else '' }}</textarea>
+          </div>
+
+          <!-- Metodología + Categoría -->
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_method') }} <span style="color:var(--pp-red)">*</span></label>
+            <select class="pp-select" id="f_method" name="methodology">
+              {% for m in valid_methods %}
+              <option value="{{ m }}" {% if initiative and initiative.methodology == m %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_category') }} <span style="color:var(--pp-red)">*</span></label>
+            <select class="pp-select" id="f_category" name="category">
+              {% for c in valid_categories %}
+              <option value="{{ c }}" {% if initiative and initiative.category == c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          {% if initiative %}
+          <!-- Estado (solo en edición) -->
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_status') }}</label>
+            {% set allowed = valid_transitions[initiative.status] if valid_transitions else [] %}
+            {% if allowed %}
+            <select class="pp-select" id="f_status" name="status">
+              <option value="{{ initiative.status }}" selected>
+                {% if initiative.status == 'En progreso' %}{{ t('ini_st_en_progreso') }}
+                {% elif initiative.status == 'No iniciado' %}{{ t('ini_st_no_iniciado') }}
+                {% elif initiative.status == 'Terminado' %}{{ t('ini_st_terminado') }}
+                {% else %}{{ t('ini_st_cancelado') }}{% endif %}
+                {{ t('ini_st_current_suffix') }}
+              </option>
+              {% for s in allowed %}
+              <option value="{{ s }}">
+                {% if s == 'En progreso' %}{{ t('ini_st_en_progreso') }}
+                {% elif s == 'No iniciado' %}{{ t('ini_st_no_iniciado') }}
+                {% elif s == 'Terminado' %}{{ t('ini_st_terminado') }}
+                {% else %}{{ t('ini_st_cancelado') }}{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+            {% else %}
+            <input type="text" class="pp-input" value="{{ initiative.status }} {{ t('ini_st_final_suffix') }}" readonly style="color:var(--pp-text-faint);">
+            <input type="hidden" name="status" value="{{ initiative.status }}">
+            {% endif %}
+          </div>
+
+          <!-- Comentario de cambio de estado -->
+          <div class="col-12" id="statusCommentRow" style="display:none;">
+            <label class="pp-label">{{ t('ini_form_lbl_st_comment') }} <span style="color:var(--pp-red)">*</span></label>
+            <textarea class="pp-input" id="f_status_comment" name="status_comment" rows="2"
+                      placeholder="{{ t('ini_form_st_comment_ph') }}"></textarea>
+          </div>
+          {% endif %}
+
+          <!-- Site + Línea -->
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_site') }}</label>
+            <input type="text" class="pp-input" id="f_site" name="site_id" readonly
+                   value="{{ initiative.site_id if initiative else site_id }}">
+          </div>
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_line') }}</label>
+            <select class="pp-select" id="f_line" name="line_number">
+              <option value="">{{ t('ini_form_line_all') }}</option>
+              {% for l in site_lines %}
+              <option value="{{ l }}" {% if initiative and initiative.line_number == l %}selected{% endif %}>L{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Owner -->
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_owner') }} <span style="color:var(--pp-red)">*</span></label>
+            <input type="text" class="pp-input" id="f_owner" name="owner" required
+                   placeholder="{{ t('ini_form_owner_ph') }}"
+                   value="{{ initiative.owner if initiative else '' }}">
+          </div>
+
+          <!-- Problema vinculado -->
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_problem') }}</label>
+            <select class="pp-select" id="f_problem" name="linked_problem_id">
+              <option value="">{{ t('ini_form_problem_none') }}</option>
+              {% for p in problems %}
+              <option value="{{ p.id }}"
+                {% if initiative and initiative.linked_problem_id == p.id %}selected{% endif %}>
+                #{{ p.id }} — {{ p.problem_description[:60] }}{% if p.problem_description|length > 60 %}…{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Fechas -->
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_start') }} <span style="color:var(--pp-red)">*</span></label>
+            <input type="date" class="pp-input" id="f_start" name="start_date" required
+                   value="{{ initiative.start_date if initiative else '' }}">
+          </div>
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_target') }} <span style="color:var(--pp-red)">*</span></label>
+            <input type="date" class="pp-input" id="f_target" name="target_date" required
+                   value="{{ initiative.target_date if initiative else '' }}">
+          </div>
+
+          {% if initiative %}
+          <div class="col-sm-6">
+            <label class="pp-label">{{ t('ini_form_lbl_completion') }}</label>
+            <input type="date" class="pp-input" id="f_completion" name="completion_date"
+                   value="{{ initiative.completion_date if initiative.completion_date else '' }}">
+          </div>
+          {% endif %}
+
+          <!-- Beneficios -->
+          <div class="col-12">
+            <label class="pp-label">{{ t('ini_form_lbl_exp_benefit') }}</label>
+            <input type="text" class="pp-input" id="f_benefit_exp" name="expected_benefit"
+                   placeholder="Ej: Reducción de atascos 85%, +1.5 pp OEE"
+                   value="{{ initiative.expected_benefit if initiative and initiative.expected_benefit else '' }}">
+          </div>
+
+          {% if initiative %}
+          <div class="col-12">
+            <label class="pp-label">{{ t('ini_form_lbl_act_benefit') }}</label>
+            <input type="text" class="pp-input" id="f_benefit_act" name="actual_benefit"
+                   placeholder="Ej: Atascos de 5,2/sem → 0,9/sem. OEE +1,2 pp."
+                   value="{{ initiative.actual_benefit if initiative and initiative.actual_benefit else '' }}">
+          </div>
+          {% endif %}
+
+          <!-- Modificado/Creado por -->
+          <div class="col-sm-6">
+            <label class="pp-label">{% if initiative %}{{ t('ini_form_lbl_modified_by') }}{% else %}{{ t('ini_form_lbl_created_by') }}{% endif %} <span style="color:var(--pp-red)">*</span></label>
+            <input type="text" class="pp-input" id="f_user" name="changed_by" required
+                   placeholder="{{ t('ini_form_user_ph') }}">
+          </div>
+
+        </div>
+
+        <!-- Acciones -->
+        <div class="d-flex gap-2 mt-4 align-items-center">
+          <button type="submit" class="pp-btn pp-btn-primary" id="submitBtn">
+            {% if initiative %}{{ t('ini_form_btn_save') }}{% else %}{{ t('ini_form_btn_create') }}{% endif %}
+          </button>
+          <a href="/initiatives" class="pp-btn">{{ t('ini_form_btn_cancel') }}</a>
+          {% if initiative %}
+          <button type="button" class="pp-btn" style="margin-left:auto; color:var(--pp-text-faint);"
+                  onclick="confirmDelete()">{{ t('ini_form_btn_delete') }}</button>
+          {% endif %}
+        </div>
+
+        <div id="formAlert" style="display:none; margin-top:12px;" class="pp-tag"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Audit log (solo edición) -->
+  {% if initiative and audit_log %}
+  <div class="col-lg-5">
+    <div class="pp-card">
+      <div class="pp-card-head mb-3">
+        <div>
+          <p class="pp-eyebrow pp-eyebrow-muted">{{ t('ini_audit_eyebrow') }}</p>
+          <h3 class="pp-card-title">{{ t('ini_audit_title') }}</h3>
+        </div>
+        <span class="pp-tag pp-tag-neutral">{{ audit_log|length }}</span>
+      </div>
+      <div style="max-height:480px; overflow-y:auto;">
+        {% for entry in audit_log %}
+        <div style="padding:8px 0; border-bottom:1px solid var(--pp-border); font-size:12px;">
+          <div class="d-flex justify-content-between">
+            <span style="font-weight:600; color:var(--pp-text);">{{ entry.field_changed }}</span>
+            <span class="pp-faint">{{ entry.changed_at[:16] }}</span>
+          </div>
+          <div class="pp-faint" style="margin-top:3px;">
+            👤 <strong>{{ entry.changed_by }}</strong>
+          </div>
+          {% if entry.old_value is not none %}
+          <div style="margin-top:4px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span style="background:#fff5f5; color:#9b2c2c; padding:1px 6px; border-radius:4px; font-size:11px;">{{ entry.old_value or '—' }}</span>
+            <span class="pp-faint">→</span>
+            <span style="background:#f0fff4; color:#276749; padding:1px 6px; border-radius:4px; font-size:11px;">{{ entry.new_value or '—' }}</span>
+          </div>
+          {% else %}
+          <div style="margin-top:4px;">
+            <span style="background:#f0fff4; color:#276749; padding:1px 6px; border-radius:4px; font-size:11px;">{{ entry.new_value or '—' }}</span>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Document modal ─────────────────────────────────────────────────────── -->
+{% if initiative %}
+<div id="docModal" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="docModalTitle">{{ t('ini_doc_modal_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="docModalBody">
+        <div class="text-muted">{{ t('ini_doc_loading') }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Delete modal ───────────────────────────────────────────────────────── -->
+{% if initiative %}
+<div id="deleteModal" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t('ini_del_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ t('ini_del_confirm_pre') }} <strong>{{ initiative.title }}</strong>?</p>
+        <div class="pp-field">
+          <label class="pp-label">{{ t('ini_del_reason_lbl') }} <span style="color:var(--pp-red)">*</span></label>
+          <input type="text" class="pp-input" id="deleteReason" placeholder="{{ t('ini_del_reason_ph') }}">
+        </div>
+        <div class="pp-field">
+          <label class="pp-label">{{ t('ini_del_by_lbl') }} <span style="color:var(--pp-red)">*</span></label>
+          <input type="text" class="pp-input" id="deleteBy" placeholder="{{ t('ini_del_by_ph') }}">
+        </div>
+        <div id="deleteAlert" style="display:none; margin-top:8px;" class="pp-tag"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">{{ t('ini_del_cancel') }}</button>
+        <button type="button" class="pp-btn pp-btn-primary" style="background:var(--pp-red);" onclick="doDelete()">{{ t('ini_del_confirm_btn') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Coach Panel ────────────────────────────────────────────────────────── -->
+<div id="coach-panel" style="
+  display:none; position:fixed; right:0; top:0; height:100vh; width:400px;
+  background:#fff; box-shadow:-4px 0 24px rgba(0,0,0,.15);
+  z-index:1100; flex-direction:column;
+  border-left:1px solid var(--pp-border);">
+
+  <!-- Header -->
+  <div style="padding:14px 18px; border-bottom:1px solid var(--pp-border);
+              background:var(--pp-bg); display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+    <div>
+      <div style="font-size:10px; font-weight:700; color:var(--pp-info); text-transform:uppercase; letter-spacing:.06em;">{{ t('ini_coach_panel_label') }}</div>
+      <div style="font-size:14px; font-weight:700; color:var(--pp-text); margin-top:1px;">🎓 CI Coach</div>
+    </div>
+    <button onclick="toggleCoachPanel()" style="background:none; border:none; font-size:20px; line-height:1;
+            cursor:pointer; color:var(--pp-text-faint); padding:2px 6px;"
+            title="{{ t('ini_coach_close_panel') }}">×</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="coach-messages" style="flex:1; overflow-y:auto; padding:14px 16px;
+       display:flex; flex-direction:column; gap:10px;">
+    <div id="coach-welcome" style="text-align:center; color:var(--pp-text-faint);
+         font-size:13px; padding:24px 12px;">
+      <div style="font-size:36px; margin-bottom:10px;">🎓</div>
+      <p style="font-weight:600; color:var(--pp-text); margin-bottom:6px;">{{ t('ini_coach_welcome_title') }}</p>
+      <p style="font-size:12px; line-height:1.5;">{{ t('ini_coach_welcome_desc') }}</p>
+    </div>
+  </div>
+
+  <!-- Quick-action chips -->
+  <div id="coach-chips" style="padding:8px 14px; border-top:1px solid var(--pp-border);
+       display:flex; gap:6px; flex-wrap:wrap; background:var(--pp-bg); flex-shrink:0;">
+    <button class="pp-btn pp-btn-sm" style="font-size:11px;"
+            onclick="sendCoachPreset(COACH_PRESETS.similar)">{{ t('ini_coach_chip_similar') }}</button>
+    <button class="pp-btn pp-btn-sm" style="font-size:11px;"
+            onclick="sendCoachPreset(COACH_PRESETS.timeline)">{{ t('ini_coach_chip_timeline') }}</button>
+    <button class="pp-btn pp-btn-sm" style="font-size:11px;"
+            onclick="sendCoachPreset(COACH_PRESETS.benefit)">{{ t('ini_coach_chip_benefit') }}</button>
+    {% if initiative and initiative.methodology == 'A3' %}
+    <button class="pp-btn pp-btn-sm" style="font-size:11px; background:#bee3f8; color:#2c5282; border-color:#bee3f8;"
+            onclick="sendCoachPreset(COACH_PRESETS.a3)">{{ t('ini_coach_chip_a3') }}</button>
+    {% endif %}
+  </div>
+
+  <!-- Input -->
+  <div style="padding:12px 14px; border-top:1px solid var(--pp-border); background:#fff; flex-shrink:0;">
+    <div style="display:flex; gap:8px; align-items:flex-end;">
+      <textarea id="coach-input"
+                placeholder="{{ t('ini_coach_input_ph') }}"
+                style="flex:1; resize:none; padding:8px 12px; border:1px solid var(--pp-border);
+                       border-radius:8px; font-size:13px; font-family:inherit;
+                       min-height:40px; max-height:100px; line-height:1.4;"
+                rows="1"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCoachMessage();}"></textarea>
+      <button id="coach-send-btn" onclick="sendCoachMessage()"
+              style="background:var(--pp-info); color:white; border:none; border-radius:8px;
+                     padding:8px 14px; cursor:pointer; font-size:13px; align-self:flex-end;
+                     white-space:nowrap; flex-shrink:0;">
+        {{ t('ini_coach_send') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay para cerrar el panel al clicar fuera -->
+<div id="coach-overlay" onclick="toggleCoachPanel()"
+     style="display:none; position:fixed; inset:0; z-index:1099;
+            background:rgba(0,0,0,.25);"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SITE_ID = "{{ site_id }}";
+{% if initiative %}
+const INITIATIVE_ID = {{ initiative.id }};
+const IS_EDIT = true;
+const ORIGINAL_STATUS = "{{ initiative.status }}";
+{% else %}
+const INITIATIVE_ID = null;
+const IS_EDIT = false;
+const ORIGINAL_STATUS = null;
+{% endif %}
+
+// i18n strings for JS
+const I18N = {
+  saving:        {{ t('ini_js_saving')       | tojson }},
+  savedOk:       {{ t('ini_js_saved_ok')     | tojson }},
+  createdOk:     {{ t('ini_js_created_ok')   | tojson }},
+  netError:      {{ t('ini_js_net_error')    | tojson }},
+  saveError:     {{ t('ini_js_save_error')   | tojson }},
+  statusReq:     {{ t('ini_js_status_req')   | tojson }},
+  valReasonReq:  {{ t('ini_val_reason_req')  | tojson }},
+  valNameReq:    {{ t('ini_val_name_req')    | tojson }},
+  valDeleteErr:  {{ t('ini_val_delete_err')  | tojson }},
+  docLoading:    {{ t('ini_doc_loading')     | tojson }},
+  docNotFound:   {{ t('ini_doc_not_found')   | tojson }},
+  coachThinking: {{ t('ini_coach_thinking')  | tojson }},
+  btnSave:       {{ t('ini_form_btn_save')   | tojson }},
+  btnCreate:     {{ t('ini_form_btn_create') | tojson }},
+  coachSend:     {{ t('ini_coach_send')      | tojson }},
+};
+
+// Preset coach queries (translated)
+const COACH_PRESETS = {
+  similar:  {{ t('ini_coach_preset_similar')  | tojson }},
+  timeline: {{ t('ini_coach_preset_timeline') | tojson }},
+  benefit:  {{ t('ini_coach_preset_benefit')  | tojson }},
+  a3:       {{ t('ini_coach_preset_a3')       | tojson }},
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function _esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Status comment toggle ─────────────────────────────────────────────────────
+{% if initiative %}
+const statusSelect = document.getElementById("f_status");
+if (statusSelect) {
+  statusSelect.addEventListener("change", function() {
+    const commentRow = document.getElementById("statusCommentRow");
+    const changed = this.value !== ORIGINAL_STATUS;
+    commentRow.style.display = changed ? "" : "none";
+    document.getElementById("f_status_comment").required = changed;
+  });
+}
+{% endif %}
+
+// ── Form submit ───────────────────────────────────────────────────────────────
+document.getElementById("iniForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = I18N.saving;
+
+  const fd = new FormData(this);
+  const payload = {};
+  for (const [k, v] of fd.entries()) {
+    payload[k] = v.trim() === "" ? null : v.trim();
+  }
+
+  if (IS_EDIT && statusSelect && payload.status !== ORIGINAL_STATUS) {
+    if (!payload.status_comment) {
+      showAlert(I18N.statusReq, "error");
+      btn.disabled = false;
+      btn.textContent = I18N.btnSave;
+      return;
+    }
+  }
+
+  if (!IS_EDIT) {
+    payload.created_by = payload.changed_by;
+    delete payload.changed_by;
+  }
+
+  const url    = IS_EDIT
+    ? `/api/initiatives/${INITIATIVE_ID}?site=${SITE_ID}`
+    : `/api/initiatives?site=${SITE_ID}`;
+  const method = IS_EDIT ? "PUT" : "POST";
+
+  try {
+    const r    = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+
+    if (!r.ok) {
+      showAlert(data.error || I18N.saveError, "error");
+      btn.disabled = false;
+      btn.textContent = IS_EDIT ? I18N.btnSave : I18N.btnCreate;
+      return;
+    }
+
+    if (IS_EDIT) {
+      showAlert(I18N.savedOk, "ok");
+      setTimeout(() => location.reload(), 900);
+    } else {
+      const newId = data.id;
+      try {
+        const relRes = await fetch(`/api/initiatives/${newId}/related?site=${SITE_ID}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const relData = await relRes.json();
+        if (relData.count > 0) {
+          sessionStorage.setItem("coach_notification", JSON.stringify({
+            count:             relData.count,
+            initiative_id:     newId,
+            initiative_title:  relData.initiative_title,
+            related:           relData.related,
+          }));
+        }
+      } catch (_) { /* no bloquear si falla */ }
+
+      showAlert(I18N.createdOk, "ok");
+      setTimeout(() => { window.location.href = `/initiatives?site=${SITE_ID}`; }, 700);
+    }
+  } catch {
+    showAlert(I18N.netError, "error");
+    btn.disabled = false;
+    btn.textContent = IS_EDIT ? I18N.btnSave : I18N.btnCreate;
+  }
+});
+
+function showAlert(msg, type) {
+  const el = document.getElementById("formAlert");
+  el.textContent = msg;
+  el.style.display = "inline-block";
+  el.style.background = type === "ok" ? "#c6f6d5" : "#fed7aa";
+  el.style.color       = type === "ok" ? "#276749"  : "#7c2d12";
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+{% if initiative %}
+let deleteModalInstance = null;
+function confirmDelete() {
+  const el = document.getElementById("deleteModal");
+  if (!deleteModalInstance) deleteModalInstance = new bootstrap.Modal(el);
+  document.getElementById("deleteReason").value = "";
+  document.getElementById("deleteBy").value = "";
+  document.getElementById("deleteAlert").style.display = "none";
+  deleteModalInstance.show();
+}
+
+async function doDelete() {
+  const reason = document.getElementById("deleteReason").value.trim();
+  const by     = document.getElementById("deleteBy").value.trim();
+  const alertEl = document.getElementById("deleteAlert");
+
+  if (!reason) {
+    alertEl.textContent = I18N.valReasonReq;
+    alertEl.style.display = "inline-block";
+    alertEl.style.background = "#fed7aa"; alertEl.style.color = "#7c2d12";
+    return;
+  }
+  if (!by) {
+    alertEl.textContent = I18N.valNameReq;
+    alertEl.style.display = "inline-block";
+    alertEl.style.background = "#fed7aa"; alertEl.style.color = "#7c2d12";
+    return;
+  }
+
+  const r = await fetch(`/api/initiatives/${INITIATIVE_ID}?site=${SITE_ID}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deleted_by: by, deletion_reason: reason }),
+  });
+  if (r.ok) {
+    window.location.href = `/initiatives?site=${SITE_ID}`;
+  } else {
+    const d = await r.json();
+    alertEl.textContent = d.error || I18N.valDeleteErr;
+    alertEl.style.display = "inline-block";
+    alertEl.style.background = "#fed7aa"; alertEl.style.color = "#7c2d12";
+  }
+}
+{% endif %}
+
+// ── Coach Panel ───────────────────────────────────────────────────────────────
+let _coachOpen = false;
+
+function toggleCoachPanel() {
+  _coachOpen = !_coachOpen;
+  const panel   = document.getElementById("coach-panel");
+  const overlay = document.getElementById("coach-overlay");
+  panel.style.display   = _coachOpen ? "flex"  : "none";
+  overlay.style.display = _coachOpen ? "block" : "none";
+  if (_coachOpen) {
+    document.getElementById("coach-input").focus();
+    // Auto-open if navigated via #coach anchor
+  }
+}
+
+// Auto-open coach if URL has #coach
+if (window.location.hash === "#coach") {
+  toggleCoachPanel();
+}
+
+function sendCoachPreset(text) {
+  document.getElementById("coach-input").value = text;
+  sendCoachMessage();
+}
+
+async function sendCoachMessage() {
+  const input = document.getElementById("coach-input");
+  const query = input.value.trim();
+  if (!query) return;
+
+  input.value = "";
+  _hideWelcome();
+  _appendMsg("user", query);
+
+  const loadingId = "coach-loading-" + Date.now();
+  _appendLoading(loadingId);
+
+  const btn = document.getElementById("coach-send-btn");
+  btn.disabled    = true;
+  btn.textContent = "…";
+
+  try {
+    const res = await fetch("/api/initiatives/coach-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        initiative_id: INITIATIVE_ID,
+        site_id:       SITE_ID,
+      }),
+    });
+    const data = await res.json();
+    document.getElementById(loadingId)?.remove();
+
+    const isMock = data.source === "mock";
+    _appendMsg("assistant", data.error ? ("⚠ " + data.error) : (data.text || "—"), isMock);
+
+    if (data.sources && data.sources.length) {
+      _appendSources(data.sources);
+    }
+  } catch (err) {
+    document.getElementById(loadingId)?.remove();
+    _appendMsg("assistant", "⚠ " + _esc(err.message), true);
+  }
+
+  btn.disabled    = false;
+  btn.textContent = I18N.coachSend;
+}
+
+function _hideWelcome() {
+  const w = document.getElementById("coach-welcome");
+  if (w) w.style.display = "none";
+}
+
+function _appendMsg(role, text, isMock) {
+  const container = document.getElementById("coach-messages");
+  const el = document.createElement("div");
+
+  if (role === "user") {
+    el.style.cssText = [
+      "background:var(--pp-info)", "color:white", "padding:9px 13px",
+      "border-radius:14px 14px 4px 14px", "font-size:13px", "max-width:85%",
+      "align-self:flex-end", "word-wrap:break-word", "white-space:pre-wrap",
+      "margin-left:auto",
+    ].join(";");
+    el.textContent = text;
+  } else {
+    const bg  = isMock ? "#fff8e1" : "#f0f4ff";
+    const bdr = isMock ? "#ffe082"  : "#c7d7ff";
+    el.style.cssText = [
+      `background:${bg}`, `border:1px solid ${bdr}`, "padding:10px 14px",
+      "border-radius:4px 14px 14px 14px", "font-size:13px", "max-width:92%",
+      "word-wrap:break-word",
+    ].join(";");
+    const label = `<span style="font-size:10px;font-weight:700;color:var(--pp-text-faint);display:block;margin-bottom:5px;">🎓 Coach${isMock ? ' (demo)' : ''}</span>`;
+    el.innerHTML = label + _esc(text).replace(/\n/g, "<br>");
+  }
+
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+function _appendLoading(id) {
+  const container = document.getElementById("coach-messages");
+  const el = document.createElement("div");
+  el.id = id;
+  el.style.cssText = "background:#f7fafc;padding:10px 14px;border-radius:4px 14px 14px 14px;font-size:13px;color:var(--pp-text-faint);max-width:80%;";
+  el.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid #cbd5e0;border-top-color:var(--pp-info);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;"></span>${_esc(I18N.coachThinking)}`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+function _appendSources(sources) {
+  const container = document.getElementById("coach-messages");
+  const el = document.createElement("div");
+  el.style.cssText = "font-size:11px;color:var(--pp-text-faint);padding:4px 6px;";
+  el.innerHTML = "📄 " + sources.map(s => _esc(s)).join(", ");
+  container.appendChild(el);
+}
+
+// ── Document viewer ───────────────────────────────────────────────────────────
+{% if initiative %}
+let _docModalInstance = null;
+let _docLoaded = false;
+
+(async function checkDocument() {
+  try {
+    const r = await fetch(`/api/initiatives/${INITIATIVE_ID}/document?site=${SITE_ID}`);
+    if (r.ok) {
+      document.getElementById("view-doc-btn").style.display = "flex";
+    }
+  } catch (_) {}
+})();
+
+async function openDocumentModal() {
+  const modalEl = document.getElementById("docModal");
+  if (!_docModalInstance) _docModalInstance = new bootstrap.Modal(modalEl);
+  document.getElementById("docModalTitle").textContent = "…";
+  document.getElementById("docModalBody").innerHTML = `<div class="text-muted">${_esc(I18N.docLoading)}</div>`;
+  _docModalInstance.show();
+
+  if (_docLoaded) return;
+  try {
+    const r = await fetch(`/api/initiatives/${INITIATIVE_ID}/document?site=${SITE_ID}`);
+    if (!r.ok) throw new Error("not found");
+    const d = await r.json();
+    _docLoaded = true;
+    document.getElementById("docModalTitle").textContent = `${d.document_type}: ${d.initiative_title}`;
+    document.getElementById("docModalBody").innerHTML = d.content_html;
+  } catch {
+    document.getElementById("docModalBody").innerHTML =
+      `<p class="text-muted">${_esc(I18N.docNotFound)}</p>`;
+  }
+}
+{% endif %}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && _coachOpen) toggleCoachPanel();
+});
+</script>
+{% endblock %}

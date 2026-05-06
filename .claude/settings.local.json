@@ -6,7 +6,8 @@
       "Bash(lilly-code models:*)",
       "Bash(python:*)",
       "Bash(ls *)",
-      "WebFetch(domain:claude.ai)"
+      "WebFetch(domain:claude.ai)",
+      "Bash(xargs grep *)"
     ]
   }
 }

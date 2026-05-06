@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ t('ini_arch_title') }}{% endblock %}
+
+{% block content %}
+<div class="pp-page-head">
+  <div>
+    <div class="pp-crumbs">
+      <span>{{ t('ini_crumb_ci') }}</span><span class="pp-crumb-sep">/</span>
+      <a href="/initiatives" style="color:inherit;text-decoration:none;">{{ t('ini_crumb_list') }}</a>
+      <span class="pp-crumb-sep">/</span>
+      <span>{{ t('ini_crumb_archived') }}</span>
+    </div>
+    <h1 class="pp-h1">{{ t('ini_arch_title') }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ sites[site_id].flag }} {{ sites[site_id].name }} — {{ t('ini_arch_subtitle') }}</p>
+  </div>
+  <a href="/initiatives" class="pp-btn">{{ t('ini_btn_back_active') }}</a>
+</div>
+
+{% if initiatives %}
+<div class="pp-card-head mb-3" style="margin-bottom:12px !important;">
+  <div>
+    <p class="pp-eyebrow pp-eyebrow-muted">{{ t('ini_arch_eyebrow') }}</p>
+    <h3 class="pp-card-title">{{ t('ini_arch_section_title') }}</h3>
+  </div>
+  <span class="pp-tag pp-tag-neutral">{{ initiatives|length }}</span>
+</div>
+
+<div class="pp-grid-3">
+  {% for ini in initiatives %}
+  <div class="pp-card archived-card">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+      <div class="d-flex align-items-center gap-1 flex-wrap">
+        <span class="pp-tag method-badge--{{ ini.methodology }}">{{ ini.methodology }}</span>
+        <span class="pp-tag status-badge--{{ ini.status | replace(' ','_') }}">
+          {% if ini.status == 'En progreso'  %}{{ t('ini_st_en_progreso') }}
+          {% elif ini.status == 'No iniciado' %}{{ t('ini_st_no_iniciado') }}
+          {% elif ini.status == 'Terminado'   %}{{ t('ini_st_terminado') }}
+          {% else %}{{ t('ini_st_cancelado') }}{% endif %}
+        </span>
+        <span class="pp-tag cat-badge--{{ ini.category }}">{{ ini.category }}</span>
+        {% if ini.line_number %}<span class="pp-tag pp-tag-neutral">L{{ ini.line_number }}</span>{% endif %}
+      </div>
+      <span class="pp-faint" style="font-size:11px;">👤 {{ ini.owner }}</span>
+    </div>
+
+    <h6 style="font-weight:700; font-size:13px; margin-bottom:4px; color:var(--pp-text-faint);">{{ ini.title }}</h6>
+    <p class="pp-faint" style="font-size:12px; margin-bottom:8px;">{{ ini.description }}</p>
+
+    <div class="d-flex gap-3 flex-wrap pp-faint" style="font-size:11px; margin-bottom:8px;">
+      <span>{{ t('ini_card_start') }} {{ ini.start_date }}</span>
+      <span>{{ t('ini_card_target') }} {{ ini.target_date }}</span>
+    </div>
+
+    <div style="margin-top:8px; padding:8px; background:var(--pp-bg); border-radius:6px; border:1px solid var(--pp-border); font-size:12px;">
+      <div style="color:var(--pp-red); font-weight:600; margin-bottom:4px;">{{ t('ini_arch_deleted_box') }}</div>
+      {% if ini.deleted_at %}
+      <div class="pp-faint">🕐 {{ ini.deleted_at[:16] }}</div>
+      {% endif %}
+      {% if ini.deleted_by %}
+      <div class="pp-faint">👤 {{ ini.deleted_by }}</div>
+      {% endif %}
+      {% if ini.deletion_reason %}
+      <div style="margin-top:4px; font-style:italic;">{{ ini.deletion_reason }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="pp-empty">
+  <p class="pp-empty-title">{{ t('ini_arch_empty') }}</p>
+  <a href="/initiatives" class="pp-btn mt-2">{{ t('ini_arch_see_active') }}</a>
+</div>
+{% endif %}
+
+<style>
+.archived-card { opacity: 0.85; border-left: 3px solid var(--pp-text-faint) !important; }
+.archived-card:hover { opacity: 1; }
+
+.method-badge--A3     { background: #bee3f8; color: #2c5282; }
+.method-badge--Kaizen { background: #c6f6d5; color: #276749; }
+.method-badge--DMAIC  { background: #e9d5ff; color: #553c9a; }
+.method-badge--5Why   { background: #fed7aa; color: #7c2d12; }
+.method-badge--other  { background: #e2e8f0; color: #4a5568; }
+
+.status-badge--En_progreso { background: #ebf8ff; color: #2c5282; }
+.status-badge--No_iniciado { background: #f7fafc; color: #4a5568; }
+.status-badge--Terminado   { background: #f0fff4; color: #276749; }
+.status-badge--Cancelado   { background: #fff5f5; color: #9b2c2c; }
+
+.cat-badge--Safety   { background: #fff5f5; color: #9b2c2c; }
+.cat-badge--Quality  { background: #ebf8ff; color: #2b6cb0; }
+.cat-badge--Delivery { background: #fefcbf; color: #744210; }
+.cat-badge--Cost     { background: #f0fff4; color: #276749; }
+.cat-badge--People   { background: #faf5ff; color: #553c9a; }
+</style>
+{% endblock %}

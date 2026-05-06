@@ -44,7 +44,14 @@ _CLASSIFICATION_SYSTEM = (
     "deben activarse para responderlo de forma óptima. "
     "Responde SIEMPRE con un objeto JSON válido y nada más. "
     "No añadas explicaciones fuera del JSON. "
-    "Si no hay agentes registrados o el mensaje es genérico, usa la lista vacía."
+    "Si no hay agentes registrados o el mensaje es genérico, usa la lista vacía.\n\n"
+    "Guía de selección rápida:\n"
+    "- 'ci_coach': preguntas sobre cómo gestionar o mejorar una iniciativa concreta, "
+    "revisión de A3, estimar beneficio, validar plazos, buscar proyectos similares entre plantas.\n"
+    "- 'kaizen': oportunidades de mejora nuevas, análisis cross-site de problemas, "
+    "best practices, informe diario.\n"
+    "- Ambos pueden activarse juntos si el mensaje mezcla análisis de oportunidades y "
+    "coaching sobre una iniciativa específica."
 )
 
 _CLASSIFICATION_TEMPLATE = """\

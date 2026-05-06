@@ -476,15 +476,30 @@ CREATE TABLE IF NOT EXISTS improvement_initiatives (
     description      TEXT NOT NULL,
     methodology      TEXT NOT NULL DEFAULT 'Kaizen'
                      CHECK(methodology IN ('A3','Kaizen','DMAIC','5Why','other')),
-    status           TEXT NOT NULL DEFAULT 'planned'
-                     CHECK(status IN ('planned','in_progress','completed','on_hold')),
+    status           TEXT NOT NULL DEFAULT 'No iniciado'
+                     CHECK(status IN ('No iniciado','En progreso','Terminado','Cancelado')),
+    category         TEXT NOT NULL DEFAULT 'Quality'
+                     CHECK(category IN ('Safety','Quality','Delivery','Cost','People')),
     owner            TEXT NOT NULL,
     start_date       TEXT NOT NULL,
     target_date      TEXT NOT NULL,
     completion_date  TEXT,
     expected_benefit TEXT,
     actual_benefit   TEXT,
-    linked_problem_id INTEGER REFERENCES top_problems(id) ON DELETE SET NULL
+    linked_problem_id INTEGER REFERENCES top_problems(id) ON DELETE SET NULL,
+    deleted          INTEGER NOT NULL DEFAULT 0,
+    deleted_at       TEXT,
+    deleted_by       TEXT,
+    deletion_reason  TEXT
+);
+CREATE TABLE IF NOT EXISTS initiative_audit_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    initiative_id INTEGER NOT NULL REFERENCES improvement_initiatives(id) ON DELETE CASCADE,
+    field_changed TEXT NOT NULL,
+    old_value     TEXT,
+    new_value     TEXT,
+    changed_by    TEXT NOT NULL,
+    changed_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS initiative_documents (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -502,6 +517,7 @@ CREATE INDEX IF NOT EXISTS idx_problems_line       ON top_problems(line_number);
 CREATE INDEX IF NOT EXISTS idx_initiatives_site    ON improvement_initiatives(site_id);
 CREATE INDEX IF NOT EXISTS idx_initiatives_status  ON improvement_initiatives(status);
 CREATE INDEX IF NOT EXISTS idx_init_docs_init      ON initiative_documents(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_init      ON initiative_audit_log(initiative_id);
 CREATE TABLE IF NOT EXISTS notification_config (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     site_id     TEXT NOT NULL UNIQUE,
@@ -983,7 +999,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
                 "line": None,
                 "title": "A3: Eliminación de atascos en etiquetadora automática",
                 "desc": "Proyecto A3 para eliminar las paradas recurrentes por atasco en la etiquetadora automática en todas las líneas de Alcobendas. Problema principal de OEE de la planta.",
-                "method": "A3", "status": "completed", "owner": "Isabel Torres",
+                "method": "A3", "status": "Terminado", "category": "Quality",
+                "owner": "Isabel Torres",
                 "start": "2025-10-20", "target": "2026-02-28", "completion": "2026-02-18",
                 "benefit_exp": "Reducción de atascos un 85%, recuperando ≥4 h/semana de producción perdida",
                 "benefit_act": "Atascos reducidos de 5,2/semana a 0,9/semana. Recuperadas 3,8 h/semana de producción. OEE +1,2 pp.",
@@ -993,7 +1010,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
                 "line": None,
                 "title": "SMED: Reducción del tiempo de cambio de formato (<40 min)",
                 "desc": "Proyecto SMED para reducir el tiempo de cambio de formato de 58 min a menos de 40 min en todas las líneas. Incluye kits de cambio con código de color y estandarización de secuencia.",
-                "method": "A3", "status": "in_progress", "owner": "Pedro García",
+                "method": "A3", "status": "En progreso", "category": "Delivery",
+                "owner": "Pedro García",
                 "start": "2026-02-03", "target": "2026-06-30", "completion": None,
                 "benefit_exp": "Reducción del tiempo de cambio de 58 a <40 min; recuperar ≥3 h/semana de capacidad productiva",
                 "benefit_act": None,
@@ -1005,7 +1023,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
                 "line": None,
                 "title": "SMED: Changeover Standardization — Global Best Practice (45 min benchmark)",
                 "desc": "SMED project to reduce and standardize format changeover time across all 3 lines. Indianapolis established as the global benchmark site. Methodology transferable to all network plants.",
-                "method": "A3", "status": "completed", "owner": "Jennifer Taylor",
+                "method": "A3", "status": "Terminado", "category": "Delivery",
+                "owner": "Jennifer Taylor",
                 "start": "2025-06-01", "target": "2025-11-30", "completion": "2025-11-20",
                 "benefit_exp": "Reduce average changeover from 72 min to <50 min; establish transferable best practice for the global network",
                 "benefit_act": "Average changeover: 72 min → 45 min (38% reduction). Variability: 55–90 min → 38–55 min. Annual hours recovered: 210 h/year (3 lines). OEE +4.1 pp. Methodology deployed to Alcobendas Q1 2026.",
@@ -1015,7 +1034,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
                 "line": None,
                 "title": "DMAIC: Elimination of Intermittent Serialization Camera Errors",
                 "desc": "DMAIC project to identify and permanently eliminate the root cause of intermittent 2D camera read errors in the serialization module, which is the primary OEE loss driver across all Indianapolis lines.",
-                "method": "DMAIC", "status": "in_progress", "owner": "Karen Martinez",
+                "method": "DMAIC", "status": "En progreso", "category": "Quality",
+                "owner": "Karen Martinez",
                 "start": "2026-01-20", "target": "2026-06-30", "completion": None,
                 "benefit_exp": "Reduce serialization stoppages from 3.8/week to <0.3/week; recover ~60 min/week of lost production; OEE +1.3 pp",
                 "benefit_act": None,
@@ -1026,7 +1046,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
             {
                 "line": 1, "title": "Amélioration OEE ligne sérialisation — résolution erreurs caméra",
                 "desc": "Projet A3 pour éliminer les erreurs répétées de lecture caméra 2D dans le module de sérialisation de la ligne 1.",
-                "method": "A3", "status": "in_progress", "owner": "Claire Rousseau",
+                "method": "A3", "status": "En progreso", "category": "Quality",
+                "owner": "Claire Rousseau",
                 "start": "2026-02-01", "target": "2026-06-30", "completion": None,
                 "benefit_exp": "Réduire les arrêts liés à la sérialisation de 3,5/semaine à <0,5/semaine",
                 "benefit_act": None,
@@ -1035,7 +1056,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
             {
                 "line": 3, "title": "5 Pourquoi: Adhérence étiquettes basse température",
                 "desc": "Analyse 5 Pourquoi pour identifier et éliminer la cause racine du problème d'adhérence des étiquettes lors des périodes hivernales.",
-                "method": "5Why", "status": "in_progress", "owner": "Sophie Lefebvre",
+                "method": "5Why", "status": "En progreso", "category": "Quality",
+                "owner": "Sophie Lefebvre",
                 "start": "2026-02-15", "target": "2026-04-30", "completion": None,
                 "benefit_exp": "Éliminer les non-conformités étiquetage liées à la température — 0 réclamation client",
                 "benefit_act": None,
@@ -1046,7 +1068,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
             {
                 "line": 1, "title": "Riduzione scarti per peso fuori tolleranza — Linea 1",
                 "desc": "Progetto A3 per ridurre il tasso di scarto per peso fuori tolleranza sulla linea 1, attualmente superiore all'1,5%.",
-                "method": "A3", "status": "in_progress", "owner": "Chiara Ricci",
+                "method": "A3", "status": "En progreso", "category": "Quality",
+                "owner": "Chiara Ricci",
                 "start": "2026-02-10", "target": "2026-05-31", "completion": None,
                 "benefit_exp": "Ridurre il tasso di scarto da 1,5% a <0,5%; risparmio stimato 15.000 unità/mese",
                 "benefit_act": None,
@@ -1055,7 +1078,8 @@ def _seed_problems_and_initiatives(site_id: str, conn: sqlite3.Connection) -> No
             {
                 "line": 2, "title": "Kaizen: Eliminazione guasti pick-and-place L2",
                 "desc": "Evento Kaizen focalizzato sull'eliminazione dei guasti ricorrenti nel sistema pick-and-place della linea 2 causati dal deterioramento delle ventose.",
-                "method": "Kaizen", "status": "planned", "owner": "Francesco Romano",
+                "method": "Kaizen", "status": "No iniciado", "category": "Cost",
+                "owner": "Francesco Romano",
                 "start": "2026-04-14", "target": "2026-04-16", "completion": None,
                 "benefit_exp": "Ridurre i guasti pick-and-place da 3,5/settimana a <0,5/settimana",
                 "benefit_act": None,
@@ -1625,13 +1649,13 @@ ROOT CAUSE SECONDARIA: Variabilità del materiale in ingresso superiore alle spe
         cur = conn.execute(
             """INSERT INTO improvement_initiatives
                (site_id, line_number, title, description, methodology, status,
-                owner, start_date, target_date, completion_date,
+                category, owner, start_date, target_date, completion_date,
                 expected_benefit, actual_benefit, linked_problem_id)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 site_id, ini["line"], ini["title"], ini["desc"],
-                ini["method"], ini["status"], ini["owner"],
-                ini["start"], ini["target"], ini.get("completion"),
+                ini["method"], ini["status"], ini.get("category", "Quality"),
+                ini["owner"], ini["start"], ini["target"], ini.get("completion"),
                 ini.get("benefit_exp"), ini.get("benefit_act"), linked_id,
             ),
         )

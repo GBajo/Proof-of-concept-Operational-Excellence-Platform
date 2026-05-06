@@ -1,13 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Iniciativas de Mejora{% endblock %}
+{% block title %}{{ t('ini_page_title') }}{% endblock %}
 
 {% block content %}
+<!-- Coach related-initiatives notification (populated by JS from sessionStorage) -->
+<div id="coach-notification" style="display:none; margin-bottom:14px;
+     background:#ebf8ff; border:1px solid #bee3f8; border-radius:10px;
+     padding:12px 16px; display:none; align-items:center; gap:12px;">
+  <span style="font-size:20px; flex-shrink:0;">🎓</span>
+  <div style="flex:1; font-size:13px;">
+    <strong id="coach-notif-title" style="color:#2c5282;"></strong>
+    <span id="coach-notif-text" style="color:#2b6cb0; margin-left:6px;"></span>
+  </div>
+  <button id="coach-notif-see-btn" onclick="openRelatedModal()"
+          class="pp-btn pp-btn-sm"
+          style="font-size:12px; background:#3182ce; color:white; border:none; flex-shrink:0;">
+    {{ t('ini_coach_notif_btn') }}
+  </button>
+  <button onclick="dismissCoachNotif()"
+          style="background:none; border:none; font-size:16px; cursor:pointer;
+                 color:#718096; flex-shrink:0; padding:0 4px;">×</button>
+</div>
+
 <!-- Header -->
 <div class="pp-page-head">
   <div>
-    <div class="pp-crumbs"><span>Mejora Continua</span><span class="pp-crumb-sep">/</span><span>Iniciativas</span></div>
-    <h1 class="pp-h1">📋 Iniciativas de Mejora Continua</h1>
-    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ sites[site_id].flag }} {{ sites[site_id].name }} — Proyectos A3, Kaizen, DMAIC y 5Why</p>
+    <div class="pp-crumbs"><span>{{ t('ini_crumb_ci') }}</span><span class="pp-crumb-sep">/</span><span>{{ t('ini_crumb_list') }}</span></div>
+    <h1 class="pp-h1">{{ t('ini_page_title') }}</h1>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ sites[site_id].flag }} {{ sites[site_id].name }} — {{ t('ini_page_subtitle_suffix') }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/initiatives/archived?site={{ site_id }}" class="pp-btn pp-btn-sm" style="font-size:12px;">{{ t('ini_btn_archived') }}</a>
+    <a href="/initiatives/new?site={{ site_id }}" class="pp-btn pp-btn-primary">{{ t('ini_btn_new') }}</a>
   </div>
 </div>
 
@@ -16,47 +39,82 @@
   <form method="get" id="filterForm">
     <div class="d-flex align-items-center gap-3 flex-wrap">
       <div class="pp-field" style="margin:0;">
-        <label class="pp-label" style="margin-bottom:2px;">Estado</label>
+        <label class="pp-label" style="margin-bottom:2px;">{{ t('ini_filter_status') }}</label>
         <select name="status" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
-          <option value="">Todos</option>
-          <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>En curso</option>
-          <option value="planned"     {% if current_status=='planned'     %}selected{% endif %}>Planificado</option>
-          <option value="completed"   {% if current_status=='completed'   %}selected{% endif %}>Completado</option>
-          <option value="on_hold"     {% if current_status=='on_hold'     %}selected{% endif %}>En espera</option>
+          <option value="">{{ t('ini_filter_all_st') }}</option>
+          <option value="En progreso" {% if current_status=='En progreso' %}selected{% endif %}>{{ t('ini_st_en_progreso') }}</option>
+          <option value="No iniciado" {% if current_status=='No iniciado' %}selected{% endif %}>{{ t('ini_st_no_iniciado') }}</option>
+          <option value="Terminado"   {% if current_status=='Terminado'   %}selected{% endif %}>{{ t('ini_st_terminado') }}</option>
+          <option value="Cancelado"   {% if current_status=='Cancelado'   %}selected{% endif %}>{{ t('ini_st_cancelado') }}</option>
         </select>
       </div>
       <div class="pp-field" style="margin:0;">
-        <label class="pp-label" style="margin-bottom:2px;">Metodología</label>
+        <label class="pp-label" style="margin-bottom:2px;">{{ t('ini_filter_category') }}</label>
+        <select name="category" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
+          <option value="">{{ t('ini_filter_all_cat') }}</option>
+          <option value="Safety"   {% if current_category=='Safety'   %}selected{% endif %}>Safety</option>
+          <option value="Quality"  {% if current_category=='Quality'  %}selected{% endif %}>Quality</option>
+          <option value="Delivery" {% if current_category=='Delivery' %}selected{% endif %}>Delivery</option>
+          <option value="Cost"     {% if current_category=='Cost'     %}selected{% endif %}>Cost</option>
+          <option value="People"   {% if current_category=='People'   %}selected{% endif %}>People</option>
+        </select>
+      </div>
+      <div class="pp-field" style="margin:0;">
+        <label class="pp-label" style="margin-bottom:2px;">{{ t('ini_filter_method') }}</label>
         <select name="methodology" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
-          <option value="">Todas</option>
+          <option value="">{{ t('ini_filter_all_met') }}</option>
           <option value="A3"    {% if current_method=='A3'    %}selected{% endif %}>A3</option>
           <option value="Kaizen"{% if current_method=='Kaizen'%}selected{% endif %}>Kaizen</option>
           <option value="DMAIC" {% if current_method=='DMAIC' %}selected{% endif %}>DMAIC</option>
           <option value="5Why"  {% if current_method=='5Why'  %}selected{% endif %}>5Why</option>
+          <option value="other" {% if current_method=='other' %}selected{% endif %}>other</option>
         </select>
       </div>
       <div class="pp-field" style="margin:0;">
-        <label class="pp-label" style="margin-bottom:2px;">Línea</label>
+        <label class="pp-label" style="margin-bottom:2px;">{{ t('ini_filter_line') }}</label>
         <select name="line" class="pp-select" style="width:auto; padding:5px 10px;" onchange="document.getElementById('filterForm').submit()">
-          <option value="">Todas</option>
+          <option value="">{{ t('ini_filter_all_lines') }}</option>
           {% for l in site_lines %}
           <option value="{{ l }}" {% if current_line==l %}selected{% endif %}>L{{ l }}</option>
           {% endfor %}
         </select>
       </div>
-      {% if current_status or current_method or current_line %}
-      <a href="/initiatives" class="pp-btn pp-btn-sm" style="margin-top:18px;">✕ Limpiar</a>
+      <div class="pp-field" style="margin:0;">
+        <label class="pp-label" style="margin-bottom:2px;">{{ t('ini_filter_owner_lbl') }}</label>
+        <input type="text" name="owner" class="pp-input" style="width:140px; padding:5px 10px;"
+               placeholder="{{ t('ini_filter_owner_ph') }}"
+               value="{{ current_owner or '' }}">
+      </div>
+      <div style="margin-top:18px;">
+        <button type="submit" class="pp-btn pp-btn-sm">{{ t('ini_filter_btn') }}</button>
+      </div>
+      {% if current_status or current_method or current_line or current_category or current_owner %}
+      <div style="margin-top:18px;">
+        <a href="/initiatives" class="pp-btn pp-btn-sm">{{ t('ini_filter_clear') }}</a>
+      </div>
       {% endif %}
     </div>
   </form>
+</div>
+
+<!-- Evolution chart -->
+<div class="pp-card mb-4" style="margin-bottom:16px !important;">
+  <div class="pp-card-head">
+    <div>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('ini_chart_evol_eyebrow') }}</p>
+      <h3 class="pp-card-title">{{ t('ini_chart_evol_title') }}</h3>
+    </div>
+    <div id="statusSummary" class="d-flex gap-2 flex-wrap"></div>
+  </div>
+  <div id="evolutionChart" style="width:100%;height:260px"></div>
 </div>
 
 <!-- Gantt timeline -->
 <div class="pp-card mb-4" style="margin-bottom:16px !important;">
   <div class="pp-card-head">
     <div>
-      <p class="pp-eyebrow pp-eyebrow-muted">Planificación</p>
-      <h3 class="pp-card-title">📅 Timeline de Iniciativas</h3>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('ini_chart_gantt_eyebrow') }}</p>
+      <h3 class="pp-card-title">{{ t('ini_chart_gantt_title') }}</h3>
     </div>
   </div>
   <div id="ganttChart" style="width:100%;height:320px"></div>
@@ -66,58 +124,68 @@
 <div class="mb-4" style="margin-bottom:16px !important;">
   <div class="pp-card-head mb-3" style="margin-bottom:12px !important;">
     <div>
-      <p class="pp-eyebrow pp-eyebrow-muted">Lista</p>
-      <h3 class="pp-card-title">🗂 Iniciativas</h3>
+      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('ini_list_eyebrow') }}</p>
+      <h3 class="pp-card-title">{{ t('ini_list_title') }}</h3>
     </div>
     <span class="pp-tag pp-tag-neutral">{{ initiatives|length }}</span>
   </div>
   {% if initiatives %}
   <div class="pp-grid-3">
     {% for ini in initiatives %}
-    <div class="pp-card init-card init-card--{{ ini.status }} {% if highlight == ini.id %}init-card--highlighted{% endif %}"
+    <div class="pp-card init-card init-card--{{ ini.status | replace(' ','_') }} {% if highlight == ini.id %}init-card--highlighted{% endif %}"
          id="ini-{{ ini.id }}" data-id="{{ ini.id }}">
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
         <div class="d-flex align-items-center gap-1 flex-wrap">
           <span class="pp-tag method-badge--{{ ini.methodology }}">{{ ini.methodology }}</span>
-          <span class="pp-tag status-badge--{{ ini.status }}">
-            {% if ini.status == 'in_progress' %}🔄 En curso
-            {% elif ini.status == 'planned'   %}⏳ Planificado
-            {% elif ini.status == 'completed' %}✅ Completado
-            {% else %}⏸ En espera{% endif %}
+          <span class="pp-tag status-badge--{{ ini.status | replace(' ','_') }}">
+            {% if ini.status == 'En progreso'  %}{{ t('ini_st_en_progreso') }}
+            {% elif ini.status == 'No iniciado' %}{{ t('ini_st_no_iniciado') }}
+            {% elif ini.status == 'Terminado'   %}{{ t('ini_st_terminado') }}
+            {% else %}{{ t('ini_st_cancelado') }}{% endif %}
           </span>
+          <span class="pp-tag cat-badge--{{ ini.category }}">{{ ini.category }}</span>
           {% if ini.line_number %}<span class="pp-tag pp-tag-neutral">L{{ ini.line_number }}</span>{% endif %}
         </div>
-        <span class="pp-faint" style="font-size:11px;">👤 {{ ini.owner }}</span>
+        <div class="d-flex gap-1 align-items-center">
+          <span class="pp-faint" style="font-size:11px;">👤 {{ ini.owner }}</span>
+          <a href="/initiatives/{{ ini.id }}/edit" class="pp-btn pp-btn-sm" style="padding:2px 8px; font-size:11px;" title="{{ t('ini_card_edit') }}">✏️</a>
+          <a href="/initiatives/{{ ini.id }}/edit" class="pp-btn pp-btn-sm"
+             style="padding:2px 8px; font-size:11px; color:var(--pp-info); border-color:var(--pp-info);"
+             title="{{ t('ini_card_coach') }}"
+             onclick="event.preventDefault(); openCoachForInit({{ ini.id }}, '{{ ini.title | replace("'", "\\'") | replace('"', '\\"') }}')">🎓</a>
+          <button class="pp-btn pp-btn-sm" style="padding:2px 8px; font-size:11px; color:var(--pp-red);"
+                  title="{{ t('ini_card_delete') }}" onclick="openDeleteModal({{ ini.id }}, '{{ ini.title | replace("'", "\\'") }}')">🗑</button>
+        </div>
       </div>
 
       <h6 style="font-weight:700; font-size:13px; margin-bottom:4px;">{{ ini.title }}</h6>
       <p class="pp-faint" style="font-size:12px; margin-bottom:8px;">{{ ini.description }}</p>
 
       <div class="d-flex gap-3 flex-wrap pp-faint" style="font-size:11px; margin-bottom:8px;">
-        <span>🗓 Inicio: {{ ini.start_date }}</span>
-        <span>🎯 Target: {{ ini.target_date }}</span>
+        <span>{{ t('ini_card_start') }} {{ ini.start_date }}</span>
+        <span>{{ t('ini_card_target') }} {{ ini.target_date }}</span>
         {% if ini.completion_date %}
-        <span>✅ Completado: {{ ini.completion_date }}</span>
+        <span>{{ t('ini_card_completed') }} {{ ini.completion_date }}</span>
         {% endif %}
       </div>
 
       {% if ini.expected_benefit %}
-      <div class="pp-faint" style="font-size:12px; margin-bottom:4px;"><span style="font-weight:600;">💡 Beneficio esperado:</span> {{ ini.expected_benefit }}</div>
+      <div class="pp-faint" style="font-size:12px; margin-bottom:4px;"><span style="font-weight:600;">{{ t('ini_card_exp_benefit') }}</span> {{ ini.expected_benefit }}</div>
       {% endif %}
       {% if ini.actual_benefit %}
-      <div style="font-size:12px; color:var(--pp-good); margin-bottom:4px;"><span style="font-weight:600;">📈 Resultado real:</span> {{ ini.actual_benefit }}</div>
+      <div style="font-size:12px; color:var(--pp-good); margin-bottom:4px;"><span style="font-weight:600;">{{ t('ini_card_act_benefit') }}</span> {{ ini.actual_benefit }}</div>
       {% endif %}
 
       {% if ini.problem_desc %}
       <div class="mb-2">
-        <a href="/problems" style="font-size:12px; font-weight:600; color:var(--pp-warn); text-decoration:none;">⚠ Problema origen: {{ ini.problem_desc[:60] }}{% if ini.problem_desc|length > 60 %}...{% endif %}</a>
+        <a href="/problems" style="font-size:12px; font-weight:600; color:var(--pp-warn); text-decoration:none;">{{ t('ini_card_problem') }} {{ ini.problem_desc[:60] }}{% if ini.problem_desc|length > 60 %}...{% endif %}</a>
       </div>
       {% endif %}
 
       {% if ini.doc_id %}
       <div class="mt-2">
         <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="openDocument({{ ini.id }})">
-          📄 Ver documento {{ ini.doc_type }}
+          {{ t('ini_card_see_doc') }} {{ ini.doc_type }}
         </button>
       </div>
       {% endif %}
@@ -126,35 +194,80 @@
   </div>
   {% else %}
   <div class="pp-empty">
-    <p class="pp-empty-title">No hay iniciativas que coincidan con los filtros seleccionados.</p>
-    <a href="/initiatives" class="pp-btn mt-2">Ver todas</a>
+    <p class="pp-empty-title">{{ t('ini_empty_text') }}</p>
+    <a href="/initiatives" class="pp-btn mt-2">{{ t('ini_empty_see_all') }}</a>
   </div>
   {% endif %}
 </div>
 
-<!-- Document modal (Bootstrap modal — kept for functionality) -->
+<!-- Related initiatives modal -->
+<div id="relatedModal" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t('ini_related_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="relatedModalBody">
+        <div class="text-muted">{{ t('ini_related_loading') }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">{{ t('ini_related_close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document modal -->
 <div id="docModal" class="modal fade" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="docModalTitle">Documento</h5>
+        <h5 class="modal-title" id="docModalTitle">{{ t('ini_doc_modal_title') }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="docModalBody">
-        <div class="text-muted">Cargando documento...</div>
+        <div class="text-muted">{{ t('ini_doc_loading') }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete modal -->
+<div id="deleteModal" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t('ini_del_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ t('ini_del_confirm_pre') }} <strong id="deleteTitle"></strong>?</p>
+        <div class="pp-field">
+          <label class="pp-label">{{ t('ini_del_reason_lbl') }} <span style="color:var(--pp-red)">*</span></label>
+          <input type="text" class="pp-input" id="deleteReason" placeholder="{{ t('ini_del_reason_ph') }}">
+        </div>
+        <div class="pp-field">
+          <label class="pp-label">{{ t('ini_del_by_lbl') }} <span style="color:var(--pp-red)">*</span></label>
+          <input type="text" class="pp-input" id="deleteBy" placeholder="{{ t('ini_del_by_ph') }}">
+        </div>
+        <div id="deleteAlert" style="display:none; margin-top:8px;" class="pp-tag"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">{{ t('ini_del_cancel') }}</button>
+        <button type="button" class="pp-btn pp-btn-primary" style="background:var(--pp-red);" onclick="doDelete()">{{ t('ini_del_confirm_btn') }}</button>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-/* Initiative cards */
 .init-card { transition: box-shadow .15s; }
 .init-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08) !important; }
-.init-card--in_progress { border-left: 3px solid var(--pp-info) !important; }
-.init-card--planned     { border-left: 3px solid var(--pp-warn) !important; }
-.init-card--completed   { border-left: 3px solid var(--pp-good) !important; }
-.init-card--on_hold     { border-left: 3px solid var(--pp-text-faint) !important; }
+.init-card--En_progreso { border-left: 3px solid #3182ce !important; }
+.init-card--No_iniciado { border-left: 3px solid #a0aec0 !important; }
+.init-card--Terminado   { border-left: 3px solid var(--pp-good) !important; }
+.init-card--Cancelado   { border-left: 3px solid var(--pp-red) !important; }
 .init-card--highlighted { outline: 3px solid var(--pp-red); box-shadow: 0 0 0 3px rgba(213,43,30,.15) !important; }
 
 .method-badge--A3     { background: #bee3f8; color: #2c5282; }
@@ -163,12 +276,17 @@
 .method-badge--5Why   { background: #fed7aa; color: #7c2d12; }
 .method-badge--other  { background: #e2e8f0; color: #4a5568; }
 
-.status-badge--in_progress { background: #ebf8ff; color: #2c5282; }
-.status-badge--planned     { background: #fffbeb; color: #92400e; }
-.status-badge--completed   { background: #f0fff4; color: #276749; }
-.status-badge--on_hold     { background: #f7fafc; color: #4a5568; }
+.status-badge--En_progreso { background: #ebf8ff; color: #2c5282; }
+.status-badge--No_iniciado { background: #f7fafc; color: #718096; }
+.status-badge--Terminado   { background: #f0fff4; color: #276749; }
+.status-badge--Cancelado   { background: #fff5f5; color: #9b2c2c; }
 
-/* A3 document styles */
+.cat-badge--Safety   { background: #fff5f5; color: #9b2c2c; }
+.cat-badge--Quality  { background: #ebf8ff; color: #2b6cb0; }
+.cat-badge--Delivery { background: #fefcbf; color: #744210; }
+.cat-badge--Cost     { background: #f0fff4; color: #276749; }
+.cat-badge--People   { background: #faf5ff; color: #553c9a; }
+
 .a3-document { font-size: 0.88rem; line-height: 1.6; }
 .a3-document h2 { font-size: 1.1rem; color: var(--pp-red); margin-bottom: 0.25rem; }
 .a3-document h3 { font-size: 0.95rem; font-weight: 700; margin: 1.2rem 0 0.4rem; border-left: 3px solid var(--pp-red); padding-left: 0.5rem; }
@@ -183,16 +301,96 @@
 const SITE_ID = "{{ site_id }}";
 {% if highlight %}const HIGHLIGHT_ID = {{ highlight }};{% else %}const HIGHLIGHT_ID = null;{% endif %}
 let docModalInstance = null;
+let deleteModalInstance = null;
+let deleteTargetId = null;
 
+// i18n strings for JS (from server-side translation system)
+const I18N = {
+  statusLabels: {
+    "En progreso": {{ t('ini_st_en_progreso') | tojson }},
+    "No iniciado": {{ t('ini_st_no_iniciado') | tojson }},
+    "Terminado":   {{ t('ini_st_terminado')   | tojson }},
+    "Cancelado":   {{ t('ini_st_cancelado')   | tojson }},
+  },
+  docLoading:   {{ t('ini_doc_loading')     | tojson }},
+  docNotFound:  {{ t('ini_doc_not_found')   | tojson }},
+  relatedNone:  {{ t('ini_related_none')    | tojson }},
+  valReasonReq: {{ t('ini_val_reason_req')  | tojson }},
+  valNameReq:   {{ t('ini_val_name_req')    | tojson }},
+  valDeleteErr: {{ t('ini_val_delete_err')  | tojson }},
+  notifFound1:  {{ t('ini_notif_found_1')   | tojson }},
+  notifFoundN:  {{ t('ini_notif_found_n')   | tojson }},
+  notifQuestion:{{ t('ini_notif_question')  | tojson }},
+};
+
+const STATUS_COLORS = {
+  "En progreso": "#3182ce",
+  "No iniciado": "#a0aec0",
+  "Terminado":   "#38a169",
+  "Cancelado":   "#e53e3e",
+};
+
+// ── Evolution chart ──────────────────────────────────────────────────────────
+(async function loadEvolution() {
+  const r = await fetch(`/api/initiatives/stats?site=${SITE_ID}`);
+  const data = await r.json();
+
+  // Summary badges
+  const summary = document.getElementById("statusSummary");
+  const STATUSES = ["No iniciado", "En progreso", "Terminado", "Cancelado"];
+  STATUSES.forEach(s => {
+    const count = data.totals[s] || 0;
+    const badge = document.createElement("span");
+    badge.className = "pp-tag";
+    badge.style.background = STATUS_COLORS[s] + "22";
+    badge.style.color = STATUS_COLORS[s];
+    badge.style.fontWeight = "600";
+    badge.textContent = `${I18N.statusLabels[s] || s}: ${count}`;
+    summary.appendChild(badge);
+  });
+
+  if (!data.by_month.length) return;
+
+  const months = [...new Set(data.by_month.map(r => r.month))].sort();
+  const seriesData = {};
+  STATUSES.forEach(s => { seriesData[s] = months.map(() => 0); });
+  data.by_month.forEach(r => {
+    const mi = months.indexOf(r.month);
+    if (mi >= 0 && seriesData[r.status] !== undefined) {
+      seriesData[r.status][mi] = r.total;
+    }
+  });
+
+  const chart = echarts.init(document.getElementById("evolutionChart"), null, { renderer: "canvas" });
+  chart.setOption({
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    legend: { data: STATUSES.map(s => I18N.statusLabels[s] || s), bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { left: "3%", right: "2%", top: "8%", bottom: "18%", containLabel: true },
+    xAxis: { type: "category", data: months, axisLabel: { fontSize: 10 } },
+    yAxis: { type: "value", minInterval: 1, axisLabel: { fontSize: 10 } },
+    series: STATUSES.map(s => ({
+      name: I18N.statusLabels[s] || s,
+      type: "bar",
+      stack: "total",
+      data: seriesData[s],
+      itemStyle: { color: STATUS_COLORS[s] },
+      label: {
+        show: true,
+        position: "inside",
+        formatter: v => v.value > 0 ? v.value : "",
+        fontSize: 10,
+        color: "#fff",
+      },
+    })),
+  });
+  window.addEventListener("resize", () => chart.resize());
+})();
+
+// ── Gantt chart ───────────────────────────────────────────────────────────────
 (async function loadGantt() {
   const r = await fetch(`/api/initiatives/gantt?site=${SITE_ID}`);
   const data = await r.json();
   if (!data.length) return;
-
-  const STATUS_COLORS = {
-    in_progress: "#3182ce", planned: "#d97706",
-    completed: "#38a169",   on_hold: "#718096",
-  };
 
   const items = data.map(d => ({
     name: d.title.length > 35 ? d.title.slice(0, 35) + "…" : d.title,
@@ -200,7 +398,7 @@ let docModalInstance = null;
     end: d.completion_date || d.target_date,
     status: d.status,
     method: d.methodology,
-    color: STATUS_COLORS[d.status] || "#718096",
+    color: STATUS_COLORS[d.status] || "#a0aec0",
   }));
 
   const chart = echarts.init(document.getElementById("ganttChart"), null, { renderer: "canvas" });
@@ -210,7 +408,7 @@ let docModalInstance = null;
       formatter: p => {
         if (p.componentType !== "series") return "";
         const d = items[p.dataIndex];
-        return `<b>${d.name}</b><br>${d.method} · ${d.status}<br>${d.start} → ${d.end}`;
+        return `<b>${d.name}</b><br>${d.method} · ${I18N.statusLabels[d.status] || d.status}<br>${d.start} → ${d.end}`;
       },
     },
     grid: { left: "3%", right: "2%", top: "8%", bottom: "10%", containLabel: true },
@@ -250,13 +448,14 @@ let docModalInstance = null;
   window.addEventListener("resize", () => chart.resize());
 })();
 
+// ── Document modal ────────────────────────────────────────────────────────────
 async function openDocument(initId) {
   const modalEl = document.getElementById("docModal");
   if (!docModalInstance) {
     docModalInstance = new bootstrap.Modal(modalEl);
   }
-  document.getElementById("docModalTitle").textContent = "Cargando…";
-  document.getElementById("docModalBody").innerHTML = '<div class="text-muted">Cargando documento…</div>';
+  document.getElementById("docModalTitle").textContent = "…";
+  document.getElementById("docModalBody").innerHTML = `<div class="text-muted">${I18N.docLoading}</div>`;
   docModalInstance.show();
 
   try {
@@ -267,10 +466,57 @@ async function openDocument(initId) {
     document.getElementById("docModalBody").innerHTML = d.content_html;
   } catch {
     document.getElementById("docModalBody").innerHTML =
-      '<p class="text-muted">No se encontro el documento para esta iniciativa.</p>';
+      `<p class="text-muted">${I18N.docNotFound}</p>`;
   }
 }
 
+// ── Delete modal ──────────────────────────────────────────────────────────────
+function openDeleteModal(id, title) {
+  deleteTargetId = id;
+  document.getElementById("deleteTitle").textContent = title;
+  document.getElementById("deleteReason").value = "";
+  document.getElementById("deleteBy").value = "";
+  document.getElementById("deleteAlert").style.display = "none";
+  const el = document.getElementById("deleteModal");
+  if (!deleteModalInstance) deleteModalInstance = new bootstrap.Modal(el);
+  deleteModalInstance.show();
+}
+
+async function doDelete() {
+  const reason = document.getElementById("deleteReason").value.trim();
+  const by     = document.getElementById("deleteBy").value.trim();
+  const alertEl = document.getElementById("deleteAlert");
+
+  if (!reason) {
+    alertEl.textContent = I18N.valReasonReq;
+    alertEl.style.display = "inline-block";
+    alertEl.style.background = "#fed7aa"; alertEl.style.color = "#7c2d12";
+    return;
+  }
+  if (!by) {
+    alertEl.textContent = I18N.valNameReq;
+    alertEl.style.display = "inline-block";
+    alertEl.style.background = "#fed7aa"; alertEl.style.color = "#7c2d12";
+    return;
+  }
+
+  const r = await fetch(`/api/initiatives/${deleteTargetId}?site=${SITE_ID}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deleted_by: by, deletion_reason: reason }),
+  });
+  if (r.ok) {
+    deleteModalInstance.hide();
+    location.reload();
+  } else {
+    const d = await r.json();
+    alertEl.textContent = d.error || I18N.valDeleteErr;
+    alertEl.style.display = "inline-block";
+    alertEl.style.background = "#fed7aa"; alertEl.style.color = "#7c2d12";
+  }
+}
+
+// ── Scroll to highlight ───────────────────────────────────────────────────────
 if (HIGHLIGHT_ID) {
   const el = document.getElementById("ini-" + HIGHLIGHT_ID);
   if (el) {
@@ -278,6 +524,84 @@ if (HIGHLIGHT_ID) {
     const btn = el.querySelector(".pp-btn-primary");
     if (btn) setTimeout(() => btn.click(), 700);
   }
+}
+
+// ── Coach notification (from sessionStorage after create) ─────────────────────
+let _relatedData = null;
+let _relatedModalInstance = null;
+
+(function checkCoachNotification() {
+  const raw = sessionStorage.getItem("coach_notification");
+  if (!raw) return;
+  sessionStorage.removeItem("coach_notification");
+  try {
+    _relatedData = JSON.parse(raw);
+    if (!_relatedData || _relatedData.count < 1) return;
+    const notif = document.getElementById("coach-notification");
+    if (!notif) return;
+    const n = _relatedData.count;
+    document.getElementById("coach-notif-title").textContent =
+      n === 1 ? I18N.notifFound1 : I18N.notifFoundN.replace('{n}', n);
+    document.getElementById("coach-notif-text").textContent = I18N.notifQuestion;
+    notif.style.display = "flex";
+  } catch (_) {}
+})();
+
+function dismissCoachNotif() {
+  const el = document.getElementById("coach-notification");
+  if (el) el.style.display = "none";
+}
+
+function openRelatedModal() {
+  const bodyEl = document.getElementById("relatedModalBody");
+  const modalEl = document.getElementById("relatedModal");
+  if (!_relatedModalInstance) _relatedModalInstance = new bootstrap.Modal(modalEl);
+  _renderRelatedBody(bodyEl, _relatedData);
+  _relatedModalInstance.show();
+}
+
+function openCoachForInit(initId, initTitle) {
+  window.location.href = `/initiatives/${initId}/edit?site=${SITE_ID}#coach`;
+}
+
+function _renderRelatedBody(bodyEl, data) {
+  if (!data || !data.related || !data.related.length) {
+    bodyEl.innerHTML = `<p class="text-muted">${I18N.relatedNone}</p>`;
+    return;
+  }
+  const STATUS_ICONS = { "Terminado": "✅", "En progreso": "🔄", "No iniciado": "⏸", "Cancelado": "❌" };
+  let html = `<p style="font-size:13px; color:var(--pp-text-faint); margin-bottom:14px;">
+    ${_escHtml(data.initiative_title || '')}:</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">`;
+  for (const r of data.related) {
+    const icon = STATUS_ICONS[r.status] || "•";
+    const statusLabel = I18N.statusLabels[r.status] || r.status;
+    const benefitLine = r.actual_benefit
+      ? `<div style="color:var(--pp-good);font-size:12px;margin-top:4px;">📈 ${_escHtml(r.actual_benefit)}</div>`
+      : (r.expected_benefit ? `<div style="color:var(--pp-text-faint);font-size:12px;margin-top:4px;">💡 ${_escHtml(r.expected_benefit)}</div>` : "");
+    html += `
+      <div style="padding:10px 14px;border:1px solid var(--pp-border);border-radius:8px;background:var(--pp-bg);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+          <div>
+            <span style="font-size:11px;font-weight:700;color:var(--pp-info);">${_escHtml(r.site)}</span>
+            <span style="font-size:11px;color:var(--pp-text-faint);margin-left:6px;">${icon} ${_escHtml(statusLabel)}</span>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#bee3f8;color:#2c5282;">${_escHtml(r.methodology)}</span>
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#e9d5ff;color:#553c9a;">${_escHtml(r.category)}</span>
+          </div>
+        </div>
+        <div style="font-weight:600;font-size:13px;margin-top:6px;">${_escHtml(r.title)}</div>
+        ${benefitLine}
+        ${r.start_date ? `<div style="font-size:11px;color:var(--pp-text-faint);margin-top:4px;">🗓 ${_escHtml(r.start_date)}${r.completion_date ? ' → ' + _escHtml(r.completion_date) : ''}</div>` : ''}
+      </div>`;
+  }
+  html += "</div>";
+  bodyEl.innerHTML = html;
+}
+
+function _escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 {% endblock %}

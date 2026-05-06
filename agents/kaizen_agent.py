@@ -112,7 +112,8 @@ class KaizenAgent(Agent):
                     """SELECT title, methodology, status, owner,
                               expected_benefit, start_date, target_date
                        FROM improvement_initiatives
-                       WHERE status IN ('in_progress', 'planned')
+                       WHERE status IN ('En progreso', 'No iniciado')
+                         AND deleted = 0
                        ORDER BY start_date DESC
                        LIMIT 5""",
                 ).fetchall()
@@ -129,8 +130,9 @@ class KaizenAgent(Agent):
                     """SELECT title, methodology, expected_benefit, actual_benefit,
                               start_date, completion_date
                        FROM improvement_initiatives
-                       WHERE status = 'completed'
+                       WHERE status = 'Terminado'
                          AND actual_benefit IS NOT NULL
+                         AND deleted = 0
                        ORDER BY completion_date DESC
                        LIMIT 3""",
                 ).fetchall()
