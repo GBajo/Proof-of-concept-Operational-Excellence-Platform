@@ -173,14 +173,54 @@ def shift_summary_view(shift_id: int):
 
 @bp.get("/dashboard")
 def dashboard():
+    from flask import g
+    from models.dashboard_config import get_dashboard_config
+    from widgets.base import create_widget
+    from widgets.registry import WIDGET_REGISTRY
+
     active_lines = get_active_lines()
     line_perf = get_line_performance_summary(days=7)
     recent_shifts = get_shifts_history(limit=10)
+
+    site_id = getattr(g, "current_site", DEFAULT_SITE)
+    line_number = request.args.get("line", type=int)
+
+    # Obtener configuración de dashboard para la línea activa
+    equipment_type = request.args.get("equipment")
+    if equipment_type:
+        from models.dashboard_config import get_config_for_equipment
+        cfg_data = get_config_for_equipment(site_id, equipment_type)
+        cfg = {
+            "layout": cfg_data["layout"],
+            "equipment_type": equipment_type,
+            "config_name": cfg_data["config_name"],
+            "source": "selector",
+        }
+    else:
+        cfg = get_dashboard_config(site_id, line_number)
+    layout = cfg["layout"]
+
+    # Renderizar widgets server-side
+    widget_rows: list[list[dict]] = []
+    for row_idx, row in enumerate(layout.get("rows", [])):
+        row_data: list[dict] = []
+        for w_idx, w_cfg in enumerate(row.get("widgets", [])):
+            widget = create_widget(w_cfg["type"], w_cfg)
+            rendered = widget.render(site_id, line_number)
+            rendered["id"] = f"w-{row_idx}-{w_idx}"
+            if not rendered.get("title"):
+                rendered["title"] = WIDGET_REGISTRY.get(w_cfg["type"], {}).get("name", w_cfg["type"])
+            row_data.append(rendered)
+        widget_rows.append(row_data)
+
     return render_template(
         "dashboard/kpi.html",
         active_lines=active_lines,
         line_perf=line_perf,
         recent_shifts=recent_shifts,
+        widget_rows=widget_rows,
+        dashboard_config=cfg,
+        line_number=line_number,
     )
 
 

@@ -56,8 +56,11 @@ def init_db(app) -> None:
     """Crea el esquema en todas las bases de datos de planta y siembra datos."""
     from site_aggregator import SITES
     from seed_sites import seed_all_sites, _create_schema
+    from models.dashboard_config import create_dashboard_tables, seed_default_configs
 
     with app.app_context():
         for site_info in SITES.values():
             _create_schema(site_info["db_path"])
+            create_dashboard_tables(site_info["db_path"])
         seed_all_sites()
+        seed_default_configs()

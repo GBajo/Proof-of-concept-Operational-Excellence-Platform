@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block title %}{{ t('page_title_dashboard') }}{% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
   const SHIFT_ID = null;
-  const LINE_NUMBER = null;
+  const LINE_NUMBER = {{ line_number | tojson }};
   const DASHBOARD_MODE = 'supervisor';
   const APP_LANG = "{{ lang }}";
 </script>
@@ -12,50 +13,64 @@
 
 {% block content %}
 
+{# ── Cabecera ─────────────────────────────────────────────────────────────── #}
 <div class="pp-page-head">
   <div>
     <p class="pp-eyebrow">Operaciones</p>
     <h1 class="pp-h1">{{ t('dashboard_title') }}</h1>
-    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">{{ t('dashboard_subtitle') }}</p>
+    <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">
+      {{ t('dashboard_subtitle') }}
+      {% if dashboard_config %}
+        &nbsp;·&nbsp;
+        <span style="color:var(--pp-text-faint);">{{ dashboard_config.config_name }}</span>
+      {% endif %}
+    </p>
   </div>
   <div class="pp-actions">
     <span class="pp-tag pp-tag-ok" id="live-indicator">
       <span class="pp-pulse" style="width:6px;height:6px;margin-right:4px;"></span>{{ t('badge_live') }}
     </span>
+
+    {# Selector de tipo de equipo #}
+    <select class="pp-select" style="width:auto; padding:7px 12px;" title="Tipo de equipo"
+            onchange="location.href='/dashboard?equipment='+this.value+(LINE_NUMBER?'&line='+LINE_NUMBER:'')">
+      <option value="">Tipo de equipo</option>
+      <option value="blister"      {% if dashboard_config and dashboard_config.equipment_type=='blister' %}selected{% endif %}>Blíster</option>
+      <option value="vial"         {% if dashboard_config and dashboard_config.equipment_type=='vial' %}selected{% endif %}>Viales / Inyect.</option>
+      <option value="autoinjector" {% if dashboard_config and dashboard_config.equipment_type=='autoinjector' %}selected{% endif %}>Autoinyectores</option>
+      <option value="generic"      {% if dashboard_config and dashboard_config.equipment_type=='generic' %}selected{% endif %}>Genérico</option>
+    </select>
+
     <select id="filter-line-select" class="pp-select" style="width:auto; padding:7px 12px;"
-            title="{{ t('filter_line') }}">
+            title="{{ t('filter_line') }}"
+            onchange="location.href='/dashboard?line='+this.value">
       <option value="">{{ t('all_lines') }}</option>
       {% for n in range(1,6) %}
-      <option value="{{ n }}" {% if request.args.get('line')|int == n %}selected{% endif %}>
+      <option value="{{ n }}" {% if line_number == n %}selected{% endif %}>
         {{ t('line_label') }} {{ n }}
       </option>
       {% endfor %}
     </select>
+
     <a href="{{ url_for('views.shifts_history') }}" class="pp-btn">
       {{ t('btn_view_history') }}
     </a>
   </div>
 </div>
 
-<!-- KPI metrics -->
+{# ── KPIs resumen en tiempo real ──────────────────────────────────────────── #}
 <div class="pp-grid-4 mb-4" style="margin-bottom:20px !important;">
   {% if active_lines %}{% set total_lines = active_lines | length %}{% else %}{% set total_lines = 0 %}{% endif %}
 
   <div class="pp-kpi">
     <p class="pp-kpi-label">{{ t('active_lines_metric') }}</p>
-    <div class="pp-kpi-value">
-      <span class="pp-kpi-num">{{ total_lines }}</span>
-    </div>
-    <div class="pp-kpi-foot">
-      <span class="pp-faint">{{ t('line_label') }}s activas</span>
-    </div>
+    <div class="pp-kpi-value"><span class="pp-kpi-num">{{ total_lines }}</span></div>
+    <div class="pp-kpi-foot"><span class="pp-faint">{{ t('line_label') }}s activas</span></div>
   </div>
 
   <div class="pp-kpi">
     <p class="pp-kpi-label">{{ t('units_produced_metric') }}</p>
-    <div class="pp-kpi-value">
-      <span class="pp-kpi-num" id="sv-total-units">—</span>
-    </div>
+    <div class="pp-kpi-value"><span class="pp-kpi-num" id="sv-total-units">—</span></div>
     <div class="pp-kpi-foot">
       <span class="pp-faint">{{ t('last_update') }} <span id="sv-last-update">—</span></span>
     </div>
@@ -67,9 +82,7 @@
       <span class="pp-kpi-num" id="sv-avg-oee">—</span>
       <span class="pp-kpi-unit">%</span>
     </div>
-    <div class="pp-kpi-foot">
-      <span class="pp-faint">OEE promedio</span>
-    </div>
+    <div class="pp-kpi-foot"><span class="pp-faint">OEE promedio</span></div>
   </div>
 
   <div class="pp-kpi">
@@ -84,60 +97,95 @@
   </div>
 </div>
 
-<!-- Charts -->
-<div class="pp-grid-2-1 mb-4" style="margin-bottom:16px !important;">
-  <div class="pp-card">
-    <div class="pp-card-head">
-      <div>
-        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_current_shift') }}</p>
-        <h3 class="pp-card-title">{{ t('chart_prod_vs_target') }}</h3>
-      </div>
-    </div>
-    <div id="chart-bars" style="width:100%; height:260px;"></div>
-  </div>
-  <div class="pp-card">
-    <div class="pp-card-head">
-      <div>
-        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_by_type') }}</p>
-        <h3 class="pp-card-title">{{ t('chart_stops_dist') }}</h3>
-      </div>
-    </div>
-    <div id="chart-donut" style="width:100%; height:260px;"></div>
-  </div>
-</div>
+{# ── Grid de widgets dinámicos ────────────────────────────────────────────── #}
+{% if widget_rows %}
+<section class="mb-4" style="margin-bottom:20px !important;">
 
-<div class="pp-grid-2 mb-4" style="margin-bottom:16px !important;">
-  <div class="pp-card">
-    <div class="pp-card-head">
-      <div>
-        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_oee_components') }}</p>
-        <h3 class="pp-card-title">{{ t('chart_oee_components') }}</h3>
+  {% for row in widget_rows %}
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px;">
+
+    {% for w in row %}
+    {% set col_span = {"small": 1, "medium": 2, "large": 3}.get(w.size, 1) %}
+
+    {% if w.render_type == 'card' %}
+    {# ── Tarjeta KPI (HTML) ── #}
+    {% set cd = w.card_data %}
+    <div class="pp-kpi" style="grid-column:span {{ col_span }};">
+      <p class="pp-kpi-label">{{ cd.label }}</p>
+      <div class="pp-kpi-value">
+        <span class="pp-kpi-num" style="color:{{ cd.color }};">{{ cd.value }}</span>
+        <span class="pp-kpi-unit">{{ cd.unit }}</span>
+      </div>
+      <div class="pp-kpi-foot">
+        <span class="{{ cd.trend_class }}" style="font-size:12px;">
+          {{ cd.trend_label }}{{ cd.unit }} vs período anterior
+        </span>
       </div>
     </div>
-    <div id="chart-area" style="width:100%; height:240px;"></div>
-  </div>
-  <div class="pp-card">
-    <div class="pp-card-head">
-      <div>
-        <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_14_shifts') }}</p>
-        <h3 class="pp-card-title">{{ t('chart_oee_trend') }}</h3>
+
+    {% else %}
+    {# ── Widget ECharts ── #}
+    <div class="pp-card" style="grid-column:span {{ col_span }}; padding:16px;">
+      {% if w.title %}
+      <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.06);">
+        <p style="margin:0; font-size:12px; color:var(--pp-text-faint); text-transform:uppercase; letter-spacing:0.06em;">
+          {{ w.title }}
+        </p>
       </div>
+      {% endif %}
+      <div id="{{ w.id }}" style="width:100%; height:{{ w.height }}px;"></div>
     </div>
-    <div id="chart-oee-line" style="width:100%; height:240px;"></div>
-  </div>
-</div>
+    {% endif %}
 
-<div class="pp-card mb-4">
-  <div class="pp-card-head">
-    <div>
-      <p class="pp-eyebrow pp-eyebrow-muted">{{ t('badge_downtime_min') }}</p>
-      <h3 class="pp-card-title">{{ t('chart_heatmap') }}</h3>
-    </div>
+    {% endfor %}
   </div>
-  <div id="chart-heatmap" style="width:100%; height:220px;"></div>
-</div>
+  {% endfor %}
 
-<!-- Active lines grid -->
+</section>
+
+{# Script inline: inicializa ECharts inmediatamente después de los divs. No hay timing issues. #}
+<script>
+(function () {
+  var _charts = {};
+  var widgetRows = {{ widget_rows | tojson }};
+  var lineParam   = {{ line_number | tojson }};
+
+  widgetRows.forEach(function (row) {
+    row.forEach(function (w) {
+      if (w.render_type !== 'chart') return;
+      var el = document.getElementById(w.id);
+      if (!el || !w.echarts_config || !Object.keys(w.echarts_config).length) return;
+      var chart = echarts.init(el, null, { renderer: 'canvas' });
+      chart.setOption(w.echarts_config);
+      _charts[w.id] = chart;
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    Object.keys(_charts).forEach(function (id) { _charts[id].resize(); });
+  });
+
+  /* Auto-refresh cada 60 s */
+  var refreshUrl = '/api/widgets/render' + (lineParam ? '?line_number=' + lineParam : '');
+  setInterval(function () {
+    fetch(refreshUrl)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        (data.rows || []).forEach(function (row) {
+          row.forEach(function (w) {
+            if (w.render_type !== 'chart' || !_charts[w.id]) return;
+            _charts[w.id].setOption(w.echarts_config, { notMerge: false });
+          });
+        });
+      })
+      .catch(function () {});
+  }, 60000);
+}());
+</script>
+
+{% endif %}
+
+{# ── Líneas activas ────────────────────────────────────────────────────────── #}
 {% if active_lines %}
 <section class="mb-4">
   <h2 class="pp-h2 mb-3">{{ t('lines_in_production') }}</h2>
@@ -170,7 +218,8 @@
         <a href="{{ url_for('views.shift_active', shift_id=line.shift_id) }}"
            class="pp-btn pp-btn-sm flex-fill" style="justify-content:center;">{{ t('btn_view_shift') }}</a>
         <a href="{{ url_for('views.shift_end', shift_id=line.shift_id) }}"
-           class="pp-btn pp-btn-sm flex-fill" style="justify-content:center; border-color:var(--pp-bad); color:var(--pp-bad);">{{ t('btn_end_shift_action') }}</a>
+           class="pp-btn pp-btn-sm flex-fill"
+           style="justify-content:center; border-color:var(--pp-bad); color:var(--pp-bad);">{{ t('btn_end_shift_action') }}</a>
       </div>
     </div>
     {% endfor %}
@@ -186,7 +235,7 @@
 </section>
 {% endif %}
 
-<!-- Line performance -->
+{# ── Rendimiento por línea ─────────────────────────────────────────────────── #}
 {% if line_perf %}
 <section class="mb-4">
   <h2 class="pp-h2 mb-3">{{ t('line_perf_title') }}</h2>
@@ -221,7 +270,7 @@
 </section>
 {% endif %}
 
-<!-- Recent shifts table -->
+{# ── Turnos recientes ──────────────────────────────────────────────────────── #}
 <section class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="pp-h2">{{ t('recent_shifts_title') }}</h2>
