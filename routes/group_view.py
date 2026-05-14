@@ -1,4 +1,4 @@
-"""routes/group_view.py — Pantalla de grupo con 3 tabs: Dashboard, SQDCP, Equipment."""
+"""routes/group_view.py — Pantalla de grupo con tabs condicionales por tier level."""
 from __future__ import annotations
 
 from datetime import date
@@ -25,6 +25,8 @@ def group_page(group_id: int):
     group = get_tier_group_by_id(group_id)
     if not group:
         abort(404)
+
+    tier_level = group.get("tier_level", 1)
 
     # Breadcrumb: walk up to root
     breadcrumb: list[dict] = [group]
@@ -58,12 +60,73 @@ def group_page(group_id: int):
 
     from routes.sqdcp import _compute_pillars, _get_shifts, _get_actions, PILLARS
     pillars = _compute_pillars(sqdcp_line, sqdcp_date, sqdcp_period)
-    shifts = _get_shifts(sqdcp_line, sqdcp_date)
+    sqdcp_shifts = _get_shifts(sqdcp_line, sqdcp_date)
     actions = _get_actions(sqdcp_line, sqdcp_date)
 
-    active_tab = request.args.get("tab", "dashboard")
-    if active_tab not in ("dashboard", "sqdcp", "equipment"):
-        active_tab = "dashboard"
+    # Valid tabs and default tab depend on tier level
+    if tier_level == 0:
+        valid_tabs = {"shifts", "shift_history", "dashboard", "sqdcp", "equipment"}
+        default_tab = "shifts"
+    else:
+        valid_tabs = {"dashboard", "sqdcp", "equipment"}
+        default_tab = "dashboard"
+
+    active_tab = request.args.get("tab", default_tab)
+    if active_tab not in valid_tabs:
+        active_tab = default_tab
+
+    # Shift data — only fetched for Tier 0
+    operators: list[dict] = []
+    active_shift: dict | None = None
+    shift_history: list[dict] = []
+    shift_history_filters: dict = {}
+    shift_line: int = sqdcp_line
+
+    if tier_level == 0:
+        from datetime import datetime, timezone
+        from models.operator import get_all_operators
+        from models.shift import get_active_shift_by_line, get_shifts_history
+
+        operators = get_all_operators()
+        shift_line = request.args.get("shift_line", type=int) or sqdcp_line
+
+        raw_shift = get_active_shift_by_line(shift_line)
+        if raw_shift:
+            active_shift = dict(raw_shift)
+            start_dt = datetime.fromisoformat(active_shift["start_time"])
+            now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+            duration_min = int((now_utc - start_dt).total_seconds() / 60)
+            active_shift["duration_h"] = duration_min // 60
+            active_shift["duration_m"] = duration_min % 60
+
+        sh_from = request.args.get("sh_from", "").strip()
+        sh_to = request.args.get("sh_to", "").strip()
+        sh_operator = request.args.get("sh_operator", "").strip()
+        sh_status = request.args.get("sh_status", "").strip()
+
+        history_list = get_shifts_history(
+            line=shift_line,
+            operator=sh_operator or None,
+            date_from=sh_from or None,
+            date_to=sh_to or None,
+            status=sh_status or None,
+            limit=50,
+        )
+        for s in history_list:
+            if s.get("end_time") and s.get("start_time"):
+                try:
+                    mins = int(
+                        (datetime.fromisoformat(s["end_time"]) - datetime.fromisoformat(s["start_time"])).total_seconds() / 60
+                    )
+                    s["duration_h"] = mins // 60
+                    s["duration_m"] = mins % 60
+                except Exception:
+                    s["duration_h"] = s["duration_m"] = None
+            else:
+                s["duration_h"] = s["duration_m"] = None
+
+        shift_history = history_list
+        shift_history_filters = {"from": sh_from, "to": sh_to, "operator": sh_operator, "status": sh_status}
 
     return render_template(
         "group/index.html",
@@ -77,13 +140,19 @@ def group_page(group_id: int):
         site_lines=site_lines,
         pillars=pillars,
         pillar_keys=PILLARS,
-        shifts=shifts,
+        shifts=sqdcp_shifts,
         actions=actions,
         selected_line=sqdcp_line,
         selected_date=sqdcp_date,
         selected_period=sqdcp_period,
         today=date.today().isoformat(),
         active_tab=active_tab,
+        tier_level=tier_level,
+        operators=operators,
+        active_shift=active_shift,
+        shift_history=shift_history,
+        shift_history_filters=shift_history_filters,
+        shift_line=shift_line,
     )
 
 

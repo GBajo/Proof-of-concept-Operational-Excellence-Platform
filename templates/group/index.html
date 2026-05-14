@@ -3,9 +3,15 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% if tier_level == 0 %}
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+{% if active_shift %}
+<script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
+{% endif %}
+{% endif %}
 <script>
-  const SHIFT_ID = null;
-  const LINE_NUMBER = {{ line_number | tojson }};
+  const SHIFT_ID = {% if tier_level == 0 and active_shift %}{{ active_shift.id }}{% else %}null{% endif %};
+  const LINE_NUMBER = {% if tier_level == 0 %}{{ shift_line }}{% else %}{{ line_number | tojson }}{% endif %};
   const DASHBOARD_MODE = 'supervisor';
   const APP_LANG = "{{ lang }}";
   const GROUP_ID = {{ group.id }};
@@ -127,6 +133,16 @@
 
 {# ── Tabs ─────────────────────────────────────────────────────────────────── #}
 <div class="grp-tabs">
+  {% if tier_level == 0 %}
+  <button class="grp-tab-btn {% if active_tab == 'shifts' %}active{% endif %}"
+          onclick="switchTab('shifts')">
+    <i class="bi bi-play-circle me-1"></i> Turnos
+  </button>
+  <button class="grp-tab-btn {% if active_tab == 'shift_history' %}active{% endif %}"
+          onclick="switchTab('shift_history')">
+    <i class="bi bi-clock-history me-1"></i> Histórico de turnos
+  </button>
+  {% endif %}
   <button class="grp-tab-btn {% if active_tab == 'dashboard' %}active{% endif %}"
           onclick="switchTab('dashboard')">
     <i class="bi bi-speedometer2 me-1"></i> Dashboard
@@ -146,8 +162,432 @@
   </button>
 </div>
 
+
 {# ══════════════════════════════════════════════════════════════════════════════
-   TAB 1 — DASHBOARD
+   TAB TURNOS — solo Tier 0
+   ══════════════════════════════════════════════════════════════════════════════ #}
+{% if tier_level == 0 %}
+<div class="grp-tab-pane {% if active_tab == 'shifts' %}active{% endif %}" id="tab-shifts">
+
+  {# Selector de línea #}
+  <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+    <form method="get" id="shiftsLineForm" class="d-flex align-items-center gap-2">
+      <input type="hidden" name="tab" value="shifts">
+      <label class="pp-faint" style="font-size:12px; font-weight:600;">Línea:</label>
+      <select name="shift_line" class="pp-select" style="width:auto; padding:5px 10px;"
+              onchange="document.getElementById('shiftsLineForm').submit()">
+        {% for l in site_lines %}
+        <option value="{{ l }}" {% if l == shift_line %}selected{% endif %}>L{{ l }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    {% if active_shift %}
+    <span class="pp-tag pp-tag-info">
+      <span class="pp-pulse" style="width:6px;height:6px;margin-right:4px;"></span>
+      Turno activo · {{ active_shift.operator_name }}
+    </span>
+    {% else %}
+    <span class="pp-tag pp-tag-neutral">Sin turno activo</span>
+    {% endif %}
+  </div>
+
+  {% if active_shift %}
+  {# ── Vista de turno activo ─────────────────────────────────────────────── #}
+  <div class="pp-grid-2-1 mb-4" style="margin-bottom:16px !important;">
+
+    {# Izquierda: info del turno + KPIs + notas #}
+    <div style="display:flex; flex-direction:column; gap:16px;">
+
+      <div class="pp-card">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div>
+            <p class="pp-eyebrow">
+              <span class="pp-pulse" style="vertical-align:-1px; margin-right:6px;"></span>
+              En curso · Línea {{ active_shift.line_number }}
+            </p>
+            <h3 class="pp-card-title" style="margin:0;">{{ active_shift.operator_name }}</h3>
+            <p class="pp-dim" style="font-size:12px; margin:4px 0 0;">
+              Inicio: {{ active_shift.start_time[11:16] }} ·
+              {{ active_shift.duration_h }}h {{ active_shift.duration_m }}m en curso
+            </p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('views.shift_active', shift_id=active_shift.id) }}"
+               class="pp-btn pp-btn-sm">
+              <i class="bi bi-arrows-fullscreen"></i> Vista completa
+            </a>
+            <button class="pp-btn pp-btn-sm pp-btn-dark"
+                    onclick="endActiveShift({{ active_shift.id }})">
+              <i class="bi bi-stop-fill"></i> Finalizar
+            </button>
+          </div>
+        </div>
+
+        {# KPI mini #}
+        <div class="pp-grid-4" style="gap:12px;">
+          <div class="pp-kpi">
+            <p class="pp-kpi-label">OEE</p>
+            <div class="pp-kpi-value">
+              <span class="pp-kpi-num" id="grp-kpi-oee">—</span>
+              <span class="pp-kpi-unit">%</span>
+            </div>
+          </div>
+          <div class="pp-kpi">
+            <p class="pp-kpi-label">Producido</p>
+            <div class="pp-kpi-value">
+              <span class="pp-kpi-num" id="grp-kpi-units">—</span>
+            </div>
+          </div>
+          <div class="pp-kpi">
+            <p class="pp-kpi-label">Rechazo</p>
+            <div class="pp-kpi-value">
+              <span class="pp-kpi-num" id="grp-kpi-reject">—</span>
+              <span class="pp-kpi-unit">%</span>
+            </div>
+          </div>
+          <div class="pp-kpi">
+            <p class="pp-kpi-label">Paros</p>
+            <div class="pp-kpi-value">
+              <span class="pp-kpi-num" id="grp-kpi-downtime">—</span>
+              <span class="pp-kpi-unit">min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Notas de traspaso #}
+      <div class="pp-card">
+        <h3 class="pp-card-title mb-3">Notas de traspaso</h3>
+        <textarea id="grp-handover-notes" class="pp-input" rows="3"
+                  placeholder="Incidencias, observaciones para el siguiente turno..."
+                  style="resize:vertical; width:100%;">{{ active_shift.handover_notes or '' }}</textarea>
+        <div class="d-flex justify-content-end mt-2">
+          <button class="pp-btn pp-btn-sm" onclick="saveHandoverNotes({{ active_shift.id }})">
+            <i class="bi bi-floppy"></i> Guardar notas
+          </button>
+        </div>
+      </div>
+
+    </div>{# /left col #}
+
+    {# Derecha: panel de comentarios de voz #}
+    <div class="voice-panel pp-card">
+      <div class="card-body d-flex flex-column" style="max-height:580px; overflow:hidden; padding:0 !important;">
+
+        <div class="voice-panel__header d-flex align-items-center justify-content-between mb-3">
+          <h3 class="pp-card-title mb-0">
+            Comentarios
+            <span class="pp-tag pp-tag-info ms-1" id="comments-count" style="font-size:10px;">0</span>
+          </h3>
+          <select id="filter-category" class="pp-select"
+                  style="width:auto; padding:5px 10px; font-size:12px;"
+                  onchange="filterComments(this.value)">
+            <option value="">Todos</option>
+            <option value="production">Producción</option>
+            <option value="quality">Calidad</option>
+            <option value="safety">Seguridad</option>
+            <option value="maintenance">Mantenimiento</option>
+          </select>
+        </div>
+
+        <div class="voice-recorder" id="voice-recorder">
+          <div id="recorder-idle">
+            <button class="voice-btn" onclick="startRecording()">
+              <span class="voice-btn__mic" aria-hidden="true">🎤</span>
+              <span class="voice-btn__label">Grabar comentario</span>
+            </button>
+            <button class="voice-btn voice-btn--secondary" onclick="openManualEntry()">
+              <span class="voice-btn__mic" aria-hidden="true">✏️</span>
+              <span class="voice-btn__label">Escribir comentario</span>
+            </button>
+          </div>
+
+          <div id="recorder-active" style="display:none">
+            <div class="rec-status">
+              <span class="rec-dot"></span>
+              <span id="rec-label">Escuchando...</span>
+            </div>
+            <div class="rec-interim" id="transcript-interim">
+              <em>Di tu comentario...</em>
+            </div>
+            <button class="voice-btn voice-btn--stop" onclick="stopRecording()">
+              <span class="voice-btn__mic" aria-hidden="true">⏹</span>
+              <span class="voice-btn__label">Detener</span>
+            </button>
+          </div>
+
+          <div id="recorder-confirm" style="display:none">
+            <div class="rec-done-header">
+              <span class="rec-dot rec-dot--done"></span>
+              <span>Transcripción lista</span>
+              <button class="btn-rerecord" onclick="startRecording()">Reintentar</button>
+            </div>
+            <textarea id="transcript-text" class="form-control voice-transcript-area" rows="3"
+              placeholder="Escribe o edita tu comentario..."></textarea>
+            <div class="cat-picker" id="cat-picker">
+              <button type="button" class="cat-btn cat-btn--production cat-btn--active"
+                      data-cat="production" onclick="selectCategory(this)">Producción</button>
+              <button type="button" class="cat-btn cat-btn--quality"
+                      data-cat="quality" onclick="selectCategory(this)">Calidad</button>
+              <button type="button" class="cat-btn cat-btn--safety"
+                      data-cat="safety" onclick="selectCategory(this)">Seguridad</button>
+              <button type="button" class="cat-btn cat-btn--maintenance"
+                      data-cat="maintenance" onclick="selectCategory(this)">Mantenimiento</button>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button class="pp-btn pp-btn-sm pp-btn-ghost" onclick="cancelComment()">Cancelar</button>
+              <button class="pp-btn pp-btn-sm pp-btn-primary" id="btn-save"
+                      onclick="submitComment()">Guardar</button>
+            </div>
+          </div>
+
+          <div id="recorder-error" style="display:none">
+            <div class="rec-error">
+              <span class="rec-error__icon">⚠️</span>
+              <span id="recorder-error-msg">Error de micrófono</span>
+              <button class="pp-btn pp-btn-sm" onclick="dismissError()">Cerrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="comments-scroll flex-grow-1 overflow-auto" id="comments-list">
+          <div class="comments-empty" id="comments-empty">
+            <span>Sin comentarios</span>
+            <small>Pulsa el micrófono para añadir uno</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>{# /pp-grid-2-1 #}
+
+  {% else %}
+  {# ── Formulario de inicio de turno ─────────────────────────────────────── #}
+  <div class="pp-grid-2-1">
+    <div class="pp-card">
+      <h3 class="pp-card-title mb-4">
+        <i class="bi bi-play-circle me-2"></i>Iniciar turno — Línea {{ shift_line }}
+      </h3>
+      <div id="grp-shift-error" class="alert alert-danger mb-3" style="display:none;"></div>
+
+      <div class="pp-field mb-4">
+        <label class="pp-label"><i class="bi bi-person me-1"></i>Operador</label>
+        {% if operators %}
+        <select id="grp-operator-id" class="pp-select" required>
+          <option value="">Seleccionar operador...</option>
+          {% for op in operators %}
+          <option value="{{ op.id }}">{{ op.name }} ({{ op.badge_number }})</option>
+          {% endfor %}
+        </select>
+        {% else %}
+        <div class="alert alert-warning">No hay operadores configurados.</div>
+        {% endif %}
+      </div>
+
+      <div class="pp-field mb-4">
+        <label class="pp-label"><i class="bi bi-clock me-1"></i>Tipo de turno</label>
+        <div class="shift-type-grid">
+          <label class="shift-type-card">
+            <input type="radio" name="grp-shift-type" value="morning" checked>
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">🌅</span>
+              <span class="shift-type-card__name">Mañana</span>
+              <span class="shift-type-card__hours">06:00 – 14:00</span>
+            </div>
+          </label>
+          <label class="shift-type-card">
+            <input type="radio" name="grp-shift-type" value="afternoon">
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">☀️</span>
+              <span class="shift-type-card__name">Tarde</span>
+              <span class="shift-type-card__hours">14:00 – 22:00</span>
+            </div>
+          </label>
+          <label class="shift-type-card">
+            <input type="radio" name="grp-shift-type" value="night">
+            <div class="shift-type-card__inner">
+              <span class="shift-type-card__icon">🌙</span>
+              <span class="shift-type-card__name">Noche</span>
+              <span class="shift-type-card__hours">22:00 – 06:00</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end pt-3" style="border-top:1px solid var(--pp-line);">
+        <button class="pp-btn pp-btn-primary" id="grp-start-btn" onclick="startGroupShift()">
+          <i class="bi bi-play-fill"></i> Iniciar turno
+        </button>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="pp-card" style="border-left:3px solid var(--pp-info);">
+        <h3 class="pp-card-title mb-3">Línea {{ shift_line }}</h3>
+        <p class="pp-dim" style="font-size:13px;">No hay turno activo en esta línea.</p>
+        <p class="pp-dim" style="font-size:13px; margin-top:8px;">
+          Selecciona el operador y el tipo de turno para comenzar.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}{# /active_shift #}
+
+</div>{# /tab-shifts #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════════
+   TAB HISTÓRICO DE TURNOS — solo Tier 0
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<div class="grp-tab-pane {% if active_tab == 'shift_history' %}active{% endif %}" id="tab-shift_history">
+
+  {# Filtros #}
+  <div class="pp-card mb-4">
+    <form method="get" id="shHistoryForm">
+      <input type="hidden" name="tab" value="shift_history">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-2">
+          <div class="pp-field">
+            <label class="pp-label">Línea</label>
+            <select name="shift_line" class="pp-select">
+              {% for l in site_lines %}
+              <option value="{{ l }}" {% if l == shift_line %}selected{% endif %}>L{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="pp-field">
+            <label class="pp-label">Operador</label>
+            <input type="text" name="sh_operator" class="pp-input"
+                   placeholder="Nombre" value="{{ shift_history_filters.operator or '' }}">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="pp-field">
+            <label class="pp-label">Desde</label>
+            <input type="date" name="sh_from" class="pp-input"
+                   value="{{ shift_history_filters.from or '' }}">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="pp-field">
+            <label class="pp-label">Hasta</label>
+            <input type="date" name="sh_to" class="pp-input"
+                   value="{{ shift_history_filters.to or '' }}">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="pp-field">
+            <label class="pp-label">Estado</label>
+            <select name="sh_status" class="pp-select">
+              <option value="">Todos</option>
+              <option value="completed"
+                {% if shift_history_filters.status == 'completed' %}selected{% endif %}>Completado</option>
+              <option value="interrupted"
+                {% if shift_history_filters.status == 'interrupted' %}selected{% endif %}>Interrumpido</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2 d-flex gap-2 align-items-end">
+          <button type="submit" class="pp-btn pp-btn-primary pp-btn-sm">Buscar</button>
+          <a href="/group/{{ group.id }}?tab=shift_history" class="pp-btn pp-btn-sm">Limpiar</a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {# Resultados #}
+  {% if shift_history %}
+  <div class="pp-table-wrap">
+    <table class="pp-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Operador</th>
+          <th>Línea</th>
+          <th>Tipo</th>
+          <th>Duración</th>
+          <th class="right">Producido</th>
+          <th class="right">Rechazo</th>
+          <th class="right">Paros</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in shift_history %}
+        {% set has_kpi = s.last_units_produced is not none %}
+        <tr>
+          <td class="pp-faint pp-mono" style="font-size:11px;">{{ s.id }}</td>
+          <td>
+            <span style="font-weight:600; font-variant-numeric:tabular-nums; font-size:13px;">{{ s.start_time[:10] | replace('-', '/') }}</span>
+            <div class="pp-faint" style="font-size:11px;">{{ s.start_time[11:16] }}{% if s.end_time %} → {{ s.end_time[11:16] }}{% endif %}</div>
+          </td>
+          <td>{{ s.operator_name }}</td>
+          <td><span class="pp-tag pp-tag-info">L{{ s.line_number }}</span></td>
+          <td style="font-size:12px;">
+            {% if s.shift_type == 'morning' %}☀ Mañana
+            {% elif s.shift_type == 'afternoon' %}🌤 Tarde
+            {% else %}🌙 Noche{% endif %}
+          </td>
+          <td class="pp-faint" style="font-size:12px; font-variant-numeric:tabular-nums;">
+            {% if s.end_time and s.start_time %}{{ s.duration_h }}h {{ s.duration_m }}m{% else %}—{% endif %}
+          </td>
+          <td class="right">
+            {% if has_kpi %}
+              <strong style="font-variant-numeric:tabular-nums;">{{ "{:,}".format(s.last_units_produced | int).replace(",", ".") }}</strong>
+              {% if s.last_target %}
+              <div class="pp-progress mt-1" style="width:80px; margin-left:auto;">
+                {% set pct = (s.last_units_produced / s.last_target * 100) | round(0) %}
+                {% set pct_capped = pct if pct <= 100 else 100 %}
+                <div class="pp-progress-fill {% if pct >= 95 %}pp-progress-fill-ok{% elif pct >= 80 %}pp-progress-fill-warn{% else %}pp-progress-fill-bad{% endif %}"
+                     style="width:{{ pct_capped }}%"></div>
+              </div>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td class="right">
+            {% if has_kpi and s.last_units_produced > 0 %}
+              {% set rate = (s.last_units_rejected / s.last_units_produced * 100) | round(1) %}
+              <span style="font-weight:700; font-variant-numeric:tabular-nums;
+                color:{% if rate <= 1 %}var(--pp-good){% elif rate <= 3 %}var(--pp-warn){% else %}var(--pp-bad){% endif %};">{{ rate }}%</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="right pp-faint" style="font-variant-numeric:tabular-nums; font-size:12px;">
+            {% if has_kpi %}{{ s.last_downtime | int }} min{% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="pp-tag {% if s.status == 'completed' %}pp-tag-ok{% else %}pp-tag-warn{% endif %}">
+              {% if s.status == 'completed' %}Completado{% else %}Interrumpido{% endif %}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('views.shift_summary_view', shift_id=s.id) }}"
+               class="pp-btn pp-btn-sm">Ver</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="pp-empty">
+    <i class="bi bi-search"></i>
+    <p class="pp-empty-title">No se encontraron turnos</p>
+    <a href="/group/{{ group.id }}?tab=shift_history" class="pp-btn mt-2">Ver todos</a>
+  </div>
+  {% endif %}
+
+</div>{# /tab-shift_history #}
+{% endif %}{# /tier_level == 0 #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════════
+   TAB DASHBOARD
    ══════════════════════════════════════════════════════════════════════════════ #}
 <div class="grp-tab-pane {% if active_tab == 'dashboard' %}active{% endif %}" id="tab-dashboard">
 
@@ -257,7 +697,7 @@
 
 
 {# ══════════════════════════════════════════════════════════════════════════════
-   TAB 2 — SQDCP
+   TAB SQDCP
    ══════════════════════════════════════════════════════════════════════════════ #}
 <div class="grp-tab-pane {% if active_tab == 'sqdcp' %}active{% endif %}" id="tab-sqdcp">
 
@@ -472,7 +912,7 @@
 
 
 {# ══════════════════════════════════════════════════════════════════════════════
-   TAB 3 — EQUIPOS
+   TAB EQUIPOS
    ══════════════════════════════════════════════════════════════════════════════ #}
 <div class="grp-tab-pane {% if active_tab == 'equipment' %}active{% endif %}" id="tab-equipment">
 
@@ -492,7 +932,6 @@
     {% for eq in equipment %}
     {% set st = eq.status %}
     <div class="eq-card" id="eq-card-{{ eq.id }}">
-      {# Status badge #}
       <div class="d-flex align-items-start justify-content-between mb-2">
         <span class="eq-type-badge">{{ eq.equipment_type }}</span>
         <span class="eq-card-status eq-status-{{ st }}" id="eq-status-badge-{{ eq.id }}">
@@ -500,37 +939,27 @@
           {% if st=='running' %}En marcha{% elif st=='stopped' %}Parado{% elif st=='changeover' %}Cambio{% elif st=='maintenance' %}Mantenimiento{% else %}Inactivo{% endif %}
         </span>
       </div>
-
-      {# Name & model #}
       <h3 style="font-size:14px; font-weight:700; margin:0 0 2px; color:var(--pp-text);">{{ eq.name }}</h3>
       {% if eq.manufacturer or eq.model %}
       <p style="font-size:12px; color:var(--pp-text-faint); margin:0 0 10px;">
         {{ eq.manufacturer or '' }}{% if eq.manufacturer and eq.model %} · {% endif %}{{ eq.model or '' }}
       </p>
       {% endif %}
-
-      {# Speed #}
       {% if eq.nominal_speed %}
       <div class="d-flex justify-content-between" style="font-size:12px; margin-bottom:6px;">
         <span class="pp-faint">Velocidad nominal</span>
         <strong>{{ eq.nominal_speed | int }} u/h</strong>
       </div>
       {% endif %}
-
-      {# Last maintenance #}
       {% if eq.last_maintenance %}
       <div class="d-flex justify-content-between" style="font-size:12px; margin-bottom:10px;">
         <span class="pp-faint">Último mantenimiento</span>
         <span>{{ eq.last_maintenance }}</span>
       </div>
       {% endif %}
-
-      {# Notes #}
       {% if eq.notes %}
       <p style="font-size:11px; color:var(--pp-text-faint); margin:0 0 10px; font-style:italic; border-left:2px solid var(--pp-line); padding-left:8px;">{{ eq.notes }}</p>
       {% endif %}
-
-      {# Status change #}
       <div class="eq-card-actions">
         <select class="pp-select" style="flex:1; padding:5px 8px; font-size:11px;"
                 id="eq-sel-{{ eq.id }}" onchange="changeEquipmentStatus({{ eq.id }}, this.value)">
@@ -544,7 +973,6 @@
     </div>
     {% endfor %}
   </div>
-
   {% else %}
   <div class="pp-empty">
     <i class="bi bi-tools" style="font-size:2rem;"></i>
@@ -564,15 +992,14 @@
 function switchTab(name) {
   document.querySelectorAll('.grp-tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.grp-tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelector(`#tab-${name}`).classList.add('active');
+  const pane = document.querySelector(`#tab-${name}`);
+  if (pane) pane.classList.add('active');
   document.querySelectorAll('.grp-tab-btn').forEach(b => {
     if (b.getAttribute('onclick') === `switchTab('${name}')`) b.classList.add('active');
   });
-  // Update URL without reload
   const url = new URL(window.location.href);
   url.searchParams.set('tab', name);
   history.replaceState({}, '', url.toString());
-  // Re-init SQDCP charts when switching to that tab
   if (name === 'sqdcp' && !window._sqdcpInitialized) {
     initSqdcpCharts();
     window._sqdcpInitialized = true;
@@ -589,7 +1016,6 @@ async function changeEquipmentStatus(eqId, status) {
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.message || 'Error');
-    // Update badge
     const badge = document.getElementById(`eq-status-badge-${eqId}`);
     if (badge) {
       const labels = { running:'En marcha', stopped:'Parado', changeover:'Cambio', maintenance:'Mantenimiento', idle:'Inactivo' };
@@ -599,7 +1025,6 @@ async function changeEquipmentStatus(eqId, status) {
     }
   } catch (err) {
     alert('Error al cambiar estado: ' + err.message);
-    // Reset select to previous value
     const sel = document.getElementById(`eq-sel-${eqId}`);
     if (sel) { const prev = sel.getAttribute('data-prev') || sel.options[0].value; sel.value = prev; }
   }
@@ -650,7 +1075,6 @@ function initSqdcpCharts() {
   window.addEventListener('resize', () => Object.values(_ringCharts).forEach(c => c && c.resize()));
 }
 
-// Auto-init if SQDCP tab is active on load
 if (document.getElementById('tab-sqdcp').classList.contains('active')) {
   initSqdcpCharts();
   window._sqdcpInitialized = true;
@@ -745,6 +1169,91 @@ function escHtml(s) {
 document.querySelectorAll('.action-status-sel').forEach(sel => {
   if (sel.value==='done') sel.closest('tr').style.opacity='0.55';
 });
+
+// ── Group shift management (Tier 0 only) ─────────────────────────────────────
+{% if tier_level == 0 %}
+const _GRP_SHIFT_LINE = {{ shift_line }};
+const _GRP_GROUP_ID   = {{ group.id }};
+
+async function startGroupShift() {
+  const operatorId = document.getElementById('grp-operator-id')?.value;
+  const shiftType  = document.querySelector('input[name="grp-shift-type"]:checked')?.value || 'morning';
+  const errEl = document.getElementById('grp-shift-error');
+  const btn   = document.getElementById('grp-start-btn');
+  if (!operatorId) {
+    errEl.textContent = 'Selecciona un operador.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Iniciando...';
+  try {
+    const res = await fetch('/api/shifts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ operator_id: parseInt(operatorId), line_number: _GRP_SHIFT_LINE, shift_type: shiftType }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al iniciar turno');
+    window.location.href = `/group/${_GRP_GROUP_ID}?tab=shifts&shift_line=${_GRP_SHIFT_LINE}`;
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-play-fill"></i> Iniciar turno';
+  }
+}
+
+async function endActiveShift(shiftId) {
+  if (!confirm('¿Finalizar el turno activo?')) return;
+  const notes = document.getElementById('grp-handover-notes')?.value || '';
+  try {
+    const res = await fetch(`/api/shifts/${shiftId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed', handover_notes: notes }),
+    });
+    if (!res.ok) throw new Error('Error al finalizar turno');
+    window.location.href = `/shift/${shiftId}/summary`;
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function saveHandoverNotes(shiftId) {
+  const notes = document.getElementById('grp-handover-notes')?.value || '';
+  try {
+    await fetch(`/api/shifts/${shiftId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handover_notes: notes }),
+    });
+  } catch (err) {
+    console.error('Error guardando notas:', err);
+  }
+}
+
+{% if active_shift %}
+// KPI polling for active shift
+(function pollGrpKpis() {
+  async function fetchKpis() {
+    try {
+      const res = await fetch(`/api/shifts/{{ active_shift.id }}/summary`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const kpi = data.kpi || {};
+      const el = id => document.getElementById(id);
+      if (el('grp-kpi-oee'))      el('grp-kpi-oee').textContent      = kpi.oee != null ? kpi.oee.toFixed(1) : '—';
+      if (el('grp-kpi-units'))    el('grp-kpi-units').textContent    = kpi.units_produced != null ? kpi.units_produced.toLocaleString('es') : '—';
+      if (el('grp-kpi-reject'))   el('grp-kpi-reject').textContent   = kpi.reject_rate != null ? kpi.reject_rate.toFixed(1) : '—';
+      if (el('grp-kpi-downtime')) el('grp-kpi-downtime').textContent = kpi.downtime_minutes != null ? Math.round(kpi.downtime_minutes) : '—';
+    } catch(e) {}
+  }
+  fetchKpis();
+  setInterval(fetchKpis, 30000);
+}());
+{% endif %}
+{% endif %}{# /tier_level == 0 #}
 </script>
 
 {% endblock %}

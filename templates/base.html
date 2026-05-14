@@ -285,18 +285,6 @@
       </div>
 
       <div class="pp-side-section">
-        <p class="pp-side-label">{{ t('nav_group_shifts') if t('nav_group_shifts') != 'nav_group_shifts' else 'Turnos' }}</p>
-        <a class="pp-side-item {% if request.path == '/shift/start' %}active{% endif %}"
-           href="{{ url_for('views.shift_start') }}">
-          <i class="bi bi-play-circle"></i>{{ t('nav_new_shift') }}
-        </a>
-        <a class="pp-side-item {% if request.path == '/shifts' %}active{% endif %}"
-           href="{{ url_for('views.shifts_history') }}">
-          <i class="bi bi-clock-history"></i>{{ t('nav_history') }}
-        </a>
-      </div>
-
-      <div class="pp-side-section">
         <p class="pp-side-label">{{ t('nav_group_improvement') if t('nav_group_improvement') != 'nav_group_improvement' else 'Mejora' }}</p>
         <a class="pp-side-item {% if request.path.startswith('/problems') %}active{% endif %}"
            href="{{ url_for('problems.problems_page') }}">
