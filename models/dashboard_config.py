@@ -86,6 +86,57 @@ _AUTOINJECTOR_LAYOUT = {
     ]
 }
 
+_TIER0_LAYOUT = {
+    "rows": [
+        {
+            "widgets": [
+                {"type": "oee_gauge",  "size": "small", "params": {"thresholds": [60, 85], "title": "OEE"}},
+                {"type": "kpi_card",   "size": "small", "params": {"metric": "units_produced",   "title": "Producción",  "unit": "uds"}},
+                {"type": "kpi_card",   "size": "small", "params": {"metric": "reject_rate",       "title": "Rechazo",     "unit": "%",   "thresholds": [5, 2]}},
+            ]
+        },
+        {
+            "widgets": [
+                {"type": "kpi_card",   "size": "small", "params": {"metric": "downtime_minutes",  "title": "Paros",       "unit": "min", "thresholds": [60, 30]}},
+                {"type": "speed_gauge","size": "small", "params": {"nominal_speed": 300,           "title": "Velocidad"}},
+            ]
+        },
+    ]
+}
+
+_TIER1_LAYOUT = {
+    "rows": [
+        {
+            "widgets": [
+                {"type": "oee_gauge",       "size": "small",  "params": {"thresholds": [60, 85], "title": "OEE"}},
+                {"type": "production_bars", "size": "medium", "params": {"days": 7,              "title": "Producción vs Objetivo"}},
+            ]
+        },
+        {
+            "widgets": [
+                {"type": "kpi_card", "size": "small", "params": {"metric": "availability", "title": "Disponibilidad", "unit": "%", "thresholds": [80, 90]}},
+                {"type": "kpi_card", "size": "small", "params": {"metric": "performance",  "title": "Rendimiento",    "unit": "%", "thresholds": [80, 90]}},
+                {"type": "kpi_card", "size": "small", "params": {"metric": "quality",      "title": "Calidad",        "unit": "%", "thresholds": [90, 95]}},
+            ]
+        },
+        {
+            "widgets": [
+                {"type": "trend_line",   "size": "large", "params": {"metric": "oee", "period": "30d", "title": "Tendencia OEE (30 días)"}},
+            ]
+        },
+        {
+            "widgets": [
+                {"type": "pareto_chart", "size": "large", "params": {"days": 30, "max_causes": 8, "title": "Pareto de Paradas"}},
+            ]
+        },
+        {
+            "widgets": [
+                {"type": "sqdcp_summary","size": "large", "params": {"days": 7, "title": "SQDCP"}},
+            ]
+        },
+    ]
+}
+
 _GENERIC_LAYOUT = {
     "rows": [
         {
