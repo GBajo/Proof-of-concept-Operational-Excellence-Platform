@@ -605,7 +605,274 @@ CREATE TABLE IF NOT EXISTS kaizen_reports (
 );
 CREATE INDEX IF NOT EXISTS idx_kaizen_reports_site ON kaizen_reports(site_id);
 CREATE INDEX IF NOT EXISTS idx_kaizen_reports_ts   ON kaizen_reports(generated_at);
+CREATE TABLE IF NOT EXISTS tiers (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id     TEXT NOT NULL,
+    tier_level  INTEGER NOT NULL CHECK(tier_level IN (0,1,2)),
+    name        TEXT NOT NULL,
+    description TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS tier_groups (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id     TEXT NOT NULL,
+    tier_id     INTEGER NOT NULL REFERENCES tiers(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    description TEXT,
+    group_type  TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS tier_group_assignments (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    parent_group_id INTEGER NOT NULL REFERENCES tier_groups(id) ON DELETE CASCADE,
+    child_group_id  INTEGER NOT NULL REFERENCES tier_groups(id) ON DELETE CASCADE,
+    assigned_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(parent_group_id, child_group_id)
+);
+CREATE TABLE IF NOT EXISTS tier_group_members (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id    INTEGER NOT NULL REFERENCES tier_groups(id) ON DELETE CASCADE,
+    operator_id INTEGER NOT NULL REFERENCES operators(id) ON DELETE CASCADE,
+    role        TEXT NOT NULL DEFAULT 'member' CHECK(role IN ('leader','member','support')),
+    assigned_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(group_id, operator_id)
+);
+CREATE TABLE IF NOT EXISTS escalation_paths (
+    id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id                     TEXT NOT NULL,
+    from_group_id               INTEGER NOT NULL REFERENCES tier_groups(id) ON DELETE CASCADE,
+    to_group_id                 INTEGER NOT NULL REFERENCES tier_groups(id) ON DELETE CASCADE,
+    escalation_type             TEXT NOT NULL DEFAULT 'general'
+                                CHECK(escalation_type IN ('quality','maintenance','safety','production','general')),
+    auto_escalate_after_minutes INTEGER,
+    notification_channel        TEXT NOT NULL DEFAULT 'app'
+                                CHECK(notification_channel IN ('app','teams','email')),
+    created_at                  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_tiers_site       ON tiers(site_id);
+CREATE INDEX IF NOT EXISTS idx_tier_groups_tier ON tier_groups(tier_id);
+CREATE INDEX IF NOT EXISTS idx_tier_groups_site ON tier_groups(site_id);
+CREATE INDEX IF NOT EXISTS idx_tga_parent       ON tier_group_assignments(parent_group_id);
+CREATE INDEX IF NOT EXISTS idx_tga_child        ON tier_group_assignments(child_group_id);
+CREATE INDEX IF NOT EXISTS idx_tgm_group        ON tier_group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_esc_from         ON escalation_paths(from_group_id);
 """
+
+
+# ── Datos de Tiers por planta ─────────────────────────────────────────────────
+
+# Estructura: tiers (tier_level_idx, name, description)
+#             groups (tier_level_idx, name, description, group_type)
+#             assignments [(parent_group_idx, child_group_idx), ...]
+#             member_badges {group_idx: [(badge, role), ...]}
+#             escalations [(from_idx, to_idx, type, minutes, channel), ...]
+
+TIER_SEED: dict[str, dict] = {
+    "alcobendas": {
+        "tiers": [
+            (0, "Tier 0 — Operadores de Línea",  "Grupos de operadores por línea de producción"),
+            (1, "Tier 1 — Equipos de Proceso",   "Equipos multidisciplinares por área de proceso"),
+            (2, "Tier 2 — Flujo de Valor",        "Gestión del flujo de valor completo de la planta"),
+        ],
+        "groups": [
+            (0, "Línea 1 - Blísters",      "Línea de envasado de blísteres",        "packaging_line"),
+            (0, "Línea 2 - Viales",        "Línea de llenado y cierre de viales",   "packaging_line"),
+            (0, "Línea 3 - Sobres",        "Línea de envasado de sobres",           "packaging_line"),
+            (1, "Equipo Sólidos Orales",   "Equipo de proceso para sólidos orales", "process_team"),
+            (1, "Equipo Inyectables",      "Equipo de proceso para inyectables",    "process_team"),
+            (2, "Value Stream Alcobendas", "Flujo de valor completo de Alcobendas", "value_stream"),
+        ],
+        "assignments": [(3, 0), (3, 2), (4, 1), (5, 3), (5, 4)],
+        "member_badges": {
+            0: [("ALB-001", "leader"), ("ALB-002", "member"), ("ALB-003", "member")],
+            1: [("ALB-004", "leader"), ("ALB-005", "member"), ("ALB-006", "member")],
+            2: [("ALB-007", "leader"), ("ALB-008", "member"), ("ALB-009", "member")],
+        },
+        "escalations": [
+            (0, 3, "production", 30, "app"),
+            (1, 4, "production", 30, "app"),
+            (2, 3, "production", 30, "app"),
+            (3, 5, "quality",    60, "teams"),
+            (4, 5, "quality",    60, "teams"),
+        ],
+    },
+    "indianapolis": {
+        "tiers": [
+            (0, "Tier 0 — Line Operators",   "Operator groups by production line"),
+            (1, "Tier 1 — Process Teams",    "Cross-functional teams by process area"),
+            (2, "Tier 2 — Value Stream",     "Full plant value stream management"),
+        ],
+        "groups": [
+            (0, "Line 1 - Autoinjectors",     "Autoinjector filling and packaging line", "filling_line"),
+            (0, "Line 2 - Insulin Pens",      "Insulin pen assembly and packaging line", "filling_line"),
+            (0, "Line 3 - Vials",             "Vial filling and packaging line",         "packaging_line"),
+            (1, "Injectables Process Team",   "Process team for injectables",            "process_team"),
+            (1, "Vials & Packaging Team",     "Process team for vials and packaging",    "process_team"),
+            (2, "Indianapolis Value Stream",  "Full Indianapolis value stream",           "value_stream"),
+        ],
+        "assignments": [(3, 0), (3, 1), (4, 2), (5, 3), (5, 4)],
+        "member_badges": {
+            0: [("IND-001", "leader"), ("IND-002", "member"), ("IND-003", "member")],
+            1: [("IND-004", "leader"), ("IND-005", "member"), ("IND-006", "member")],
+            2: [("IND-007", "leader"), ("IND-008", "member"), ("IND-009", "member")],
+        },
+        "escalations": [
+            (0, 3, "production", 30, "app"),
+            (1, 3, "production", 30, "app"),
+            (2, 4, "production", 30, "app"),
+            (3, 5, "quality",    60, "teams"),
+            (4, 5, "quality",    60, "teams"),
+        ],
+    },
+    "fegersheim": {
+        "tiers": [
+            (0, "Tier 0 — Opérateurs de Ligne",  "Groupes d'opérateurs par ligne de production"),
+            (1, "Tier 1 — Équipes de Processus", "Équipes pluridisciplinaires par zone de process"),
+            (2, "Tier 2 — Flux de Valeur",       "Gestion du flux de valeur complet du site"),
+        ],
+        "groups": [
+            (0, "Ligne 1 - Sérialisation",   "Ligne sérialisation et conditionnement", "packaging_line"),
+            (0, "Ligne 2 - Découpe",         "Ligne de découpe aluminium",             "manufacturing_equipment"),
+            (0, "Ligne 3 - Étiquetage",      "Ligne d'étiquetage et mise en boîte",    "packaging_line"),
+            (1, "Équipe Solides Oraux",      "Équipe process pour solides oraux",       "process_team"),
+            (1, "Équipe Liquides",           "Équipe process pour liquides",            "process_team"),
+            (2, "Value Stream Fegersheim",   "Flux de valeur complet de Fegersheim",   "value_stream"),
+        ],
+        "assignments": [(3, 0), (3, 2), (4, 1), (5, 3), (5, 4)],
+        "member_badges": {
+            0: [("FEG-001", "leader")],
+            1: [("FEG-002", "leader")],
+            2: [("FEG-003", "leader")],
+        },
+        "escalations": [
+            (0, 3, "production", 30, "app"),
+            (1, 4, "production", 30, "app"),
+            (2, 3, "production", 30, "app"),
+            (3, 5, "quality",    60, "teams"),
+        ],
+    },
+    "sesto": {
+        "tiers": [
+            (0, "Tier 0 — Operatori di Linea",  "Gruppi di operatori per linea di produzione"),
+            (1, "Tier 1 — Team di Processo",    "Team multidisciplinari per area di processo"),
+            (2, "Tier 2 — Flusso di Valore",    "Gestione del flusso di valore completo del sito"),
+        ],
+        "groups": [
+            (0, "Linea 1 - Blister",          "Linea di confezionamento blister",         "packaging_line"),
+            (0, "Linea 2 - Pick-and-Place",   "Linea pick-and-place e assemblaggio",       "manufacturing_equipment"),
+            (0, "Linea 3 - Pallettizzazione", "Linea di pallettizzazione e logistica",     "packaging_line"),
+            (1, "Team Confezionamento",       "Team processo confezionamento e blister",   "process_team"),
+            (1, "Team Logistica",             "Team processo pallettizzazione e logistica","process_team"),
+            (2, "Value Stream Sesto S.G.",    "Flusso di valore completo di Sesto S.G.",   "value_stream"),
+        ],
+        "assignments": [(3, 0), (3, 1), (4, 2), (5, 3), (5, 4)],
+        "member_badges": {
+            0: [("SES-001", "leader")],
+            1: [("SES-002", "leader")],
+            2: [("SES-003", "leader")],
+        },
+        "escalations": [
+            (0, 3, "production", 30, "app"),
+            (1, 3, "production", 30, "app"),
+            (2, 4, "production", 30, "app"),
+            (3, 5, "quality",    60, "teams"),
+        ],
+    },
+    "seishin": {
+        "tiers": [
+            (0, "Tier 0 — ラインオペレーター", "生産ラインごとのオペレーターグループ"),
+            (1, "Tier 1 — プロセスチーム",     "プロセスエリアごとの部門横断チーム"),
+            (2, "Tier 2 — バリューストリーム", "サイト全体のバリューストリーム管理"),
+        ],
+        "groups": [
+            (0, "ライン1 - 包装",         "包装ラインオペレーターグループ",             "packaging_line"),
+            (0, "ライン2 - 充填",         "充填ラインオペレーターグループ",             "filling_line"),
+            (0, "ライン3 - シリアル化",   "シリアル化・検査ラインオペレーターグループ", "packaging_line"),
+            (1, "生産チームA",            "包装・充填プロセスチーム",                   "process_team"),
+            (1, "生産チームB",            "シリアル化・品質プロセスチーム",             "process_team"),
+            (2, "バリューストリーム 星辰", "星辰工場全体のバリューストリーム",           "value_stream"),
+        ],
+        "assignments": [(3, 0), (3, 1), (4, 2), (5, 3), (5, 4)],
+        "member_badges": {
+            0: [("SEI-001", "leader")],
+            1: [("SEI-002", "leader")],
+            2: [("SEI-003", "leader")],
+        },
+        "escalations": [
+            (0, 3, "production", 30, "app"),
+            (1, 3, "production", 30, "app"),
+            (2, 4, "production", 30, "app"),
+            (3, 5, "quality",    60, "teams"),
+        ],
+    },
+}
+
+
+def _seed_tiers(site_id: str, conn: sqlite3.Connection) -> None:
+    """Inserta datos de tiers de ejemplo para una planta. Idempotente."""
+    seed = TIER_SEED.get(site_id)
+    if not seed:
+        return
+
+    existing = conn.execute(
+        "SELECT COUNT(*) FROM tiers WHERE site_id=?", (site_id,)
+    ).fetchone()[0]
+    if existing > 0:
+        return
+
+    # 1. Insertar tiers (nivel 0, 1, 2)
+    tier_ids: list[int] = []
+    for tier_level, name, description in seed["tiers"]:
+        cur = conn.execute(
+            "INSERT INTO tiers (site_id, tier_level, name, description) VALUES (?,?,?,?)",
+            (site_id, tier_level, name, description),
+        )
+        tier_ids.append(cur.lastrowid)
+
+    # tier_level_idx → tier_id (0→T0 id, 1→T1 id, 2→T2 id)
+    tier_id_map = {i: tid for i, tid in enumerate(tier_ids)}
+
+    # 2. Insertar grupos
+    group_ids: list[int] = []
+    for tier_level_idx, name, description, group_type in seed["groups"]:
+        cur = conn.execute(
+            "INSERT INTO tier_groups (site_id, tier_id, name, description, group_type) VALUES (?,?,?,?,?)",
+            (site_id, tier_id_map[tier_level_idx], name, description, group_type),
+        )
+        group_ids.append(cur.lastrowid)
+
+    # 3. Insertar asignaciones
+    for parent_idx, child_idx in seed["assignments"]:
+        conn.execute(
+            "INSERT OR IGNORE INTO tier_group_assignments (parent_group_id, child_group_id) VALUES (?,?)",
+            (group_ids[parent_idx], group_ids[child_idx]),
+        )
+
+    # 4. Insertar miembros (usando badge_number para encontrar operator_id)
+    for group_idx, members in seed.get("member_badges", {}).items():
+        gid = group_ids[group_idx]
+        for badge, role in members:
+            row = conn.execute(
+                "SELECT id FROM operators WHERE badge_number=?", (badge,)
+            ).fetchone()
+            if row:
+                conn.execute(
+                    "INSERT OR IGNORE INTO tier_group_members (group_id, operator_id, role) VALUES (?,?,?)",
+                    (gid, row[0], role),
+                )
+
+    # 5. Insertar rutas de escalado
+    for from_idx, to_idx, esc_type, minutes, channel in seed.get("escalations", []):
+        conn.execute(
+            """INSERT INTO escalation_paths
+               (site_id, from_group_id, to_group_id, escalation_type,
+                auto_escalate_after_minutes, notification_channel)
+               VALUES (?,?,?,?,?,?)""",
+            (site_id, group_ids[from_idx], group_ids[to_idx], esc_type, minutes, channel),
+        )
+
+    conn.commit()
+    _safe_print(f"  [ok] Tiers: {len(tier_ids)} niveles, {len(group_ids)} grupos → {site_id}")
 
 
 def _create_schema(db_path: str) -> None:
@@ -822,6 +1089,7 @@ def seed_site(site_id: str, force: bool = False) -> None:
     conn2 = sqlite3.connect(db_path)
     conn2.execute("PRAGMA foreign_keys = ON")
     _seed_problems_and_initiatives(site_id, conn2)
+    _seed_tiers(site_id, conn2)
     conn2.close()
 
     shifts_n   = len(shift_rows)
@@ -1740,6 +2008,14 @@ def seed_all_sites(force: bool = False) -> None:
     for site_id in SITES:
         seed_site(site_id, force=force)
     _seed_alert_rules()
+    # Garantizar datos de tiers incluso en BDs ya inicializadas
+    for site_id in SITES:
+        db_path = SITES[site_id]["db_path"]
+        if os.path.exists(db_path):
+            conn = sqlite3.connect(db_path)
+            conn.execute("PRAGMA foreign_keys = ON")
+            _seed_tiers(site_id, conn)
+            conn.close()
     _safe_print("[ seed_sites ] Completado.")
 
 

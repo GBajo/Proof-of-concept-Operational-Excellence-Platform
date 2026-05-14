@@ -34,6 +34,7 @@ def create_app() -> Flask:
     from routes.data_explorer import bp as data_explorer_bp
     from routes.sqdcp import bp as sqdcp_bp
     from routes.widgets import bp as widgets_bp
+    from routes.tiers import bp as tiers_bp
 
     app.register_blueprint(operators_bp)
     app.register_blueprint(shifts_bp)
@@ -51,6 +52,7 @@ def create_app() -> Flask:
     app.register_blueprint(data_explorer_bp)
     app.register_blueprint(sqdcp_bp)
     app.register_blueprint(widgets_bp)
+    app.register_blueprint(tiers_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
     @app.before_request

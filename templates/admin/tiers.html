@@ -1,0 +1,994 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Tiers{% endblock %}
+
+{% block content %}
+<style>
+/* ── Árbol jerárquico ───────────────────────────────────────── */
+.tier-tree { padding: 0.5rem 0; }
+
+.tier-node-t2 {
+  border: 2px solid var(--pp-blue, #1a6eff);
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%);
+  overflow: hidden;
+}
+.tier-node-t2 .tier-header {
+  background: rgba(26, 110, 255, 0.15);
+  border-bottom: 1px solid rgba(26,110,255,0.3);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+.tier-node-t2 .tier-header:hover { background: rgba(26,110,255,0.25); }
+.tier-children-t2 { padding: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+.tier-node-t1 {
+  border: 1px solid rgba(100,160,255,0.4);
+  border-radius: 8px;
+  background: rgba(13, 30, 60, 0.8);
+  flex: 1 1 300px;
+  min-width: 260px;
+}
+.tier-node-t1 .tier-header {
+  background: rgba(100,160,255,0.1);
+  border-bottom: 1px solid rgba(100,160,255,0.25);
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+  border-radius: 7px 7px 0 0;
+}
+.tier-node-t1 .tier-header:hover { background: rgba(100,160,255,0.2); }
+.tier-children-t1 { padding: 0.6rem 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.tier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  background: rgba(26,110,255,0.2);
+  border: 1px solid rgba(26,110,255,0.4);
+  font-size: 12px;
+  color: #90b8ff;
+  white-space: nowrap;
+}
+
+.tier-name { font-weight: 600; font-size: 13px; color: #e0ecff; flex: 1; min-width: 0; }
+.tier-meta { font-size: 11px; color: #6a8aaa; }
+.tier-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(26,110,255,0.25);
+  color: #90b8ff;
+  white-space: nowrap;
+}
+.tier-level-badge-0 { background: rgba(40,200,120,0.2); color: #50d890; border: 1px solid rgba(40,200,120,0.3); }
+.tier-level-badge-1 { background: rgba(100,160,255,0.2); color: #80b4ff; border: 1px solid rgba(100,160,255,0.3); }
+.tier-level-badge-2 { background: rgba(180,100,255,0.2); color: #c880ff; border: 1px solid rgba(180,100,255,0.3); }
+
+.ungrouped-section {
+  border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 1rem;
+}
+.ungrouped-label { font-size: 11px; color: var(--pp-text-faint); margin-bottom: 0.5rem; }
+
+.tier-collapse-icon { transition: transform 0.2s; font-size: 12px; color: #6a8aaa; }
+.tier-collapsed .tier-collapse-icon { transform: rotate(-90deg); }
+.tier-collapsed .tier-children-t2,
+.tier-collapsed .tier-children-t1 { display: none; }
+
+/* ── Tablas ─────────────────────────────────────────────────── */
+.tiers-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--pp-text-faint); }
+.tiers-table td { font-size: 13px; vertical-align: middle; }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="mb-1" style="color:var(--pp-text);">
+      <i class="bi bi-diagram-2 me-2" style="color:var(--pp-blue)"></i>Gestión de Tiers
+    </h4>
+    <p class="mb-0" style="font-size:13px;color:var(--pp-text-dim);">
+      Estructura jerárquica de equipos Lean — Tier 0 (Línea) → Tier 1 (Proceso) → Tier 2 (Value Stream)
+    </p>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="tierToast" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+  <div id="toastEl" class="toast align-items-center border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMsg"></div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="tierTabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-tree" type="button">
+      <i class="bi bi-diagram-3 me-1"></i>Árbol
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tiers" type="button">
+      <i class="bi bi-layers me-1"></i>Tiers
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-groups" type="button">
+      <i class="bi bi-people me-1"></i>Grupos
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-assignments" type="button">
+      <i class="bi bi-link-45deg me-1"></i>Asignaciones
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-members" type="button">
+      <i class="bi bi-person-badge me-1"></i>Miembros
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-escalation" type="button">
+      <i class="bi bi-arrow-up-right-circle me-1"></i>Escalado
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 1: ÁRBOL JERÁRQUICO
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade show active" id="tab-tree">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span style="font-size:13px;color:var(--pp-text-dim);">Vista jerárquica del site activo</span>
+      <div class="d-flex gap-2">
+        <button class="pp-btn pp-btn-sm" onclick="expandAll()"><i class="bi bi-arrows-expand me-1"></i>Expandir todo</button>
+        <button class="pp-btn pp-btn-sm" onclick="collapseAll()"><i class="bi bi-arrows-collapse me-1"></i>Colapsar todo</button>
+        <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="loadHierarchy()"><i class="bi bi-arrow-clockwise me-1"></i>Actualizar</button>
+      </div>
+    </div>
+    <div id="hierarchy-tree" class="tier-tree">
+      <div class="text-center py-5" style="color:var(--pp-text-faint);">
+        <div class="spinner-border spinner-border-sm mb-2"></div><br>Cargando jerarquía...
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 2: TIERS
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade" id="tab-tiers">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span style="font-size:13px;color:var(--pp-text-dim);">Niveles de tier configurados para el site activo</span>
+      <button class="pp-btn pp-btn-primary" onclick="openTierModal()">
+        <i class="bi bi-plus me-1"></i>Nuevo Tier
+      </button>
+    </div>
+    <div class="pp-card">
+      <table class="table table-hover tiers-table mb-0">
+        <thead><tr>
+          <th>Nivel</th><th>Nombre</th><th>Descripción</th><th>Grupos</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="tiers-tbody">
+          <tr><td colspan="5" class="text-center py-3" style="color:var(--pp-text-faint);">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 3: GRUPOS
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade" id="tab-groups">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size:13px;color:var(--pp-text-dim);">Filtrar por nivel:</span>
+        <select id="groupFilterLevel" class="form-select form-select-sm" style="width:auto;" onchange="loadGroups()">
+          <option value="">Todos</option>
+          <option value="2">Tier 2 — Value Stream</option>
+          <option value="1">Tier 1 — Proceso</option>
+          <option value="0">Tier 0 — Operadores</option>
+        </select>
+      </div>
+      <button class="pp-btn pp-btn-primary" onclick="openGroupModal()">
+        <i class="bi bi-plus me-1"></i>Nuevo Grupo
+      </button>
+    </div>
+    <div class="pp-card">
+      <table class="table table-hover tiers-table mb-0">
+        <thead><tr>
+          <th>Nombre</th><th>Tier</th><th>Tipo</th><th>Miembros</th><th>Subgrupos</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="groups-tbody">
+          <tr><td colspan="6" class="text-center py-3" style="color:var(--pp-text-faint);">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 4: ASIGNACIONES
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade" id="tab-assignments">
+    <div class="row g-4">
+      <div class="col-md-5">
+        <div class="pp-card h-100">
+          <div class="pp-card-header">
+            <h6 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Grupo padre</h6>
+          </div>
+          <div class="p-3">
+            <label class="form-label" style="font-size:12px;color:var(--pp-text-dim);">Selecciona un grupo Tier 1 o Tier 2</label>
+            <select id="assignParentSelect" class="form-select form-select-sm" onchange="loadAssignmentPanel()">
+              <option value="">— selecciona —</option>
+            </select>
+            <hr>
+            <div id="assigned-children">
+              <p style="font-size:12px;color:var(--pp-text-faint);">Selecciona un grupo para ver sus asignaciones.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <div class="pp-card h-100">
+          <div class="pp-card-header">
+            <h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Grupos disponibles para asignar</h6>
+          </div>
+          <div class="p-3">
+            <div id="available-children">
+              <p style="font-size:12px;color:var(--pp-text-faint);">Selecciona un grupo padre primero.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 5: MIEMBROS
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade" id="tab-members">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="pp-card">
+          <div class="pp-card-header"><h6 class="mb-0"><i class="bi bi-people me-2"></i>Seleccionar grupo</h6></div>
+          <div class="p-3">
+            <select id="memberGroupSelect" class="form-select form-select-sm" onchange="loadMembers()">
+              <option value="">— selecciona grupo —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="pp-card">
+          <div class="pp-card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-person-badge me-2"></i>Miembros del grupo</h6>
+            <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="openAddMemberModal()" id="addMemberBtn" disabled>
+              <i class="bi bi-plus me-1"></i>Añadir miembro
+            </button>
+          </div>
+          <div class="p-3">
+            <div id="members-list">
+              <p style="font-size:12px;color:var(--pp-text-faint);">Selecciona un grupo para ver sus miembros.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 6: ESCALADO
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade" id="tab-escalation">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span style="font-size:13px;color:var(--pp-text-dim);">Rutas de escalado configuradas para el site activo</span>
+      <button class="pp-btn pp-btn-primary" onclick="openEscalationModal()">
+        <i class="bi bi-plus me-1"></i>Nueva ruta
+      </button>
+    </div>
+    <div class="pp-card">
+      <table class="table table-hover tiers-table mb-0">
+        <thead><tr>
+          <th>De (grupo)</th><th>A (grupo)</th><th>Tipo</th><th>Auto-escalar</th><th>Canal</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="escalation-tbody">
+          <tr><td colspan="6" class="text-center py-3" style="color:var(--pp-text-faint);">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /tab-content -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Tier CRUD
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="tierModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--pp-surface);color:var(--pp-text);">
+      <div class="modal-header" style="border-color:var(--pp-divider);">
+        <h5 class="modal-title" id="tierModalTitle">Nuevo Tier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="tierId">
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Nivel *</label>
+          <select id="tierLevel" class="form-select form-select-sm">
+            <option value="0">Tier 0 — Operadores de Línea</option>
+            <option value="1">Tier 1 — Equipo de Proceso</option>
+            <option value="2">Tier 2 — Value Stream</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Nombre *</label>
+          <input type="text" id="tierName" class="form-control form-control-sm" placeholder="Ej: Tier 0 — Operadores de Línea">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Descripción</label>
+          <textarea id="tierDesc" class="form-control form-control-sm" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--pp-divider);">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="pp-btn pp-btn-primary" onclick="saveTier()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Grupo CRUD
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="groupModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--pp-surface);color:var(--pp-text);">
+      <div class="modal-header" style="border-color:var(--pp-divider);">
+        <h5 class="modal-title" id="groupModalTitle">Nuevo Grupo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="groupId">
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Tier asignado *</label>
+          <select id="groupTierId" class="form-select form-select-sm"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Nombre *</label>
+          <input type="text" id="groupName" class="form-control form-control-sm" placeholder="Ej: Línea 1 - Blísters">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Tipo de grupo</label>
+          <select id="groupType" class="form-select form-select-sm">
+            <option value="">— sin tipo —</option>
+            <option value="packaging_line">packaging_line — Línea de envasado</option>
+            <option value="filling_line">filling_line — Línea de llenado</option>
+            <option value="manufacturing_equipment">manufacturing_equipment — Equipos fabricación</option>
+            <option value="process_team">process_team — Equipo de proceso</option>
+            <option value="value_stream">value_stream — Flujo de valor</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Descripción</label>
+          <textarea id="groupDesc" class="form-control form-control-sm" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--pp-divider);">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="pp-btn pp-btn-primary" onclick="saveGroup()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Añadir miembro
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="memberModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--pp-surface);color:var(--pp-text);">
+      <div class="modal-header" style="border-color:var(--pp-divider);">
+        <h5 class="modal-title">Añadir miembro al grupo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Operador *</label>
+          <select id="memberOperatorId" class="form-select form-select-sm"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Rol *</label>
+          <select id="memberRole" class="form-select form-select-sm">
+            <option value="leader">Leader — Líder del grupo</option>
+            <option value="member" selected>Member — Miembro</option>
+            <option value="support">Support — Soporte</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--pp-divider);">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="pp-btn pp-btn-primary" onclick="addMember()">Añadir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Escalado
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="escalationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--pp-surface);color:var(--pp-text);">
+      <div class="modal-header" style="border-color:var(--pp-divider);">
+        <h5 class="modal-title">Nueva ruta de escalado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Grupo de origen *</label>
+          <select id="escFromGroup" class="form-select form-select-sm"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Grupo de destino *</label>
+          <select id="escToGroup" class="form-select form-select-sm"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:12px;">Tipo de escalado *</label>
+          <select id="escType" class="form-select form-select-sm">
+            <option value="production">Production — Producción</option>
+            <option value="quality">Quality — Calidad</option>
+            <option value="maintenance">Maintenance — Mantenimiento</option>
+            <option value="safety">Safety — Seguridad</option>
+            <option value="general">General</option>
+          </select>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label" style="font-size:12px;">Auto-escalar después de (min)</label>
+            <input type="number" id="escMinutes" class="form-control form-control-sm" min="1" placeholder="Opcional">
+          </div>
+          <div class="col-6">
+            <label class="form-label" style="font-size:12px;">Canal de notificación</label>
+            <select id="escChannel" class="form-select form-select-sm">
+              <option value="app">App</option>
+              <option value="teams">Teams</option>
+              <option value="email">Email</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--pp-divider);">
+        <button type="button" class="pp-btn" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="pp-btn pp-btn-primary" onclick="saveEscalation()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Datos pasados desde Flask ───────────────────────────────────────────────
+const ALL_OPERATORS = {{ operators | tojson }};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const tierModal      = new bootstrap.Modal(document.getElementById('tierModal'));
+const groupModal     = new bootstrap.Modal(document.getElementById('groupModal'));
+const memberModal    = new bootstrap.Modal(document.getElementById('memberModal'));
+const escalModal     = new bootstrap.Modal(document.getElementById('escalationModal'));
+
+let _currentMemberGroupId = null;
+let _allGroups = [];
+let _allTiers  = [];
+
+function showToast(msg, ok = true) {
+  const el  = document.getElementById('toastEl');
+  const txt = document.getElementById('toastMsg');
+  el.classList.remove('text-bg-success', 'text-bg-danger');
+  el.classList.add(ok ? 'text-bg-success' : 'text-bg-danger');
+  txt.textContent = msg;
+  bootstrap.Toast.getOrCreateInstance(el, { delay: 3000 }).show();
+}
+
+async function api(url, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+function tierLevelBadge(level) {
+  const labels = ['T0 · Operadores', 'T1 · Proceso', 'T2 · Value Stream'];
+  return `<span class="pp-tag tier-level-badge-${level}">${labels[level] || level}</span>`;
+}
+
+// ── Árbol jerárquico ───────────────────────────────────────────────────────
+async function loadHierarchy() {
+  const container = document.getElementById('hierarchy-tree');
+  container.innerHTML = '<div class="text-center py-4" style="color:var(--pp-text-faint);"><div class="spinner-border spinner-border-sm mb-2"></div><br>Cargando...</div>';
+  try {
+    const data = await api('/api/tiers/hierarchy');
+    renderTree(data, container);
+  } catch(e) {
+    container.innerHTML = '<div class="text-center py-4" style="color:var(--pp-text-faint);">Error al cargar la jerarquía.</div>';
+  }
+}
+
+function renderTree(data, container) {
+  container.innerHTML = '';
+  const hasAny = (data.tier2_groups?.length || data.ungrouped_tier1?.length || data.ungrouped_tier0?.length);
+  if (!hasAny) {
+    container.innerHTML = '<div class="text-center py-5" style="color:var(--pp-text-faint);">No hay grupos de tier configurados para este site.<br><small>Ve a la pestaña "Tiers" para empezar.</small></div>';
+    return;
+  }
+  for (const t2 of (data.tier2_groups || [])) {
+    container.appendChild(buildT2Node(t2));
+  }
+  if (data.ungrouped_tier1?.length || data.ungrouped_tier0?.length) {
+    const ungroup = document.createElement('div');
+    ungroup.className = 'ungrouped-section';
+    ungroup.innerHTML = '<p class="ungrouped-label">Grupos sin asignar a un nivel superior</p>';
+    for (const g of (data.ungrouped_tier1 || [])) ungroup.appendChild(buildT1Node(g));
+    for (const g of (data.ungrouped_tier0 || [])) {
+      const chip = document.createElement('span');
+      chip.className = 'tier-chip me-1 mb-1';
+      chip.innerHTML = `<i class="bi bi-people"></i>${escHtml(g.name)} <span class="tier-badge">${g.member_count} m</span>`;
+      ungroup.appendChild(chip);
+    }
+    container.appendChild(ungroup);
+  }
+}
+
+function buildT2Node(group) {
+  const div = document.createElement('div');
+  div.className = 'tier-node-t2';
+  const header = document.createElement('div');
+  header.className = 'tier-header';
+  header.innerHTML = `
+    <i class="bi bi-diagram-3" style="color:#6090ff;font-size:14px;"></i>
+    <span class="tier-name">${escHtml(group.name)}</span>
+    <span class="tier-meta me-2">${escHtml(group.group_type || '')}</span>
+    <span class="tier-badge">${group.member_count} miembros</span>
+    <span class="tier-badge ms-1">${group.child_count} subgrupos</span>
+    <i class="bi bi-chevron-down tier-collapse-icon ms-2"></i>`;
+  header.onclick = () => div.classList.toggle('tier-collapsed');
+  div.appendChild(header);
+  const children = document.createElement('div');
+  children.className = 'tier-children-t2';
+  for (const t1 of (group.children || [])) children.appendChild(buildT1Node(t1));
+  div.appendChild(children);
+  return div;
+}
+
+function buildT1Node(group) {
+  const div = document.createElement('div');
+  div.className = 'tier-node-t1';
+  const header = document.createElement('div');
+  header.className = 'tier-header';
+  header.innerHTML = `
+    <i class="bi bi-people" style="color:#64a0ff;font-size:13px;"></i>
+    <span class="tier-name">${escHtml(group.name)}</span>
+    <span class="tier-badge">${group.member_count} m</span>
+    <span class="tier-badge ms-1">${group.child_count} sub</span>
+    <i class="bi bi-chevron-down tier-collapse-icon ms-1"></i>`;
+  header.onclick = () => div.classList.toggle('tier-collapsed');
+  div.appendChild(header);
+  const children = document.createElement('div');
+  children.className = 'tier-children-t1';
+  for (const t0 of (group.children || [])) {
+    const chip = document.createElement('span');
+    chip.className = 'tier-chip';
+    chip.innerHTML = `<i class="bi bi-wrench"></i>${escHtml(t0.name)} <span class="tier-badge">${t0.member_count} m</span>`;
+    children.appendChild(chip);
+  }
+  if (!(group.children?.length)) {
+    children.innerHTML = '<span style="font-size:11px;color:var(--pp-text-faint);">Sin grupos Tier 0 asignados</span>';
+  }
+  div.appendChild(children);
+  return div;
+}
+
+function expandAll()  { document.querySelectorAll('.tier-node-t2,.tier-node-t1').forEach(n => n.classList.remove('tier-collapsed')); }
+function collapseAll(){ document.querySelectorAll('.tier-node-t2,.tier-node-t1').forEach(n => n.classList.add('tier-collapsed')); }
+function escHtml(s)   { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// ── Tiers CRUD ─────────────────────────────────────────────────────────────
+async function loadTiers() {
+  _allTiers = await api('/api/tiers/tiers');
+  const tbody = document.getElementById('tiers-tbody');
+  if (!_allTiers.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3" style="color:var(--pp-text-faint);">No hay tiers configurados.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _allTiers.map(t => `
+    <tr>
+      <td>${tierLevelBadge(t.tier_level)}</td>
+      <td style="font-weight:600;">${escHtml(t.name)}</td>
+      <td style="color:var(--pp-text-dim);font-size:12px;">${escHtml(t.description || '—')}</td>
+      <td><span class="pp-tag pp-tag-neutral">${t.group_count}</span></td>
+      <td>
+        <button class="pp-btn pp-btn-sm me-1" onclick="openTierModal(${t.id})"><i class="bi bi-pencil"></i></button>
+        <button class="pp-btn pp-btn-sm" style="color:var(--pp-red);" onclick="deleteTier(${t.id},'${escHtml(t.name)}')"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+function openTierModal(id = null) {
+  document.getElementById('tierId').value   = id || '';
+  document.getElementById('tierName').value = '';
+  document.getElementById('tierDesc').value = '';
+  document.getElementById('tierModalTitle').textContent = id ? 'Editar Tier' : 'Nuevo Tier';
+  if (id) {
+    const t = _allTiers.find(x => x.id === id);
+    if (t) {
+      document.getElementById('tierName').value  = t.name;
+      document.getElementById('tierDesc').value  = t.description || '';
+      document.getElementById('tierLevel').value = t.tier_level;
+    }
+  }
+  tierModal.show();
+}
+
+async function saveTier() {
+  const id   = document.getElementById('tierId').value;
+  const name = document.getElementById('tierName').value.trim();
+  if (!name) { showToast('El nombre es obligatorio.', false); return; }
+  const body = {
+    name,
+    description: document.getElementById('tierDesc').value,
+    tier_level: parseInt(document.getElementById('tierLevel').value),
+  };
+  const r = id
+    ? await api(`/api/tiers/tiers/${id}`, 'PUT', body)
+    : await api('/api/tiers/tiers', 'POST', body);
+  if (r.ok) {
+    tierModal.hide();
+    showToast(id ? 'Tier actualizado.' : 'Tier creado.');
+    loadTiers(); loadGroups(); loadHierarchy();
+  } else {
+    showToast(r.message || 'Error al guardar.', false);
+  }
+}
+
+async function deleteTier(id, name) {
+  if (!confirm(`¿Eliminar el tier "${name}"? Se eliminarán también sus grupos.`)) return;
+  const r = await api(`/api/tiers/tiers/${id}`, 'DELETE');
+  if (r.ok) { showToast('Tier eliminado.'); loadTiers(); loadGroups(); loadHierarchy(); }
+  else showToast(r.message || 'Error al eliminar.', false);
+}
+
+// ── Grupos CRUD ────────────────────────────────────────────────────────────
+async function loadGroups() {
+  const level = document.getElementById('groupFilterLevel').value;
+  const url   = level !== '' ? `/api/tiers/groups?tier_level=${level}` : '/api/tiers/groups';
+  _allGroups  = await api(url);
+  const tbody = document.getElementById('groups-tbody');
+  if (!_allGroups.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3" style="color:var(--pp-text-faint);">No hay grupos configurados.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _allGroups.map(g => `
+    <tr>
+      <td style="font-weight:600;">${escHtml(g.name)}</td>
+      <td>${tierLevelBadge(g.tier_level)}</td>
+      <td style="font-size:12px;color:var(--pp-text-dim);">${escHtml(g.group_type || '—')}</td>
+      <td><span class="pp-tag pp-tag-neutral">${g.member_count}</span></td>
+      <td><span class="pp-tag pp-tag-neutral">${g.child_count}</span></td>
+      <td>
+        <button class="pp-btn pp-btn-sm me-1" onclick="openGroupModal(${g.id})"><i class="bi bi-pencil"></i></button>
+        <button class="pp-btn pp-btn-sm" style="color:var(--pp-red);" onclick="deleteGroup(${g.id},'${escHtml(g.name)}')"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+async function openGroupModal(id = null) {
+  // Asegurar que _allTiers está cargado
+  if (!_allTiers.length) _allTiers = await api('/api/tiers/tiers');
+  const sel = document.getElementById('groupTierId');
+  sel.innerHTML = _allTiers.map(t => `<option value="${t.id}">[T${t.tier_level}] ${escHtml(t.name)}</option>`).join('');
+  document.getElementById('groupId').value   = id || '';
+  document.getElementById('groupName').value = '';
+  document.getElementById('groupDesc').value = '';
+  document.getElementById('groupType').value = '';
+  document.getElementById('groupModalTitle').textContent = id ? 'Editar Grupo' : 'Nuevo Grupo';
+  if (id) {
+    const allFull = await api('/api/tiers/groups');
+    const g = allFull.find(x => x.id === id);
+    if (g) {
+      document.getElementById('groupName').value  = g.name;
+      document.getElementById('groupDesc').value  = g.description || '';
+      document.getElementById('groupType').value  = g.group_type || '';
+      document.getElementById('groupTierId').value = g.tier_id;
+    }
+  }
+  groupModal.show();
+}
+
+async function saveGroup() {
+  const id = document.getElementById('groupId').value;
+  const name = document.getElementById('groupName').value.trim();
+  if (!name) { showToast('El nombre es obligatorio.', false); return; }
+  const body = {
+    name,
+    description: document.getElementById('groupDesc').value,
+    group_type:  document.getElementById('groupType').value,
+    tier_id:     parseInt(document.getElementById('groupTierId').value),
+  };
+  const r = id
+    ? await api(`/api/tiers/groups/${id}`, 'PUT', body)
+    : await api('/api/tiers/groups', 'POST', body);
+  if (r.ok) {
+    groupModal.hide();
+    showToast(id ? 'Grupo actualizado.' : 'Grupo creado.');
+    loadGroups(); loadHierarchy(); refreshAssignmentSelects(); refreshMemberGroupSelect();
+  } else {
+    showToast(r.message || 'Error al guardar.', false);
+  }
+}
+
+async function deleteGroup(id, name) {
+  if (!confirm(`¿Eliminar el grupo "${name}"?`)) return;
+  const r = await api(`/api/tiers/groups/${id}`, 'DELETE');
+  if (r.ok) { showToast('Grupo eliminado.'); loadGroups(); loadHierarchy(); refreshAssignmentSelects(); refreshMemberGroupSelect(); }
+  else showToast(r.message || r.message, false);
+}
+
+// ── Asignaciones ───────────────────────────────────────────────────────────
+async function refreshAssignmentSelects() {
+  const allG = await api('/api/tiers/groups');
+  const parents = allG.filter(g => g.tier_level >= 1);
+  const sel = document.getElementById('assignParentSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— selecciona —</option>' +
+    parents.map(g => `<option value="${g.id}" data-level="${g.tier_level}">[T${g.tier_level}] ${escHtml(g.name)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+async function loadAssignmentPanel() {
+  const parentId = parseInt(document.getElementById('assignParentSelect').value);
+  const assignedDiv   = document.getElementById('assigned-children');
+  const availableDiv  = document.getElementById('available-children');
+  if (!parentId) {
+    assignedDiv.innerHTML  = '<p style="font-size:12px;color:var(--pp-text-faint);">Selecciona un grupo para ver sus asignaciones.</p>';
+    availableDiv.innerHTML = '<p style="font-size:12px;color:var(--pp-text-faint);">Selecciona un grupo padre primero.</p>';
+    return;
+  }
+  const opt = document.querySelector(`#assignParentSelect option[value="${parentId}"]`);
+  const parentLevel = parseInt(opt?.dataset.level ?? 1);
+  const childLevel  = parentLevel - 1;
+
+  const [children, allGroups] = await Promise.all([
+    api(`/api/tiers/groups/${parentId}/members`).then(() => api(`/api/tiers/hierarchy`)),
+    api('/api/tiers/groups'),
+  ]);
+
+  // Assigned children from assignments API
+  const assignedRes = await fetch(`/api/tiers/groups`);
+  const allG = await assignedRes.json();
+  const assigned = allG.filter(g => g.tier_level === childLevel);
+
+  // Get actual children via hierarchy rebuild — use a simpler approach
+  const childrenRes = await api('/api/tiers/groups?tier_level=' + childLevel);
+  const assignedIds = new Set();
+
+  // Check which are already assigned by looking at groups that have this as parent
+  // We'll query the parent's current children via the full group list filtered by assignment
+  // Simpler: fetch hierarchy and find this parent
+  const hierData = await api('/api/tiers/hierarchy');
+  function findGroupInTree(groups, id) {
+    for (const g of groups) {
+      if (g.id === id) return g;
+      if (g.children?.length) {
+        const found = findGroupInTree(g.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  const allNodes = [...(hierData.tier2_groups||[]), ...(hierData.ungrouped_tier1||[]), ...(hierData.ungrouped_tier0||[])];
+  function flattenNodes(nodes) {
+    const result = [];
+    for (const n of nodes) { result.push(n); if (n.children?.length) result.push(...flattenNodes(n.children)); }
+    return result;
+  }
+  const parentNode = flattenNodes(allNodes).find(n => n.id === parentId);
+  const assignedChildren = parentNode?.children || [];
+  assignedChildren.forEach(c => assignedIds.add(c.id));
+
+  if (assignedChildren.length) {
+    assignedDiv.innerHTML = '<p style="font-size:11px;color:var(--pp-text-dim);margin-bottom:6px;">Grupos asignados:</p>' +
+      assignedChildren.map(c => `
+        <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--pp-divider);">
+          <span style="font-size:13px;">${escHtml(c.name)}</span>
+          <button class="pp-btn pp-btn-sm" style="color:var(--pp-red);" onclick="doUnassign(${parentId},${c.id})">
+            <i class="bi bi-x"></i> Desasignar
+          </button>
+        </div>`).join('');
+  } else {
+    assignedDiv.innerHTML = '<p style="font-size:12px;color:var(--pp-text-faint);">Sin grupos asignados.</p>';
+  }
+
+  const available = childrenRes.filter(g => !assignedIds.has(g.id) && g.id !== parentId);
+  if (available.length) {
+    availableDiv.innerHTML = '<p style="font-size:11px;color:var(--pp-text-dim);margin-bottom:6px;">Disponibles para asignar (Tier ' + childLevel + '):</p>' +
+      available.map(g => `
+        <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--pp-divider);">
+          <span style="font-size:13px;">${escHtml(g.name)}</span>
+          <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="doAssign(${parentId},${g.id})">
+            <i class="bi bi-plus"></i> Asignar
+          </button>
+        </div>`).join('');
+  } else {
+    availableDiv.innerHTML = '<p style="font-size:12px;color:var(--pp-text-faint);">No hay grupos de Tier ' + childLevel + ' disponibles para asignar.</p>';
+  }
+}
+
+async function doAssign(parentId, childId) {
+  const r = await api(`/api/tiers/groups/${parentId}/assign`, 'POST', { child_group_id: childId });
+  if (r.ok) { showToast('Asignación creada.'); loadAssignmentPanel(); loadHierarchy(); loadGroups(); }
+  else showToast(r.message || 'Error.', false);
+}
+
+async function doUnassign(parentId, childId) {
+  const r = await api(`/api/tiers/groups/${parentId}/unassign`, 'POST', { child_group_id: childId });
+  if (r.ok) { showToast('Asignación eliminada.'); loadAssignmentPanel(); loadHierarchy(); loadGroups(); }
+  else showToast(r.message || 'Error.', false);
+}
+
+// ── Miembros ───────────────────────────────────────────────────────────────
+async function refreshMemberGroupSelect() {
+  const allG = await api('/api/tiers/groups');
+  const sel  = document.getElementById('memberGroupSelect');
+  const cur  = sel.value;
+  sel.innerHTML = '<option value="">— selecciona grupo —</option>' +
+    allG.map(g => `<option value="${g.id}">[T${g.tier_level}] ${escHtml(g.name)}</option>`).join('');
+  if (cur) { sel.value = cur; }
+}
+
+async function loadMembers() {
+  const groupId = parseInt(document.getElementById('memberGroupSelect').value);
+  const btn     = document.getElementById('addMemberBtn');
+  _currentMemberGroupId = groupId || null;
+  btn.disabled = !groupId;
+  const div = document.getElementById('members-list');
+  if (!groupId) {
+    div.innerHTML = '<p style="font-size:12px;color:var(--pp-text-faint);">Selecciona un grupo.</p>';
+    return;
+  }
+  const members = await api(`/api/tiers/groups/${groupId}/members`);
+  if (!members.length) {
+    div.innerHTML = '<p style="font-size:12px;color:var(--pp-text-faint);">No hay miembros asignados.</p>';
+    return;
+  }
+  const roleIcon = { leader: '👑', member: '👤', support: '🔧' };
+  div.innerHTML = '<table class="table table-sm tiers-table mb-0"><thead><tr><th>Operador</th><th>Badge</th><th>Rol</th><th></th></tr></thead><tbody>' +
+    members.map(m => `
+      <tr>
+        <td>${escHtml(m.name)}</td>
+        <td style="font-size:11px;color:var(--pp-text-faint);">${escHtml(m.badge_number)}</td>
+        <td><span class="pp-tag pp-tag-neutral">${roleIcon[m.role]||''} ${m.role}</span></td>
+        <td><button class="pp-btn pp-btn-sm" style="color:var(--pp-red);" onclick="removeMember(${groupId},${m.operator_id})"><i class="bi bi-x"></i></button></td>
+      </tr>`).join('') +
+    '</tbody></table>';
+}
+
+function openAddMemberModal() {
+  if (!_currentMemberGroupId) return;
+  const sel = document.getElementById('memberOperatorId');
+  sel.innerHTML = ALL_OPERATORS.map(o => `<option value="${o.id}">${escHtml(o.name)} (${escHtml(o.badge_number)})</option>`).join('');
+  document.getElementById('memberRole').value = 'member';
+  memberModal.show();
+}
+
+async function addMember() {
+  if (!_currentMemberGroupId) return;
+  const opId = parseInt(document.getElementById('memberOperatorId').value);
+  const role = document.getElementById('memberRole').value;
+  const r = await api(`/api/tiers/groups/${_currentMemberGroupId}/members`, 'POST', { operator_id: opId, role });
+  if (r.ok) {
+    memberModal.hide();
+    showToast('Miembro añadido.');
+    loadMembers();
+    loadGroups();
+    loadHierarchy();
+  } else {
+    showToast(r.message || 'Error.', false);
+  }
+}
+
+async function removeMember(groupId, opId) {
+  if (!confirm('¿Quitar este miembro del grupo?')) return;
+  const r = await api(`/api/tiers/groups/${groupId}/members/${opId}`, 'DELETE');
+  if (r.ok) { showToast('Miembro eliminado.'); loadMembers(); loadGroups(); loadHierarchy(); }
+  else showToast('Error.', false);
+}
+
+// ── Escalado ───────────────────────────────────────────────────────────────
+async function loadEscalation() {
+  const paths = await api('/api/tiers/escalation-paths');
+  const tbody = document.getElementById('escalation-tbody');
+  if (!paths.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3" style="color:var(--pp-text-faint);">No hay rutas de escalado configuradas.</td></tr>';
+    return;
+  }
+  const chanIcon = { app: '📱', teams: '💬', email: '📧' };
+  const typeColor = { quality: 'pp-tag-info', maintenance: 'pp-tag-warn', safety: 'pp-tag-bad', production: 'pp-tag-neutral', general: 'pp-tag-neutral' };
+  tbody.innerHTML = paths.map(p => `
+    <tr>
+      <td style="font-weight:600;">${escHtml(p.from_group_name)}</td>
+      <td style="font-weight:600;">${escHtml(p.to_group_name)}</td>
+      <td><span class="pp-tag ${typeColor[p.escalation_type]||'pp-tag-neutral'}">${p.escalation_type}</span></td>
+      <td style="font-size:12px;">${p.auto_escalate_after_minutes ? p.auto_escalate_after_minutes + ' min' : '—'}</td>
+      <td style="font-size:13px;">${chanIcon[p.notification_channel]||''} ${p.notification_channel}</td>
+      <td><button class="pp-btn pp-btn-sm" style="color:var(--pp-red);" onclick="deleteEscalation(${p.id})"><i class="bi bi-trash"></i></button></td>
+    </tr>`).join('');
+}
+
+async function openEscalationModal() {
+  const allG = await api('/api/tiers/groups');
+  const fromSel = document.getElementById('escFromGroup');
+  const toSel   = document.getElementById('escToGroup');
+  const opts = allG.map(g => `<option value="${g.id}">[T${g.tier_level}] ${escHtml(g.name)}</option>`).join('');
+  fromSel.innerHTML = opts;
+  toSel.innerHTML   = opts;
+  document.getElementById('escMinutes').value = '';
+  escalModal.show();
+}
+
+async function saveEscalation() {
+  const from = parseInt(document.getElementById('escFromGroup').value);
+  const to   = parseInt(document.getElementById('escToGroup').value);
+  if (from === to) { showToast('El grupo origen y destino no pueden ser el mismo.', false); return; }
+  const min = document.getElementById('escMinutes').value;
+  const r = await api('/api/tiers/escalation-paths', 'POST', {
+    from_group_id: from,
+    to_group_id: to,
+    escalation_type: document.getElementById('escType').value,
+    auto_escalate_after_minutes: min ? parseInt(min) : null,
+    notification_channel: document.getElementById('escChannel').value,
+  });
+  if (r.ok) { escalModal.hide(); showToast('Ruta de escalado creada.'); loadEscalation(); }
+  else showToast(r.message || 'Error.', false);
+}
+
+async function deleteEscalation(id) {
+  if (!confirm('¿Eliminar esta ruta de escalado?')) return;
+  const r = await api(`/api/tiers/escalation-paths/${id}`, 'DELETE');
+  if (r.ok) { showToast('Ruta eliminada.'); loadEscalation(); }
+  else showToast('Error.', false);
+}
+
+// ── Inicialización ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  loadHierarchy();
+
+  // Carga lazy al activar cada tab
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', e => {
+      const target = e.target.getAttribute('data-bs-target');
+      if (target === '#tab-tiers')       { loadTiers(); }
+      if (target === '#tab-groups')      { loadGroups(); }
+      if (target === '#tab-assignments') { refreshAssignmentSelects(); }
+      if (target === '#tab-members')     { refreshMemberGroupSelect(); }
+      if (target === '#tab-escalation')  { loadEscalation(); }
+    });
+  });
+});
+</script>
+{% endblock %}

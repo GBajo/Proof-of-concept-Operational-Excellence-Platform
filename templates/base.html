@@ -197,13 +197,17 @@
            href="{{ url_for('alerts.alerts_history') }}">
           <i class="bi bi-bell-fill"></i>Historial alertas
         </a>
-        <a class="pp-side-item {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') %}active{% endif %}"
+        <a class="pp-side-item {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') and not request.path.startswith('/admin/tiers') %}active{% endif %}"
            href="{{ url_for('admin.admin_docs') }}">
           <i class="bi bi-book"></i>{{ t('nav_docs') }}
         </a>
         <a class="pp-side-item {% if request.path.startswith('/admin/data-explorer') %}active{% endif %}"
            href="{{ url_for('data_explorer.data_explorer_page') }}">
           <i class="bi bi-database"></i>Data Explorer
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/admin/tiers') %}active{% endif %}"
+           href="{{ url_for('tiers.tiers_admin') }}">
+          <i class="bi bi-diagram-2"></i>Gestión de Tiers
         </a>
       </div>
 
