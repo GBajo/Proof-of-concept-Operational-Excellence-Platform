@@ -35,6 +35,8 @@ def create_app() -> Flask:
     from routes.sqdcp import bp as sqdcp_bp
     from routes.widgets import bp as widgets_bp
     from routes.tiers import bp as tiers_bp
+    from routes.group_view import bp as group_view_bp
+    from routes.equipment_admin import bp as equipment_admin_bp
 
     app.register_blueprint(operators_bp)
     app.register_blueprint(shifts_bp)
@@ -53,6 +55,8 @@ def create_app() -> Flask:
     app.register_blueprint(sqdcp_bp)
     app.register_blueprint(widgets_bp)
     app.register_blueprint(tiers_bp)
+    app.register_blueprint(group_view_bp)
+    app.register_blueprint(equipment_admin_bp)
     app.register_blueprint(views_bp)  # vistas HTML al final
 
     @app.before_request
@@ -84,12 +88,29 @@ def create_app() -> Flask:
         def t(key: str) -> str:
             return get_text(key, lang)
 
+        # Tier hierarchy for sidebar navigation
+        nav_hierarchy = None
+        if current_site and current_site != "global":
+            try:
+                from models.tier import get_site_hierarchy
+                nav_hierarchy = get_site_hierarchy(current_site)
+            except Exception:
+                pass
+
+        # Active group from /group/<id> path
+        import re as _re
+        _gm = _re.match(r"^/group/(\d+)", flask_request.path)
+        active_gid = int(_gm.group(1)) if _gm else None
+
         return {
-            "navbar_active_shifts": active,
-            "lang":                 lang,
-            "t":                    t,
-            "current_site":         current_site,
-            "sites":                SITES,
+            "navbar_active_shifts":        active,
+            "lang":                        lang,
+            "t":                           t,
+            "current_site":                current_site,
+            "sites":                       SITES,
+            "navbar_tier_hierarchy":       nav_hierarchy,
+            "navbar_active_group_id":      active_gid,
+            "navbar_active_tier_group_id": active_gid,
         }
 
     # ── Arrancar el monitor en segundo plano ──────────────────────────────────

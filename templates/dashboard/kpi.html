@@ -16,6 +16,25 @@
 {# ── Cabecera ─────────────────────────────────────────────────────────────── #}
 <div class="pp-page-head">
   <div>
+    {# Breadcrumb: Site › T2 › T1 › T0 #}
+    {% if breadcrumb %}
+    <nav aria-label="breadcrumb" style="margin-bottom:6px;">
+      <span style="font-size:11px; color:var(--pp-text-faint);">
+        {% if current_site and current_site != 'global' and sites[current_site] is defined %}
+          {{ sites[current_site].flag }} {{ sites[current_site].name }}
+        {% endif %}
+        {% for crumb in breadcrumb %}
+          <span style="margin:0 4px; opacity:0.5;">›</span>
+          {% if not loop.last %}
+            <a href="/dashboard?tier_group={{ crumb.id }}"
+               style="color:var(--pp-text-dim); text-decoration:none;">{{ crumb.name }}</a>
+          {% else %}
+            <span style="color:var(--pp-text);">{{ crumb.name }}</span>
+          {% endif %}
+        {% endfor %}
+      </span>
+    </nav>
+    {% endif %}
     <p class="pp-eyebrow">Operaciones</p>
     <h1 class="pp-h1">{{ t('dashboard_title') }}</h1>
     <p class="pp-dim" style="margin:6px 0 0; font-size:13px;">

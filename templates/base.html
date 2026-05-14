@@ -16,6 +16,25 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/voice.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <style>
+    /* Tier navigation tree in sidebar */
+    .pp-nav-trow { display:flex; align-items:center; }
+    .pp-nav-trow > .pp-side-item { flex:1; min-width:0; }
+    .pp-nav-trow > .pp-side-item > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pp-nav-tchev {
+      flex-shrink:0; width:24px; height:28px;
+      display:flex; align-items:center; justify-content:center;
+      background:none; border:none; color:var(--pp-text-faint);
+      cursor:pointer; border-radius:4px; margin:0 2px;
+      transition:color .15s, background .15s;
+    }
+    .pp-nav-tchev:hover { color:var(--pp-text); background:rgba(255,255,255,.06); }
+    .pp-nav-tchev .bi { font-size:10px; transition:transform .2s; }
+    .pp-nav-tchev[aria-expanded="true"] .bi { transform:rotate(90deg); }
+    .pp-nav-ind1.pp-side-item { padding-left:24px !important; }
+    .pp-nav-ind2.pp-side-item { padding-left:40px !important; }
+    .pp-nav-trow.pp-nav-ind1 > .pp-side-item { padding-left:24px !important; }
+  </style>
 </head>
 <body>
 
@@ -137,10 +156,124 @@
            href="{{ url_for('views.index') }}">
           <i class="bi bi-house"></i>{{ t('nav_home') }}
         </a>
+
+        {# ── Dashboard: árbol jerárquico de Tiers ───────────────────────────── #}
+        {% if navbar_tier_hierarchy and (navbar_tier_hierarchy.tier2_groups or navbar_tier_hierarchy.ungrouped_tier1 or navbar_tier_hierarchy.ungrouped_tier0) %}
+
+          {# T2 groups (Value Streams) #}
+          {% for t2 in navbar_tier_hierarchy.tier2_groups %}
+            {% set ns = namespace(open=false) %}
+            {% for t1 in t2.children %}
+              {% for t0 in t1.children %}
+                {% if navbar_active_group_id and t0.id == navbar_active_group_id %}{% set ns.open = true %}{% endif %}
+              {% endfor %}
+              {% if navbar_active_tier_group_id and t1.id == navbar_active_tier_group_id %}{% set ns.open = true %}{% endif %}
+            {% endfor %}
+            {% if navbar_active_tier_group_id and t2.id == navbar_active_tier_group_id %}{% set ns.open = true %}{% endif %}
+
+          <div class="pp-nav-trow">
+            <a href="/group/{{ t2.id }}"
+               class="pp-side-item {% if navbar_active_group_id == t2.id %}active{% endif %}">
+              <i class="bi bi-diagram-3"></i><span>{{ t2.name }}</span>
+            </a>
+            {% if t2.children %}
+            <button class="pp-nav-tchev" type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#nvt2-{{ t2.id }}"
+                    aria-expanded="{{ 'true' if ns.open else 'false' }}">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+            {% endif %}
+          </div>
+
+          {% if t2.children %}
+          <div class="collapse {% if ns.open %}show{% endif %}" id="nvt2-{{ t2.id }}">
+            {% for t1 in t2.children %}
+              {% set ns1 = namespace(open=false) %}
+              {% for t0 in t1.children %}
+                {% if navbar_active_group_id and t0.id == navbar_active_group_id %}{% set ns1.open = true %}{% endif %}
+              {% endfor %}
+              {% if navbar_active_tier_group_id and t1.id == navbar_active_tier_group_id %}{% set ns1.open = true %}{% endif %}
+
+            <div class="pp-nav-trow pp-nav-ind1">
+              <a href="/group/{{ t1.id }}"
+                 class="pp-side-item {% if navbar_active_group_id == t1.id %}active{% endif %}">
+                <i class="bi bi-people"></i><span>{{ t1.name }}</span>
+              </a>
+              {% if t1.children %}
+              <button class="pp-nav-tchev" type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#nvt1-{{ t1.id }}"
+                      aria-expanded="{{ 'true' if ns1.open else 'false' }}">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              {% endif %}
+            </div>
+
+            {% if t1.children %}
+            <div class="collapse {% if ns1.open %}show{% endif %}" id="nvt1-{{ t1.id }}">
+              {% for t0 in t1.children %}
+              <a href="/group/{{ t0.id }}"
+                 class="pp-side-item pp-nav-ind2 {% if navbar_active_group_id == t0.id %}active{% endif %}">
+                <i class="bi bi-gear"></i><span>{{ t0.name }}</span>
+              </a>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% endfor %}
+
+          {# T1 groups without T2 parent #}
+          {% for t1 in navbar_tier_hierarchy.ungrouped_tier1 %}
+            {% set ns1 = namespace(open=false) %}
+            {% for t0 in t1.children %}
+              {% if navbar_active_group_id and t0.id == navbar_active_group_id %}{% set ns1.open = true %}{% endif %}
+            {% endfor %}
+            {% if navbar_active_tier_group_id and t1.id == navbar_active_tier_group_id %}{% set ns1.open = true %}{% endif %}
+
+          <div class="pp-nav-trow">
+            <a href="/group/{{ t1.id }}"
+               class="pp-side-item {% if navbar_active_group_id == t1.id %}active{% endif %}">
+              <i class="bi bi-people"></i><span>{{ t1.name }}</span>
+            </a>
+            {% if t1.children %}
+            <button class="pp-nav-tchev" type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#nvt1u-{{ t1.id }}"
+                    aria-expanded="{{ 'true' if ns1.open else 'false' }}">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+            {% endif %}
+          </div>
+
+          {% if t1.children %}
+          <div class="collapse {% if ns1.open %}show{% endif %}" id="nvt1u-{{ t1.id }}">
+            {% for t0 in t1.children %}
+            <a href="/group/{{ t0.id }}"
+               class="pp-side-item pp-nav-ind1 {% if navbar_active_group_id == t0.id %}active{% endif %}">
+              <i class="bi bi-gear"></i><span>{{ t0.name }}</span>
+            </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% endfor %}
+
+          {# T0 groups without any parent #}
+          {% for t0 in navbar_tier_hierarchy.ungrouped_tier0 %}
+          <a href="/group/{{ t0.id }}"
+             class="pp-side-item {% if navbar_active_group_id == t0.id %}active{% endif %}">
+            <i class="bi bi-gear"></i><span>{{ t0.name }}</span>
+          </a>
+          {% endfor %}
+
+        {% else %}
         <a class="pp-side-item {% if request.path == '/dashboard' %}active{% endif %}"
            href="{{ url_for('views.dashboard') }}">
           <i class="bi bi-speedometer2"></i>{{ t('nav_dashboard') }}
         </a>
+        {% endif %}
         <a class="pp-side-item {% if request.path == '/global' %}active{% endif %}"
            href="{{ url_for('views.global_view') }}">
           <i class="bi bi-globe"></i>{{ t('nav_global') }}
@@ -148,10 +281,6 @@
         <a class="pp-side-item {% if request.path.startswith('/vsm') %}active{% endif %}"
            href="{{ url_for('vsm.vsm_page') }}">
           <i class="bi bi-diagram-3"></i>{{ t('nav_vsm') }}
-        </a>
-        <a class="pp-side-item {% if request.path.startswith('/sqdcp') %}active{% endif %}"
-           href="{{ url_for('sqdcp.sqdcp_page') }}">
-          <i class="bi bi-columns-gap"></i>SQDCP
         </a>
       </div>
 
@@ -197,7 +326,7 @@
            href="{{ url_for('alerts.alerts_history') }}">
           <i class="bi bi-bell-fill"></i>Historial alertas
         </a>
-        <a class="pp-side-item {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') and not request.path.startswith('/admin/tiers') %}active{% endif %}"
+        <a class="pp-side-item {% if request.path.startswith('/admin') and not request.path.startswith('/admin/notifications') and not request.path.startswith('/admin/data-explorer') and not request.path.startswith('/admin/tiers') and not request.path.startswith('/admin/equipment') %}active{% endif %}"
            href="{{ url_for('admin.admin_docs') }}">
           <i class="bi bi-book"></i>{{ t('nav_docs') }}
         </a>
@@ -208,6 +337,10 @@
         <a class="pp-side-item {% if request.path.startswith('/admin/tiers') %}active{% endif %}"
            href="{{ url_for('tiers.tiers_admin') }}">
           <i class="bi bi-diagram-2"></i>Gestión de Tiers
+        </a>
+        <a class="pp-side-item {% if request.path.startswith('/admin/equipment') %}active{% endif %}"
+           href="{{ url_for('equipment_admin.equipment_page') }}">
+          <i class="bi bi-gear"></i>Equipos
         </a>
       </div>
 

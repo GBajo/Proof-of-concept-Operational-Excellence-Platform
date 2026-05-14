@@ -184,6 +184,27 @@ def dashboard():
 
     site_id = getattr(g, "current_site", DEFAULT_SITE)
     line_number = request.args.get("line", type=int)
+    group_id = request.args.get("group_id", type=int)
+    tier_group_id = request.args.get("tier_group", type=int)
+
+    # Build breadcrumb for tier-based navigation
+    breadcrumb = None
+    if group_id or tier_group_id:
+        try:
+            from models.tier import get_tier_group_by_id, get_group_parents
+            target_id = group_id or tier_group_id
+            group = get_tier_group_by_id(target_id)
+            if group:
+                crumbs = [group]
+                parents = get_group_parents(target_id)
+                if parents:
+                    crumbs.insert(0, parents[0])
+                    grandparents = get_group_parents(parents[0]["id"])
+                    if grandparents:
+                        crumbs.insert(0, grandparents[0])
+                breadcrumb = crumbs
+        except Exception:
+            pass
 
     # Obtener configuración de dashboard para la línea activa
     equipment_type = request.args.get("equipment")
@@ -221,6 +242,9 @@ def dashboard():
         widget_rows=widget_rows,
         dashboard_config=cfg,
         line_number=line_number,
+        breadcrumb=breadcrumb,
+        group_id=group_id,
+        tier_group_id=tier_group_id,
     )
 
 

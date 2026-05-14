@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+  const SHIFT_ID = null;
+  const LINE_NUMBER = {{ line_number | tojson }};
+  const DASHBOARD_MODE = 'supervisor';
+  const APP_LANG = "{{ lang }}";
+  const GROUP_ID = {{ group.id }};
+</script>
+<style>
+/* ── Equipment status colors ──────────────────────────────────────────────── */
+.eq-status-running     { background:rgba(34,197,94,.15);  color:#22c55e; border-color:rgba(34,197,94,.35); }
+.eq-status-stopped     { background:rgba(239,68,68,.15);  color:#ef4444; border-color:rgba(239,68,68,.35); }
+.eq-status-changeover  { background:rgba(245,158,11,.15); color:#f59e0b; border-color:rgba(245,158,11,.35); }
+.eq-status-maintenance { background:rgba(59,130,246,.15); color:#3b82f6; border-color:rgba(59,130,246,.35); }
+.eq-status-idle        { background:rgba(156,163,175,.1); color:#9ca3af; border-color:rgba(156,163,175,.3); }
+.eq-card {
+  background:var(--pp-card);
+  border:1px solid var(--pp-line);
+  border-radius:var(--pp-r);
+  padding:16px;
+  position:relative;
+  transition:box-shadow .15s, border-color .15s;
+}
+.eq-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); border-color:var(--pp-divider); }
+.eq-card-status {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700;
+  border:1px solid transparent; letter-spacing:.02em; text-transform:uppercase;
+}
+.eq-type-badge {
+  display:inline-block; padding:2px 7px; border-radius:4px;
+  font-size:10px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+  background:var(--pp-surface); color:var(--pp-text-faint);
+  border:1px solid var(--pp-line);
+}
+.eq-status-dot {
+  width:7px; height:7px; border-radius:50%; flex-shrink:0;
+}
+.eq-card-actions { display:flex; gap:6px; margin-top:12px; }
+
+/* ── Period toggle (SQDCP) ─────────────────────────────────────────────────── */
+.sqdcp-period-wrap {
+  display:flex; gap:2px; background:var(--pp-surface);
+  border:1px solid var(--pp-line); border-radius:8px; padding:3px;
+}
+.sqdcp-period-btn {
+  padding:5px 14px; font-size:12px; font-weight:600; border:none;
+  background:transparent; color:var(--pp-text-faint); border-radius:6px;
+  cursor:pointer; transition:background .12s, color .12s; font-family:inherit;
+}
+.sqdcp-period-btn:hover { background:var(--pp-card); color:var(--pp-text); }
+.sqdcp-period-btn--active { background:var(--pp-card); color:var(--pp-text); box-shadow:0 1px 3px rgba(0,0,0,.1); }
+.sqdcp-ring-card {
+  background:var(--pp-surface); border:1px solid var(--pp-line);
+  border-radius:var(--pp-r); padding:12px 8px 16px;
+  display:flex; flex-direction:column; align-items:stretch;
+}
+.pillar-btn { transition:background .12s, color .12s; }
+.pillar-btn.active-S { background:#2d7a3a !important; color:#fff !important; }
+.pillar-btn.active-Q { background:#1f6391 !important; color:#fff !important; }
+.pillar-btn.active-D { background:#d68910 !important; color:#fff !important; }
+.pillar-btn.active-C { background:#6b4ea8 !important; color:#fff !important; }
+.pillar-btn.active-P { background:var(--pp-red) !important; color:#fff !important; }
+
+/* ── Group tabs ────────────────────────────────────────────────────────────── */
+.grp-tabs { border-bottom:2px solid var(--pp-line); margin-bottom:24px; }
+.grp-tab-btn {
+  padding:10px 20px; font-size:13px; font-weight:600; border:none;
+  background:none; color:var(--pp-text-faint); cursor:pointer;
+  border-bottom:2px solid transparent; margin-bottom:-2px;
+  transition:color .15s, border-color .15s; font-family:inherit;
+}
+.grp-tab-btn:hover { color:var(--pp-text); }
+.grp-tab-btn.active { color:var(--pp-text); border-bottom-color:var(--pp-accent, #3b82f6); }
+.grp-tab-pane { display:none; }
+.grp-tab-pane.active { display:block; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Cabecera ─────────────────────────────────────────────────────────────── #}
+<div class="pp-page-head">
+  <div>
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" style="margin-bottom:6px;">
+      <span style="font-size:11px; color:var(--pp-text-faint);">
+        {% if current_site and current_site != 'global' and sites[current_site] is defined %}
+          {{ sites[current_site].flag }} {{ sites[current_site].name }}
+        {% endif %}
+        {% for crumb in breadcrumb %}
+          <span style="margin:0 4px; opacity:.5;">›</span>
+          {% if not loop.last %}
+            <a href="{{ url_for('group_view.group_page', group_id=crumb.id) }}"
+               style="color:var(--pp-text-dim); text-decoration:none;">{{ crumb.name }}</a>
+          {% else %}
+            <span style="color:var(--pp-text);">{{ crumb.name }}</span>
+          {% endif %}
+        {% endfor %}
+      </span>
+    </nav>
+    {% set tier_icon = {'0':'bi-gear','1':'bi-people','2':'bi-diagram-3'} %}
+    <p class="pp-eyebrow">
+      <i class="bi {{ tier_icon.get(group.tier_level|string, 'bi-layers') }}"></i>
+      Tier {{ group.tier_level }} — {{ group.tier_name }}
+    </p>
+    <h1 class="pp-h1">{{ group.name }}</h1>
+    {% if group.description %}
+    <p class="pp-dim" style="margin:4px 0 0; font-size:13px;">{{ group.description }}</p>
+    {% endif %}
+  </div>
+  <div class="pp-actions">
+    {% if eq_summary.total > 0 %}
+    <span class="pp-tag {% if eq_summary.stopped > 0 %}pp-tag-bad{% elif eq_summary.maintenance > 0 or eq_summary.changeover > 0 %}pp-tag-warn{% else %}pp-tag-ok{% endif %}">
+      {{ eq_summary.running }}/{{ eq_summary.total }} en marcha
+    </span>
+    {% endif %}
+    <span class="pp-tag pp-tag-ok" id="live-indicator">
+      <span class="pp-pulse" style="width:6px;height:6px;margin-right:4px;"></span>{{ t('badge_live') }}
+    </span>
+  </div>
+</div>
+
+{# ── Tabs ─────────────────────────────────────────────────────────────────── #}
+<div class="grp-tabs">
+  <button class="grp-tab-btn {% if active_tab == 'dashboard' %}active{% endif %}"
+          onclick="switchTab('dashboard')">
+    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+  </button>
+  <button class="grp-tab-btn {% if active_tab == 'sqdcp' %}active{% endif %}"
+          onclick="switchTab('sqdcp')">
+    <i class="bi bi-columns-gap me-1"></i> SQDCP
+  </button>
+  <button class="grp-tab-btn {% if active_tab == 'equipment' %}active{% endif %}"
+          onclick="switchTab('equipment')">
+    <i class="bi bi-tools me-1"></i> Equipos
+    {% if eq_summary.total > 0 %}
+    <span class="pp-badge ms-1" style="background:{% if eq_summary.stopped > 0 %}var(--pp-bad){% elif eq_summary.maintenance > 0 %}var(--pp-info){% else %}transparent; color:var(--pp-text-faint){% endif %}; font-size:10px;">
+      {{ eq_summary.total }}
+    </span>
+    {% endif %}
+  </button>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════════════════
+   TAB 1 — DASHBOARD
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<div class="grp-tab-pane {% if active_tab == 'dashboard' %}active{% endif %}" id="tab-dashboard">
+
+  {# KPI resumen en tiempo real #}
+  <div class="pp-grid-4 mb-4" style="margin-bottom:20px !important;">
+    <div class="pp-kpi">
+      <p class="pp-kpi-label">{{ t('units_produced_metric') }}</p>
+      <div class="pp-kpi-value"><span class="pp-kpi-num" id="sv-total-units">—</span></div>
+      <div class="pp-kpi-foot"><span class="pp-faint">{{ t('last_update') }} <span id="sv-last-update">—</span></span></div>
+    </div>
+    <div class="pp-kpi">
+      <p class="pp-kpi-label">{{ t('avg_oee_metric') }}</p>
+      <div class="pp-kpi-value"><span class="pp-kpi-num" id="sv-avg-oee">—</span><span class="pp-kpi-unit">%</span></div>
+      <div class="pp-kpi-foot"><span class="pp-faint">OEE promedio</span></div>
+    </div>
+    <div class="pp-kpi">
+      <p class="pp-kpi-label">{{ t('avg_reject_metric') }}</p>
+      <div class="pp-kpi-value"><span class="pp-kpi-num" id="sv-avg-reject">—</span><span class="pp-kpi-unit">%</span></div>
+      <div class="pp-kpi-foot"><span id="sv-total-downtime" class="pp-faint">— min paros</span></div>
+    </div>
+    <div class="pp-kpi">
+      <p class="pp-kpi-label">Equipos activos</p>
+      <div class="pp-kpi-value"><span class="pp-kpi-num">{{ eq_summary.running }}</span><span class="pp-kpi-unit">/{{ eq_summary.total }}</span></div>
+      <div class="pp-kpi-foot"><span class="pp-faint">en marcha ahora</span></div>
+    </div>
+  </div>
+
+  {# Grid de widgets dinámicos #}
+  {% if widget_rows %}
+  <section class="mb-4" style="margin-bottom:20px !important;">
+    {% for row in widget_rows %}
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px;">
+      {% for w in row %}
+      {% set col_span = {"small":1,"medium":2,"large":3}.get(w.size,1) %}
+      {% if w.render_type == 'card' %}
+      {% set cd = w.card_data %}
+      <div class="pp-kpi" style="grid-column:span {{ col_span }};">
+        <p class="pp-kpi-label">{{ cd.label }}</p>
+        <div class="pp-kpi-value">
+          <span class="pp-kpi-num" style="color:{{ cd.color }};">{{ cd.value }}</span>
+          <span class="pp-kpi-unit">{{ cd.unit }}</span>
+        </div>
+        <div class="pp-kpi-foot">
+          <span class="{{ cd.trend_class }}" style="font-size:12px;">{{ cd.trend_label }}{{ cd.unit }} vs período anterior</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="pp-card" style="grid-column:span {{ col_span }}; padding:16px;">
+        {% if w.title %}
+        <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.06);">
+          <p style="margin:0; font-size:12px; color:var(--pp-text-faint); text-transform:uppercase; letter-spacing:.06em;">{{ w.title }}</p>
+        </div>
+        {% endif %}
+        <div id="{{ w.id }}" style="width:100%; height:{{ w.height }}px;"></div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </section>
+
+  <script>
+  (function () {
+    var _charts = {};
+    var widgetRows = {{ widget_rows | tojson }};
+    widgetRows.forEach(function (row) {
+      row.forEach(function (w) {
+        if (w.render_type !== 'chart') return;
+        var el = document.getElementById(w.id);
+        if (!el || !w.echarts_config || !Object.keys(w.echarts_config).length) return;
+        var chart = echarts.init(el, null, { renderer: 'canvas' });
+        chart.setOption(w.echarts_config);
+        _charts[w.id] = chart;
+      });
+    });
+    window.addEventListener('resize', function () {
+      Object.keys(_charts).forEach(function (id) { _charts[id].resize(); });
+    });
+  }());
+  </script>
+  {% else %}
+  <div class="pp-empty">
+    <i class="bi bi-speedometer2"></i>
+    <p class="pp-empty-title">Sin widgets configurados para este grupo</p>
+  </div>
+  {% endif %}
+
+  {# Subgrupos si es T1/T2 #}
+  {% if children %}
+  <section class="mb-4">
+    <h2 class="pp-h2 mb-3">Subgrupos ({{ children | length }})</h2>
+    <div class="pp-grid-4">
+      {% for child in children %}
+      <a href="{{ url_for('group_view.group_page', group_id=child.id) }}" class="pp-card" style="text-decoration:none; display:block;">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <i class="bi {% if child.tier_level == 0 %}bi-gear{% elif child.tier_level == 1 %}bi-people{% else %}bi-diagram-3{% endif %}" style="color:var(--pp-text-faint);"></i>
+          <strong style="font-size:13px;">{{ child.name }}</strong>
+        </div>
+        <p class="pp-faint" style="font-size:11px; margin:0;">{{ child.member_count }} miembros · Tier {{ child.tier_level }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>{# /tab-dashboard #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════════
+   TAB 2 — SQDCP
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<div class="grp-tab-pane {% if active_tab == 'sqdcp' %}active{% endif %}" id="tab-sqdcp">
+
+  {# Filtros #}
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <form method="get" id="sqdcpForm" class="d-flex align-items-center gap-2">
+      <input type="hidden" name="tab" value="sqdcp">
+      <input type="hidden" name="sqdcp_period" value="{{ selected_period }}">
+      <label class="pp-faint" style="font-size:12px; font-weight:600;">Línea:</label>
+      <select name="sqdcp_line" class="pp-select" style="width:auto; padding:5px 10px;"
+              onchange="document.getElementById('sqdcpForm').submit()">
+        {% for l in site_lines %}
+        <option value="{{ l }}" {% if l == selected_line %}selected{% endif %}>L{{ l }}</option>
+        {% endfor %}
+      </select>
+      <label class="pp-faint" style="font-size:12px; font-weight:600;">Fecha:</label>
+      <input type="date" name="sqdcp_date" value="{{ selected_date }}" class="pp-input"
+             style="width:auto; padding:5px 10px;"
+             onchange="document.getElementById('sqdcpForm').submit()">
+    </form>
+    <div class="d-flex align-items-center gap-2">
+      <div class="sqdcp-period-wrap">
+        <button class="sqdcp-period-btn {% if selected_period=='day' %}sqdcp-period-btn--active{% endif %}"
+                onclick="setSqdcpPeriod('day')">Diario</button>
+        <button class="sqdcp-period-btn {% if selected_period=='week' %}sqdcp-period-btn--active{% endif %}"
+                onclick="setSqdcpPeriod('week')">Semanal</button>
+        <button class="sqdcp-period-btn {% if selected_period=='month' %}sqdcp-period-btn--active{% endif %}"
+                onclick="setSqdcpPeriod('month')">Mensual</button>
+      </div>
+      <button class="pp-btn pp-btn-sm" onclick="openAddAction()">
+        <i class="bi bi-plus-lg"></i> Nueva acción
+      </button>
+    </div>
+  </div>
+
+  {# Ring charts #}
+  <div class="pp-card" style="padding:20px 24px 24px; margin-bottom:16px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">Línea {{ selected_line }} · {{ selected_date }}</p>
+        <h3 class="pp-card-title" style="margin:0;">Indicadores SQDCP</h3>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px;">
+      {% for key in pillar_keys %}
+      {% set p = pillars[key] %}
+      <div class="sqdcp-ring-card">
+        <div id="sqdcp-ring-{{ key }}" style="width:100%; height:185px;"></div>
+        <div class="d-flex align-items-center gap-2 justify-content-center" style="margin-top:6px;">
+          <div class="pp-sqdcp-letter pp-sqdcp-{{ key }}" style="width:26px;height:26px;font-size:13px;border-radius:6px;">{{ key }}</div>
+          <div>
+            <div style="font-weight:700; font-size:13px; color:var(--pp-text); line-height:1.2;">{{ p.name }}</div>
+            <div style="font-size:11px; color:var(--pp-text-faint); line-height:1.3;">{{ p.secondary }}</div>
+          </div>
+        </div>
+        <div class="text-center" style="margin-top:8px;">
+          <span class="pp-tag pp-tag-{{ key }}" style="font-size:10px;">
+            {% if p.status=='ok' %}✓ OK{% elif p.status=='warn' %}△ Atención{% else %}✗ Alerta{% endif %}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Turnos del día #}
+  <div class="pp-card mb-4" style="margin-bottom:16px !important;">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">Línea {{ selected_line }} · {{ selected_date }}</p>
+        <h3 class="pp-card-title">Turnos del día</h3>
+      </div>
+      <span class="pp-tag pp-tag-neutral">{{ shifts | length }}</span>
+    </div>
+    {% if shifts %}
+    <div class="pp-table-wrap">
+      <table class="pp-table">
+        <thead><tr>
+          <th>Turno</th><th>Operador</th><th>Horario</th>
+          <th class="right">Producido</th><th class="right">Objetivo</th>
+          <th class="right">% OTD</th><th class="right">Rechazos</th>
+          <th class="right">Parada</th><th>Estado</th>
+        </tr></thead>
+        <tbody>
+          {% for s in shifts %}
+          {% set otd = (s.units_produced / s.target_units * 100)|round(1) if s.target_units > 0 else 0 %}
+          {% set rft = ((1 - s.units_rejected / s.units_produced) * 100)|round(1) if s.units_produced > 0 else 0 %}
+          <tr>
+            <td>{% if s.shift_type=='morning' %}☀ Mañana{% elif s.shift_type=='afternoon' %}🌤 Tarde{% else %}🌙 Noche{% endif %}</td>
+            <td style="font-weight:600; font-size:13px;">{{ s.operator_name }}</td>
+            <td class="pp-faint" style="font-size:12px; font-variant-numeric:tabular-nums;">{{ s.start_time[11:16] }}{% if s.end_time %} → {{ s.end_time[11:16] }}{% endif %}</td>
+            <td class="right" style="font-variant-numeric:tabular-nums;"><strong>{{ "{:,}".format(s.units_produced).replace(",",".") }}</strong></td>
+            <td class="right pp-faint" style="font-size:12px; font-variant-numeric:tabular-nums;">{{ "{:,}".format(s.target_units).replace(",",".") }}</td>
+            <td class="right"><span class="pp-tag {% if otd>=95 %}pp-tag-ok{% elif otd>=80 %}pp-tag-warn{% else %}pp-tag-bad{% endif %}">{{ otd }}%</span></td>
+            <td class="right" style="font-size:12px; font-variant-numeric:tabular-nums;">{% if s.units_produced > 0 %}<span style="color:{% if rft>=99 %}var(--pp-good){% elif rft>=97 %}var(--pp-warn){% else %}var(--pp-bad){% endif %}; font-weight:700;">{{ (100-rft)|round(1) }}%</span>{% else %}—{% endif %}</td>
+            <td class="right pp-faint" style="font-size:12px;">{{ s.downtime_minutes|int }} min</td>
+            <td><span class="pp-tag {% if s.status=='completed' %}pp-tag-ok{% elif s.status=='active' %}pp-tag-info{% else %}pp-tag-warn{% endif %}">{% if s.status=='completed' %}Completado{% elif s.status=='active' %}Activo{% else %}Interrumpido{% endif %}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="pp-empty" style="padding:32px;">
+      <i class="bi bi-calendar-x" style="font-size:1.8rem;"></i>
+      <p class="pp-empty-title">Sin turnos registrados para esta fecha</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Acciones del día #}
+  <div class="pp-card mb-4" style="margin-bottom:16px !important;">
+    <div class="pp-card-head">
+      <div>
+        <p class="pp-eyebrow pp-eyebrow-muted">Seguimiento</p>
+        <h3 class="pp-card-title">Acciones del día</h3>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="pp-tag pp-tag-neutral" id="actions-count">{{ actions | length }}</span>
+        <button class="pp-btn pp-btn-sm pp-btn-primary" onclick="openAddAction()">
+          <i class="bi bi-plus-lg"></i> Añadir
+        </button>
+      </div>
+    </div>
+    <div id="actions-table-wrap">
+      {% if actions %}
+      <div class="pp-table-wrap">
+        <table class="pp-table" id="actions-table">
+          <thead><tr>
+            <th style="width:60px;">Pilar</th><th>Acción</th><th>Responsable</th>
+            <th>Plazo</th><th>Estado</th><th style="width:60px;"></th>
+          </tr></thead>
+          <tbody id="actions-tbody">
+            {% for a in actions %}
+            <tr data-id="{{ a.id }}">
+              <td><span class="pp-tag pp-tag-{{ a.pillar }}">{{ a.pillar }}</span></td>
+              <td style="font-size:13px;">{{ a.title }}</td>
+              <td class="pp-faint" style="font-size:12px;">{{ a.owner or '—' }}</td>
+              <td class="pp-faint" style="font-size:12px;">{{ a.deadline or '—' }}</td>
+              <td>
+                <select class="pp-select action-status-sel" style="padding:3px 6px; font-size:11px; width:auto;"
+                        data-id="{{ a.id }}" onchange="updateActionStatus(this)">
+                  <option value="open" {% if a.status=='open' %}selected{% endif %}>⏳ Pendiente</option>
+                  <option value="in_progress" {% if a.status=='in_progress' %}selected{% endif %}>🔄 En curso</option>
+                  <option value="done" {% if a.status=='done' %}selected{% endif %}>✅ Hecho</option>
+                  <option value="blocked" {% if a.status=='blocked' %}selected{% endif %}>🚫 Bloqueado</option>
+                </select>
+              </td>
+              <td><button class="pp-btn pp-btn-sm" style="padding:3px 8px; color:var(--pp-text-faint);" onclick="deleteAction({{ a.id }}, this)">✕</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="pp-empty" id="actions-empty" style="padding:32px;">
+        <i class="bi bi-list-check" style="font-size:1.8rem;"></i>
+        <p class="pp-empty-title">Sin acciones registradas</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Add-action modal #}
+  <div id="add-action-overlay" style="display:none; position:fixed; inset:0; z-index:800; background:rgba(0,0,0,.35);">
+    <div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+                background:var(--pp-card); border-radius:var(--pp-r-lg); padding:28px 32px;
+                width:480px; max-width:96vw; box-shadow:0 16px 48px rgba(0,0,0,.18);">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Nueva acción SQDCP</h3>
+        <button class="pp-btn pp-btn-sm" onclick="closeAddAction()" style="color:var(--pp-text-faint);">✕</button>
+      </div>
+      <div class="pp-field mb-3">
+        <label class="pp-label">Pilar</label>
+        <div class="d-flex gap-2" id="pillar-picker">
+          {% for key in pillar_keys %}
+          <button type="button" class="pillar-btn pp-btn pp-btn-sm" data-pillar="{{ key }}"
+                  style="font-weight:700; min-width:44px;" onclick="selectPillar(this)">{{ key }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="new-pillar" value="S">
+      </div>
+      <div class="pp-field mb-3">
+        <label class="pp-label" for="new-title">Acción</label>
+        <input type="text" id="new-title" class="pp-input" placeholder="Ej: Revisar EPI zona granulación" maxlength="300">
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <div class="pp-field" style="margin:0;">
+            <label class="pp-label" for="new-owner">Responsable</label>
+            <input type="text" id="new-owner" class="pp-input" placeholder="Nombre">
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="pp-field" style="margin:0;">
+            <label class="pp-label" for="new-deadline">Plazo</label>
+            <input type="text" id="new-deadline" class="pp-input" placeholder="Ej: Hoy 16:00">
+          </div>
+        </div>
+      </div>
+      <div id="add-action-error" class="alert alert-danger" style="display:none;"></div>
+      <div class="d-flex justify-content-end gap-2 pt-3" style="border-top:1px solid var(--pp-line);">
+        <button class="pp-btn pp-btn-ghost" onclick="closeAddAction()">Cancelar</button>
+        <button class="pp-btn pp-btn-primary" id="add-action-btn" onclick="submitAction()">
+          <i class="bi bi-plus-lg"></i> Añadir acción
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>{# /tab-sqdcp #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════════
+   TAB 3 — EQUIPOS
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<div class="grp-tab-pane {% if active_tab == 'equipment' %}active{% endif %}" id="tab-equipment">
+
+  {# Status summary bar #}
+  {% if eq_summary.total > 0 %}
+  <div class="d-flex gap-2 flex-wrap mb-4">
+    <span class="eq-card-status eq-status-running"><span class="eq-status-dot" style="background:#22c55e;"></span>{{ eq_summary.running }} En marcha</span>
+    {% if eq_summary.stopped > 0 %}<span class="eq-card-status eq-status-stopped"><span class="eq-status-dot" style="background:#ef4444;"></span>{{ eq_summary.stopped }} Parado</span>{% endif %}
+    {% if eq_summary.changeover > 0 %}<span class="eq-card-status eq-status-changeover"><span class="eq-status-dot" style="background:#f59e0b;"></span>{{ eq_summary.changeover }} Cambio</span>{% endif %}
+    {% if eq_summary.maintenance > 0 %}<span class="eq-card-status eq-status-maintenance"><span class="eq-status-dot" style="background:#3b82f6;"></span>{{ eq_summary.maintenance }} Mantenimiento</span>{% endif %}
+    {% if eq_summary.idle > 0 %}<span class="eq-card-status eq-status-idle"><span class="eq-status-dot" style="background:#9ca3af;"></span>{{ eq_summary.idle }} Inactivo</span>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if equipment %}
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px;">
+    {% for eq in equipment %}
+    {% set st = eq.status %}
+    <div class="eq-card" id="eq-card-{{ eq.id }}">
+      {# Status badge #}
+      <div class="d-flex align-items-start justify-content-between mb-2">
+        <span class="eq-type-badge">{{ eq.equipment_type }}</span>
+        <span class="eq-card-status eq-status-{{ st }}" id="eq-status-badge-{{ eq.id }}">
+          <span class="eq-status-dot" style="background:{% if st=='running' %}#22c55e{% elif st=='stopped' %}#ef4444{% elif st=='changeover' %}#f59e0b{% elif st=='maintenance' %}#3b82f6{% else %}#9ca3af{% endif %};"></span>
+          {% if st=='running' %}En marcha{% elif st=='stopped' %}Parado{% elif st=='changeover' %}Cambio{% elif st=='maintenance' %}Mantenimiento{% else %}Inactivo{% endif %}
+        </span>
+      </div>
+
+      {# Name & model #}
+      <h3 style="font-size:14px; font-weight:700; margin:0 0 2px; color:var(--pp-text);">{{ eq.name }}</h3>
+      {% if eq.manufacturer or eq.model %}
+      <p style="font-size:12px; color:var(--pp-text-faint); margin:0 0 10px;">
+        {{ eq.manufacturer or '' }}{% if eq.manufacturer and eq.model %} · {% endif %}{{ eq.model or '' }}
+      </p>
+      {% endif %}
+
+      {# Speed #}
+      {% if eq.nominal_speed %}
+      <div class="d-flex justify-content-between" style="font-size:12px; margin-bottom:6px;">
+        <span class="pp-faint">Velocidad nominal</span>
+        <strong>{{ eq.nominal_speed | int }} u/h</strong>
+      </div>
+      {% endif %}
+
+      {# Last maintenance #}
+      {% if eq.last_maintenance %}
+      <div class="d-flex justify-content-between" style="font-size:12px; margin-bottom:10px;">
+        <span class="pp-faint">Último mantenimiento</span>
+        <span>{{ eq.last_maintenance }}</span>
+      </div>
+      {% endif %}
+
+      {# Notes #}
+      {% if eq.notes %}
+      <p style="font-size:11px; color:var(--pp-text-faint); margin:0 0 10px; font-style:italic; border-left:2px solid var(--pp-line); padding-left:8px;">{{ eq.notes }}</p>
+      {% endif %}
+
+      {# Status change #}
+      <div class="eq-card-actions">
+        <select class="pp-select" style="flex:1; padding:5px 8px; font-size:11px;"
+                id="eq-sel-{{ eq.id }}" onchange="changeEquipmentStatus({{ eq.id }}, this.value)">
+          <option value="running"     {% if st=='running' %}selected{% endif %}>🟢 En marcha</option>
+          <option value="stopped"     {% if st=='stopped' %}selected{% endif %}>🔴 Parado</option>
+          <option value="changeover"  {% if st=='changeover' %}selected{% endif %}>🟡 Cambio formato</option>
+          <option value="maintenance" {% if st=='maintenance' %}selected{% endif %}>🔵 Mantenimiento</option>
+          <option value="idle"        {% if st=='idle' %}selected{% endif %}>⚪ Inactivo</option>
+        </select>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="pp-empty">
+    <i class="bi bi-tools" style="font-size:2rem;"></i>
+    <p class="pp-empty-title">Sin equipos asignados a este grupo</p>
+    <p class="pp-faint" style="font-size:12px; margin-top:4px;">Añade equipos desde la pantalla de administración de Tiers</p>
+  </div>
+  {% endif %}
+
+</div>{# /tab-equipment #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════════
+   SCRIPTS
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.grp-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.grp-tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector(`#tab-${name}`).classList.add('active');
+  document.querySelectorAll('.grp-tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') === `switchTab('${name}')`) b.classList.add('active');
+  });
+  // Update URL without reload
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', name);
+  history.replaceState({}, '', url.toString());
+  // Re-init SQDCP charts when switching to that tab
+  if (name === 'sqdcp' && !window._sqdcpInitialized) {
+    initSqdcpCharts();
+    window._sqdcpInitialized = true;
+  }
+}
+
+// ── Equipment status change ───────────────────────────────────────────────────
+async function changeEquipmentStatus(eqId, status) {
+  try {
+    const res = await fetch(`/api/equipment/${eqId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message || 'Error');
+    // Update badge
+    const badge = document.getElementById(`eq-status-badge-${eqId}`);
+    if (badge) {
+      const labels = { running:'En marcha', stopped:'Parado', changeover:'Cambio', maintenance:'Mantenimiento', idle:'Inactivo' };
+      const colors = { running:'#22c55e', stopped:'#ef4444', changeover:'#f59e0b', maintenance:'#3b82f6', idle:'#9ca3af' };
+      badge.className = `eq-card-status eq-status-${status}`;
+      badge.innerHTML = `<span class="eq-status-dot" style="background:${colors[status]};"></span>${labels[status]}`;
+    }
+  } catch (err) {
+    alert('Error al cambiar estado: ' + err.message);
+    // Reset select to previous value
+    const sel = document.getElementById(`eq-sel-${eqId}`);
+    if (sel) { const prev = sel.getAttribute('data-prev') || sel.options[0].value; sel.value = prev; }
+  }
+}
+
+// ── SQDCP period ──────────────────────────────────────────────────────────────
+function setSqdcpPeriod(period) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', 'sqdcp');
+  url.searchParams.set('sqdcp_period', period);
+  window.location.href = url.toString();
+}
+
+// ── SQDCP ring charts ─────────────────────────────────────────────────────────
+const SQDCP_DATA   = {{ pillars | tojson }};
+const SQDCP_LINE   = {{ selected_line }};
+const SQDCP_DATE   = "{{ selected_date }}";
+const SQDCP_PERIOD = "{{ selected_period }}";
+
+const PILLAR_COLOR = { S:'#2d7a3a', Q:'#1f6391', D:'#d68910', C:'#6b4ea8', P:'#d52b1e' };
+const STATUS_COLOR = { ok:'#22c55e', warn:'#f59e0b', bad:'#ef4444' };
+
+function initRingChart(key) {
+  const p = SQDCP_DATA[key];
+  const fillColor = PILLAR_COLOR[key];
+  const valColor  = STATUS_COLOR[p.status] || fillColor;
+  const pct = Math.max(0, Math.min(Number(p.pct) || 0, 100));
+  const el  = document.getElementById('sqdcp-ring-' + key);
+  if (!el) return null;
+  const chart = echarts.init(el, null, { renderer: 'svg' });
+  chart.setOption({
+    graphic: [
+      { type:'text', left:'center', top:'36%', style:{ text:String(p.value), font:'900 28px Inter,system-ui,sans-serif', fill:valColor, textAlign:'center' } },
+      { type:'text', left:'center', top:'56%', style:{ text:p.unit, font:'600 9px Inter,system-ui,sans-serif', fill:'#9ca3af', textAlign:'center', width:90, overflow:'truncate' } },
+    ],
+    series: [{ type:'pie', radius:['58%','80%'], startAngle:90, silent:true,
+      data:[
+        { value:pct,     itemStyle:{ color:fillColor, borderRadius:4 } },
+        { value:100-pct, itemStyle:{ color:'rgba(0,0,0,0.07)', borderRadius:0 } },
+      ], label:{show:false}, labelLine:{show:false}, emphasis:{disabled:true} }],
+  });
+  return chart;
+}
+
+var _ringCharts = {};
+function initSqdcpCharts() {
+  ['S','Q','D','C','P'].forEach(k => { _ringCharts[k] = initRingChart(k); });
+  window.addEventListener('resize', () => Object.values(_ringCharts).forEach(c => c && c.resize()));
+}
+
+// Auto-init if SQDCP tab is active on load
+if (document.getElementById('tab-sqdcp').classList.contains('active')) {
+  initSqdcpCharts();
+  window._sqdcpInitialized = true;
+}
+
+// ── SQDCP actions ─────────────────────────────────────────────────────────────
+function selectPillar(btn) {
+  document.querySelectorAll('.pillar-btn').forEach(b => { b.className = b.className.replace(/\bactive-\w\b/,'').trim(); });
+  btn.classList.add('active-' + btn.dataset.pillar);
+  document.getElementById('new-pillar').value = btn.dataset.pillar;
+}
+function openAddAction() {
+  document.getElementById('add-action-overlay').style.display = 'block';
+  document.getElementById('new-title').value = '';
+  document.getElementById('new-owner').value = '';
+  document.getElementById('new-deadline').value = '';
+  document.getElementById('add-action-error').style.display = 'none';
+  const first = document.querySelector('.pillar-btn');
+  if (first) selectPillar(first);
+  setTimeout(() => document.getElementById('new-title').focus(), 100);
+}
+function closeAddAction() {
+  document.getElementById('add-action-overlay').style.display = 'none';
+}
+document.getElementById('add-action-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAddAction();
+});
+async function submitAction() {
+  const title = document.getElementById('new-title').value.trim();
+  const pillar = document.getElementById('new-pillar').value;
+  const owner = document.getElementById('new-owner').value.trim();
+  const deadline = document.getElementById('new-deadline').value.trim();
+  const errEl = document.getElementById('add-action-error');
+  const btn = document.getElementById('add-action-btn');
+  if (!title) { errEl.textContent='El campo Acción es obligatorio.'; errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/sqdcp/actions', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ line:SQDCP_LINE, date:SQDCP_DATE, pillar, title, owner, deadline }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    closeAddAction();
+    appendActionRow({ id:data.id, pillar, title, owner, deadline, status:'open' });
+    updateCount(1);
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally { btn.disabled = false; }
+}
+async function updateActionStatus(sel) {
+  const id = sel.dataset.id;
+  const status = sel.value;
+  try {
+    await fetch(`/api/sqdcp/actions/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status}) });
+    const row = sel.closest('tr');
+    row.style.opacity = status==='done' ? '0.55' : '';
+  } catch(err) { console.error('Error al actualizar acción:', err); }
+}
+async function deleteAction(id, btn) {
+  if (!confirm('¿Eliminar esta acción?')) return;
+  try {
+    await fetch(`/api/sqdcp/actions/${id}`, { method:'DELETE' });
+    btn.closest('tr').remove();
+    updateCount(-1);
+    if (!document.querySelector('#actions-tbody tr')) {
+      document.getElementById('actions-table-wrap').innerHTML = `<div class="pp-empty" style="padding:32px;"><i class="bi bi-list-check" style="font-size:1.8rem;"></i><p class="pp-empty-title">Sin acciones registradas</p></div>`;
+    }
+  } catch(err) { alert('Error al eliminar la acción.'); }
+}
+function updateCount(delta) {
+  const el = document.getElementById('actions-count');
+  el.textContent = (parseInt(el.textContent||'0') + delta);
+}
+const TAG_COLORS = { S:'pp-tag-S', Q:'pp-tag-Q', D:'pp-tag-D', C:'pp-tag-C', P:'pp-tag-P' };
+function appendActionRow(a) {
+  let tbody = document.getElementById('actions-tbody');
+  if (!tbody) {
+    document.getElementById('actions-table-wrap').innerHTML = `<div class="pp-table-wrap"><table class="pp-table" id="actions-table"><thead><tr><th style="width:60px;">Pilar</th><th>Acción</th><th>Responsable</th><th>Plazo</th><th>Estado</th><th style="width:60px;"></th></tr></thead><tbody id="actions-tbody"></tbody></table></div>`;
+    tbody = document.getElementById('actions-tbody');
+  }
+  const tr = document.createElement('tr');
+  tr.dataset.id = a.id;
+  tr.innerHTML = `<td><span class="pp-tag ${TAG_COLORS[a.pillar]||'pp-tag-neutral'}">${a.pillar}</span></td><td style="font-size:13px;">${escHtml(a.title)}</td><td class="pp-faint" style="font-size:12px;">${escHtml(a.owner)||'—'}</td><td class="pp-faint" style="font-size:12px;">${escHtml(a.deadline)||'—'}</td><td><select class="pp-select action-status-sel" style="padding:3px 6px;font-size:11px;width:auto;" data-id="${a.id}" onchange="updateActionStatus(this)"><option value="open" selected>⏳ Pendiente</option><option value="in_progress">🔄 En curso</option><option value="done">✅ Hecho</option><option value="blocked">🚫 Bloqueado</option></select></td><td><button class="pp-btn pp-btn-sm" style="padding:3px 8px;color:var(--pp-text-faint);" onclick="deleteAction(${a.id},this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+document.querySelectorAll('.action-status-sel').forEach(sel => {
+  if (sel.value==='done') sel.closest('tr').style.opacity='0.55';
+});
+</script>
+
+{% endblock %}

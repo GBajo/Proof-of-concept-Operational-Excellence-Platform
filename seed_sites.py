@@ -656,6 +656,28 @@ CREATE INDEX IF NOT EXISTS idx_tga_parent       ON tier_group_assignments(parent
 CREATE INDEX IF NOT EXISTS idx_tga_child        ON tier_group_assignments(child_group_id);
 CREATE INDEX IF NOT EXISTS idx_tgm_group        ON tier_group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_esc_from         ON escalation_paths(from_group_id);
+CREATE TABLE IF NOT EXISTS equipment (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id          TEXT NOT NULL,
+    group_id         INTEGER NOT NULL REFERENCES tier_groups(id) ON DELETE CASCADE,
+    name             TEXT NOT NULL,
+    equipment_type   TEXT NOT NULL DEFAULT 'other'
+                     CHECK(equipment_type IN ('thermoformer','filler','weigher','labeler',
+                                              'serializer','cartoner','case_packer',
+                                              'palletizer','inspection','other')),
+    model            TEXT,
+    manufacturer     TEXT,
+    serial_number    TEXT,
+    status           TEXT NOT NULL DEFAULT 'running'
+                     CHECK(status IN ('running','stopped','changeover','maintenance','idle')),
+    nominal_speed    REAL,
+    installed_date   TEXT,
+    last_maintenance TEXT,
+    notes            TEXT,
+    created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_equipment_group  ON equipment(group_id);
+CREATE INDEX IF NOT EXISTS idx_equipment_site   ON equipment(site_id);
 """
 
 
@@ -875,6 +897,157 @@ def _seed_tiers(site_id: str, conn: sqlite3.Connection) -> None:
     _safe_print(f"  [ok] Tiers: {len(tier_ids)} niveles, {len(group_ids)} grupos → {site_id}")
 
 
+# ── Datos de equipos por planta ───────────────────────────────────────────────
+# Estructura por grupo: [(name, type, model, manufacturer, serial, status, nominal_speed,
+#                         installed_date, last_maintenance, notes)]
+
+EQUIPMENT_SEED: dict[str, dict[str, list]] = {
+    "alcobendas": {
+        "Línea 1 - Blísters": [
+            ("Termoformadora TF1", "thermoformer", "TF-7000", "Uhlmann", "TF1-ALB-001", "running",  450.0, "2019-03-15", "2025-02-10", "Revisión lámina PVC mensual"),
+            ("Llenadora BL1",     "filler",        "BL-500",  "IMA",     "BL1-ALB-001", "running",  450.0, "2019-03-15", "2025-03-01", None),
+            ("Selladora SL1",     "other",          "SL-300",  "Romaco",  "SL1-ALB-001", "running",  450.0, "2019-03-15", "2025-01-20", "Cambio sellos trimestralmente"),
+            ("Troqueladora TR1",  "other",          "TR-200",  "Romaco",  "TR1-ALB-001", "running",  450.0, "2019-03-15", "2025-02-28", None),
+            ("Estuchadora ES1",   "cartoner",       "ES-600",  "Marchesini", "ES1-ALB-001", "running", 420.0, "2020-06-10", "2025-03-05", None),
+            ("Etiquetadora ET1",  "labeler",        "ET-400",  "Herma",   "ET1-ALB-001", "stopped",  450.0, "2020-06-10", "2024-11-15", "Problema recurrente con bobina — en revisión"),
+        ],
+        "Línea 2 - Viales": [
+            ("Lavadora LA1",     "other",       "LA-200",  "Bausch+Ströbel", "LA1-ALB-001", "running",    200.0, "2018-09-01", "2025-01-08", None),
+            ("Llenadora VF1",    "filler",      "VF-1000", "Bosch",          "VF1-ALB-001", "running",    200.0, "2018-09-01", "2025-02-14", "Calibración dosificadora bimensual"),
+            ("Taponadora TP1",   "other",       "TP-500",  "Bosch",          "TP1-ALB-001", "running",    200.0, "2018-09-01", "2025-02-14", None),
+            ("Engarzadora EG1",  "other",       "EG-300",  "Bosch",          "EG1-ALB-001", "changeover", 200.0, "2018-09-01", "2025-03-10", "Cambio de formato en curso"),
+            ("Etiquetadora ET2", "labeler",     "ET-400",  "Herma",          "ET2-ALB-001", "changeover", 200.0, "2021-04-20", "2025-03-10", None),
+            ("Estuchadora ES2",  "cartoner",    "ES-600",  "Marchesini",     "ES2-ALB-001", "changeover", 180.0, "2021-04-20", "2025-03-01", None),
+        ],
+        "Línea 3 - Sobres": [
+            ("Formadora SO1",    "other",   "SO-400",  "ICA",         "SO1-ALB-001", "running", 300.0, "2021-01-10", "2025-01-25", None),
+            ("Dosificadora DO1", "weigher", "DO-200",  "Multipond",   "DO1-ALB-001", "running", 300.0, "2021-01-10", "2025-02-18", None),
+            ("Selladora SL2",   "other",   "SL-300",  "Romaco",      "SL2-ALB-001", "running", 300.0, "2021-01-10", "2025-01-30", None),
+            ("Cortadora CO1",   "other",   "CO-100",  "ICA",         "CO1-ALB-001", "idle",    300.0, "2021-01-10", "2025-02-05", "En espera de orden de fabricación"),
+            ("Estuchadora ES3",  "cartoner","ES-400",  "Marchesini",  "ES3-ALB-001", "running", 280.0, "2021-01-10", "2025-03-08", None),
+        ],
+    },
+    "indianapolis": {
+        "Line 1 - Autoinjectors": [
+            ("Assembly Unit AU1",   "other",       "AU-2000",  "Owen Mumford", "AU1-IND-001", "running",     800.0, "2020-05-01", "2025-02-20", None),
+            ("Filling Station FS1", "filler",      "FS-500",   "Bausch+Ströbel","FS1-IND-001", "running",     800.0, "2020-05-01", "2025-01-15", None),
+            ("Inspection Unit IN1", "inspection",  "VI-3000",  "Mettler-Toledo","IN1-IND-001", "running",     800.0, "2020-05-01", "2025-03-01", None),
+            ("Labeler LB1",         "labeler",     "LB-600",   "Herma",        "LB1-IND-001", "running",     800.0, "2020-05-01", "2025-02-10", None),
+            ("Cartoner CT1",        "cartoner",    "CT-800",   "Dividella",    "CT1-IND-001", "maintenance", 750.0, "2020-05-01", "2025-03-11", "Scheduled PM in progress"),
+        ],
+        "Line 2 - Insulin Pens": [
+            ("Pen Assembly PA1",    "other",       "PA-1500",  "Ypsomed",      "PA1-IND-001", "running",  600.0, "2021-03-10", "2025-02-28", None),
+            ("Fill & Finish FF1",   "filler",      "FF-800",   "Bosch",        "FF1-IND-001", "running",  600.0, "2021-03-10", "2025-02-05", None),
+            ("Labeler LB2",         "labeler",     "LB-600",   "Herma",        "LB2-IND-001", "running",  600.0, "2021-03-10", "2025-01-20", None),
+            ("Serializer SR1",      "serializer",  "SR-200",   "Systech",      "SR1-IND-001", "running",  600.0, "2021-03-10", "2025-03-01", None),
+            ("Case Packer CP1",     "case_packer", "CP-400",   "Dividella",    "CP1-IND-001", "running",  580.0, "2021-03-10", "2025-02-15", None),
+        ],
+        "Line 3 - Vials": [
+            ("Vial Washer VW1",    "other",      "VW-1000",  "Bausch+Ströbel","VW1-IND-001", "running",    400.0, "2019-07-15", "2025-01-30", None),
+            ("Filler/Stopper FS2", "filler",     "FS-2000",  "Bosch",         "FS2-IND-001", "running",    400.0, "2019-07-15", "2025-02-22", None),
+            ("Capper CP2",         "other",      "CP-600",   "Bosch",         "CP2-IND-001", "running",    400.0, "2019-07-15", "2025-02-22", None),
+            ("Inspection VVI1",    "inspection", "VVI-5000", "Brevetti Angela","VVI1-IND-001","running",    400.0, "2019-07-15", "2025-03-05", None),
+            ("Labeler LB3",        "labeler",    "LB-600",   "Herma",         "LB3-IND-001", "stopped",    400.0, "2019-07-15", "2024-12-10", "Encoder failure — parts on order"),
+            ("Palletizer PL1",     "palletizer", "PL-200",   "KUKA",          "PL1-IND-001", "running",    380.0, "2019-07-15", "2025-02-18", None),
+        ],
+    },
+    "fegersheim": {
+        "Ligne 1 - Sérialisation": [
+            ("Sérialisation SR1",   "serializer",  "SR-300",   "Körber",       "SR1-FEG-001", "running",   500.0, "2020-09-01", "2025-02-08", None),
+            ("Étiqueteuse ET1",     "labeler",     "ET-500",   "Weber",        "ET1-FEG-001", "running",   500.0, "2020-09-01", "2025-01-28", None),
+            ("Contrôle vision CV1", "inspection",  "CV-2000",  "Cognex",       "CV1-FEG-001", "running",   500.0, "2020-09-01", "2025-02-20", None),
+            ("Cartonneuse CN1",     "cartoner",    "CN-600",   "Marchesini",   "CN1-FEG-001", "running",   480.0, "2020-09-01", "2025-03-03", None),
+        ],
+        "Ligne 2 - Découpe": [
+            ("Presse découpe PD1",  "other",       "PD-800",   "Romaco",       "PD1-FEG-001", "running",   300.0, "2018-04-10", "2025-01-15", "Lame changée trimestrellement"),
+            ("Découpe aluminium DA1","other",       "DA-400",   "Uhlmann",      "DA1-FEG-001", "maintenance",300.0,"2018-04-10", "2025-03-10", "Maintenance préventive en cours"),
+            ("Contrôle qualité CQ1","inspection",  "CQ-1000",  "Keyence",      "CQ1-FEG-001", "running",   300.0, "2018-04-10", "2025-02-25", None),
+        ],
+        "Ligne 3 - Étiquetage": [
+            ("Étiqueteuse ET2",     "labeler",     "ET-500",   "Weber",        "ET2-FEG-001", "running",   400.0, "2021-11-20", "2025-02-12", None),
+            ("Applicateur AP1",     "other",       "AP-200",   "Herma",        "AP1-FEG-001", "running",   400.0, "2021-11-20", "2025-01-18", None),
+            ("Cartonneuse CN2",     "cartoner",    "CN-400",   "IMA",          "CN2-FEG-001", "idle",      380.0, "2021-11-20", "2025-02-28", "Attente ordre de fabrication"),
+        ],
+    },
+    "sesto": {
+        "Linea 1 - Blister": [
+            ("Termoformatrice TF1", "thermoformer","TF-7500",  "IMA",          "TF1-SES-001", "running",   420.0, "2019-06-01", "2025-02-05", None),
+            ("Riempitrice RI1",     "filler",      "RI-600",   "MG2",          "RI1-SES-001", "running",   420.0, "2019-06-01", "2025-01-22", None),
+            ("Saldatrice SD1",      "other",       "SD-300",   "Uhlmann",      "SD1-SES-001", "running",   420.0, "2019-06-01", "2025-03-02", None),
+            ("Fustellatrice FU1",   "other",       "FU-200",   "Romaco",       "FU1-SES-001", "running",   420.0, "2019-06-01", "2025-02-18", None),
+            ("Astucciatrice AS1",   "cartoner",    "AS-600",   "Marchesini",   "AS1-SES-001", "changeover",400.0, "2019-06-01", "2025-03-08", "Cambio formato in corso"),
+        ],
+        "Linea 2 - Pick-and-Place": [
+            ("Robot Pick-Place PP1","other",       "PP-2000",  "Fanuc",        "PP1-SES-001", "running",   300.0, "2022-02-15", "2025-02-28", None),
+            ("Controllo visione VC1","inspection", "VC-3000",  "Cognex",       "VC1-SES-001", "running",   300.0, "2022-02-15", "2025-03-01", None),
+            ("Astucciatrice AS2",   "cartoner",    "AS-400",   "IMA",          "AS2-SES-001", "running",   280.0, "2022-02-15", "2025-01-30", None),
+        ],
+        "Linea 3 - Pallettizzazione": [
+            ("Palettizzatore PL1",  "palletizer",  "PL-500",   "KUKA",         "PL1-SES-001", "running",   150.0, "2020-03-20", "2025-02-10", None),
+            ("Avvolgitrice AV1",    "other",       "AV-200",   "Robopac",      "AV1-SES-001", "running",   150.0, "2020-03-20", "2025-01-25", None),
+            ("Etichettatrice ET1",  "labeler",     "ET-300",   "Weber",        "ET1-SES-001", "stopped",   150.0, "2020-03-20", "2024-12-20", "Guasto scheda elettronica — in riparazione"),
+        ],
+    },
+    "seishin": {
+        "ライン1 - 包装": [
+            ("サーモフォーマー TF1", "thermoformer","TF-6000",  "CKD",          "TF1-SEI-001", "running",   380.0, "2020-04-01", "2025-02-15", None),
+            ("充填機 FL1",           "filler",      "FL-400",   "Shibuya",      "FL1-SEI-001", "running",   380.0, "2020-04-01", "2025-01-20", None),
+            ("シール機 SL1",         "other",       "SL-200",   "Omori",        "SL1-SEI-001", "running",   380.0, "2020-04-01", "2025-02-28", None),
+            ("ラベラー LB1",         "labeler",     "LB-300",   "Sato",         "LB1-SEI-001", "running",   380.0, "2020-04-01", "2025-03-05", None),
+            ("カートナー CT1",       "cartoner",    "CT-500",   "Mutual",       "CT1-SEI-001", "running",   360.0, "2020-04-01", "2025-02-22", None),
+        ],
+        "ライン2 - 充填": [
+            ("洗浄機 WS1",           "other",       "WS-800",   "Shibuya",      "WS1-SEI-001", "running",   200.0, "2018-10-15", "2025-01-10", None),
+            ("充填密封機 FF1",       "filler",      "FF-1200",  "Bosch",        "FF1-SEI-001", "running",   200.0, "2018-10-15", "2025-02-05", None),
+            ("打栓機 CP1",           "other",       "CP-400",   "Shibuya",      "CP1-SEI-001", "maintenance",200.0,"2018-10-15", "2025-03-10", "定期点検実施中"),
+            ("検査機 IN1",           "inspection",  "VI-2000",  "Keyence",      "IN1-SEI-001", "running",   200.0, "2018-10-15", "2025-02-20", None),
+        ],
+        "ライン3 - シリアル化": [
+            ("シリアライザー SR1",   "serializer",  "SR-100",   "Systech",      "SR1-SEI-001", "running",   300.0, "2022-07-01", "2025-03-01", None),
+            ("集積機 AG1",           "other",       "AG-200",   "Omori",        "AG1-SEI-001", "running",   300.0, "2022-07-01", "2025-02-15", None),
+            ("ケースパッカー CP2",   "case_packer", "CP-600",   "Fuji",         "CP2-SEI-001", "idle",      280.0, "2022-07-01", "2025-02-10", "次ロット待ち"),
+        ],
+    },
+}
+
+
+def _seed_equipment(site_id: str, conn: sqlite3.Connection) -> None:
+    """Inserta equipos de ejemplo para una planta. Idempotente."""
+    seed = EQUIPMENT_SEED.get(site_id)
+    if not seed:
+        return
+
+    existing = conn.execute(
+        "SELECT COUNT(*) FROM equipment WHERE site_id=?", (site_id,)
+    ).fetchone()[0]
+    if existing > 0:
+        return
+
+    count = 0
+    for group_name, machines in seed.items():
+        row = conn.execute(
+            "SELECT id FROM tier_groups WHERE site_id=? AND name=?", (site_id, group_name)
+        ).fetchone()
+        if not row:
+            continue
+        group_id = row[0]
+        for (name, eq_type, model, manufacturer, serial, status, speed,
+             installed, last_maint, notes) in machines:
+            conn.execute(
+                """INSERT INTO equipment
+                   (site_id, group_id, name, equipment_type, model, manufacturer,
+                    serial_number, status, nominal_speed, installed_date,
+                    last_maintenance, notes)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (site_id, group_id, name, eq_type, model, manufacturer,
+                 serial, status, speed, installed, last_maint, notes),
+            )
+            count += 1
+
+    conn.commit()
+    _safe_print(f"  [ok] Equipment: {count} máquinas → {site_id}")
+
+
 def _create_schema(db_path: str) -> None:
     conn = sqlite3.connect(db_path)
     conn.executescript(SCHEMA_SQL)
@@ -1090,6 +1263,7 @@ def seed_site(site_id: str, force: bool = False) -> None:
     conn2.execute("PRAGMA foreign_keys = ON")
     _seed_problems_and_initiatives(site_id, conn2)
     _seed_tiers(site_id, conn2)
+    _seed_equipment(site_id, conn2)
     conn2.close()
 
     shifts_n   = len(shift_rows)
@@ -2008,13 +2182,14 @@ def seed_all_sites(force: bool = False) -> None:
     for site_id in SITES:
         seed_site(site_id, force=force)
     _seed_alert_rules()
-    # Garantizar datos de tiers incluso en BDs ya inicializadas
+    # Garantizar datos de tiers e equipment incluso en BDs ya inicializadas
     for site_id in SITES:
         db_path = SITES[site_id]["db_path"]
         if os.path.exists(db_path):
             conn = sqlite3.connect(db_path)
             conn.execute("PRAGMA foreign_keys = ON")
             _seed_tiers(site_id, conn)
+            _seed_equipment(site_id, conn)
             conn.close()
     _safe_print("[ seed_sites ] Completado.")
 
